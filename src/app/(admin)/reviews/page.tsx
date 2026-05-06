@@ -44,7 +44,7 @@ export default async function ReviewsPage({
           <p className="text-sm text-gray-600 mt-1">총 {allReviews.length}건</p>
         </div>
         <Link
-          href="/reviews/new"
+          href="/reviews/register"
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
         >
           + 리뷰 등록

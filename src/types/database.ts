@@ -27,6 +27,7 @@ export interface Channel {
   collection_mode: string
   publish_mode: string
   is_active: boolean
+  api_enabled: boolean
 }
 
 export interface Review {

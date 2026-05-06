@@ -16,7 +16,7 @@ interface Channel {
   name: string
 }
 
-export default function NewReviewPage() {
+export default function RegisterReviewPage() {
   const [state, action, isPending] = useActionState(createReviewAction, null)
   const [branches, setBranches] = useState<Branch[]>([])
   const [channels, setChannels] = useState<Channel[]>([])
@@ -126,7 +126,9 @@ export default function NewReviewPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">리뷰 URL (선택)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                리뷰 URL (선택)
+              </label>
               <input
                 type="url"
                 name="review_url"
