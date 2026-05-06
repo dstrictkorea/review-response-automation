@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm install *)",
+      "Bash(npm list *)",
+      "PowerShell(New-Item *)",
+      "Bash(npm run *)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\hyunh\\\\Desktop\\\\ARTE Review Automation E2E\\\\review-response-automation\\\\src\\\\middleware.ts\" -Force)",
+      "Bash(Write-Output \"deleted\")"
+    ]
+  }
+}
