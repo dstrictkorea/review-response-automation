@@ -48,6 +48,9 @@ export interface Review {
   sentiment: Sentiment | null
   internal_note_ko: string | null
   normalized_hash: string
+  import_hash: string | null
+  source_import_batch_id: string | null
+  source_import_row_id: string | null
   created_at: string
   updated_at: string
 }
@@ -108,4 +111,31 @@ export interface ReplyTemplate {
   language: string
   category: string
   content: string
+}
+
+export interface ReviewImportBatch {
+  id: string
+  branch_code: string
+  channel_code: string
+  import_format: string
+  original_filename: string | null
+  total_rows: number
+  valid_rows: number
+  duplicate_rows: number
+  error_rows: number
+  imported_rows: number
+  created_by: string | null
+  created_at: string
+}
+
+export interface ReviewImportRow {
+  id: string
+  batch_id: string
+  row_index: number
+  source_payload: Record<string, unknown> | null
+  mapped_payload: Record<string, unknown> | null
+  status: 'pending' | 'imported' | 'duplicate' | 'error'
+  error_message: string | null
+  review_id: string | null
+  created_at: string
 }

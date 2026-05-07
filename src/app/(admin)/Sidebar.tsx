@@ -7,7 +7,8 @@ import { createClient } from '@/lib/supabase/client'
 const navItems = [
   { href: '/dashboard', label: '대시보드' },
   { href: '/reviews', label: '리뷰 목록' },
-  { href: '/reviews/register', label: '리뷰 등록' },
+  { href: '/reviews/import', label: '리뷰 가져오기' },
+  { href: '/reviews/register', label: '1건 수동 입력' },
   { href: '/archive', label: '아카이브' },
   { href: '/settings', label: '설정' },
 ]
@@ -33,7 +34,10 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
         {navItems.map((item) => {
           const isActive =
             item.href === '/reviews'
-              ? pathname === '/reviews' || (pathname.startsWith('/reviews/') && pathname !== '/reviews/register')
+              ? pathname === '/reviews' ||
+                (pathname.startsWith('/reviews/') &&
+                  pathname !== '/reviews/register' &&
+                  pathname !== '/reviews/import')
               : pathname === item.href || pathname.startsWith(item.href + '/')
           return (
             <Link
