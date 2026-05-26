@@ -8,6 +8,7 @@ interface SearchParams {
   channel?: string
   status?: string
   risk?: string
+  q?: string
 }
 
 export default async function ReviewsPage({
@@ -31,7 +32,17 @@ export default async function ReviewsPage({
     supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
   ])
 
-  const allReviews: Review[] = reviews ?? []
+  // 텍스트 검색은 클라이언트 필터로 처리 (소규모 데이터셋 기준 OK)
+  const searchText = (params.q ?? '').toLowerCase()
+  const allReviews: Review[] = (reviews ?? []).filter((r) => {
+    if (!searchText) return true
+    return (
+      r.review_text?.toLowerCase().includes(searchText) ||
+      r.reviewer_name?.toLowerCase().includes(searchText) ||
+      r.branch_code.toLowerCase().includes(searchText) ||
+      r.channel_code.toLowerCase().includes(searchText)
+    )
+  })
 
   const statuses: ReviewStatus[] = ['new', 'ai_done', 'approved', 'manual_published', 'no_reply', 'escalated']
   const riskLevels: RiskLevel[] = ['low', 'medium', 'high', 'critical']
@@ -43,15 +54,35 @@ export default async function ReviewsPage({
           <h2 className="text-xl font-bold text-gray-900">리뷰 목록</h2>
           <p className="text-sm text-gray-600 mt-1">총 {allReviews.length}건</p>
         </div>
-        <Link
-          href="/reviews/register"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-        >
-          + 리뷰 등록
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/reviews/import"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            CSV 가져오기
+          </Link>
+          <Link
+            href="/reviews/register"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            + 1건 등록
+          </Link>
+        </div>
       </div>
 
       <form method="GET" className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+        {/* 텍스트 검색 */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 내용 / 작성자 검색</label>
+          <input
+            type="text"
+            name="q"
+            defaultValue={params.q ?? ''}
+            placeholder="검색어를 입력하세요 (리뷰 내용, 작성자명, 지점/채널 코드)"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">지점</label>
@@ -148,7 +179,7 @@ export default async function ReviewsPage({
             {allReviews.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                  해당 조건의 리뷰가 없습니다.
+                  {searchText ? `"${params.q}" 검색 결과가 없습니다.` : '해당 조건의 리뷰가 없습니다.'}
                 </td>
               </tr>
             )}
@@ -166,7 +197,7 @@ export default async function ReviewsPage({
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-gray-700">{review.branch_code}</td>
                 <td className="px-4 py-3 text-xs text-gray-700">{review.channel_code}</td>
-                <td className="px-4 py-3 text-gray-700">
+                <td className="px-4 py-3 text-gray-700 text-xs">
                   {review.rating != null ? `${review.rating}★` : '-'}
                 </td>
                 <td className="px-4 py-3">

@@ -1,7 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { statusLabel, statusClasses, riskClasses, riskLabel } from '@/lib/badges'
-import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
+import type { Review, ReviewStatus, RiskLevel, Sentiment } from '@/types/database'
+
+const sentimentLabel: Record<Sentiment, string> = {
+  positive: '긍정',
+  neutral: '중립',
+  mixed: '복합',
+  negative: '부정',
+}
 
 export default async function ArchivePage() {
   const supabase = await createClient()
@@ -9,7 +16,7 @@ export default async function ArchivePage() {
   const { data: reviews } = await supabase
     .from('reviews')
     .select('*')
-    .in('status', ['approved', 'manual_published', 'no_reply', 'escalated'])
+    .in('status', ['manual_published', 'no_reply', 'escalated'])
     .order('updated_at', { ascending: false })
 
   const archived: Review[] = reviews ?? []
@@ -87,7 +94,9 @@ export default async function ArchivePage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs text-gray-600">{review.sentiment ?? '-'}</td>
+                <td className="px-4 py-3 text-xs text-gray-600">
+                  {review.sentiment ? sentimentLabel[review.sentiment] : '-'}
+                </td>
                 <td className="px-4 py-3 text-xs text-gray-600 max-w-xs truncate">
                   {review.review_text?.slice(0, 60) ?? '-'}
                 </td>

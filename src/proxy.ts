@@ -23,19 +23,9 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
-
-  if (!user && !pathname.startsWith('/api/') && pathname !== '/login') {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-
-  if (user && pathname === '/login') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
+  // Refresh expired session tokens — must not have any code between
+  // createServerClient and getUser() or session refresh breaks
+  await supabase.auth.getUser()
 
   return supabaseResponse
 }
