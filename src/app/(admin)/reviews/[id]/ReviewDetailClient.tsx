@@ -21,6 +21,23 @@ const actionLabels: Record<string, string> = {
   review_published: '게시 완료',
 }
 
+const sentimentKo: Record<string, string> = {
+  positive: '긍정',
+  neutral: '중립',
+  mixed: '복합',
+  negative: '부정',
+}
+
+const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'approved'])
+
+function elapsedLabel(dateStr: string | null): string | null {
+  if (!dateStr) return null
+  const hours = Math.floor((Date.now() - new Date(dateStr).getTime()) / 3600000)
+  if (hours < 24) return '오늘'
+  if (hours < 48) return '어제'
+  return `${Math.floor(hours / 24)}일 전`
+}
+
 export default function ReviewDetailClient({ review: initialReview, draft: initialDraft, logs: initialLogs }: Props) {
   const [review, setReview] = useState(initialReview)
   const [draft, setDraft] = useState(initialDraft)
@@ -69,7 +86,6 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         setActionMessage(`오류: ${result.error}`)
       } else {
         setActionMessage(successMsg)
-        // Reload the page to reflect new status
         window.location.reload()
       }
     })
@@ -84,8 +100,29 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   const canApprove = review.status === 'ai_done' || review.status === 'approved'
   const canPublish = review.status === 'approved'
 
+  const isActive = ACTIVE_STATUSES.has(review.status)
+  const reviewDateStr = review.review_created_at ?? null
+  const elapsedStr = elapsedLabel(reviewDateStr)
+  const elapsedDays = reviewDateStr
+    ? Math.floor((Date.now() - new Date(reviewDateStr).getTime()) / 86400000)
+    : null
+  const isSlaWarning = isActive && elapsedDays !== null && elapsedDays >= 3
+
   return (
     <div className="space-y-5">
+      {/* SLA 경고 배너 */}
+      {isSlaWarning && (
+        <div className="rounded-xl bg-amber-50 border border-amber-300 px-5 py-3 flex items-center gap-3">
+          <span className="text-amber-600 font-bold text-lg">!</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">응답 지연 주의</p>
+            <p className="text-xs text-amber-700">
+              이 리뷰가 작성된 지 <strong>{elapsedDays}일</strong>이 지났습니다. 빠른 답변 처리가 필요합니다.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Review info */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -99,7 +136,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
           )}
           {review.sentiment && (
             <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-              감성: {review.sentiment}
+              감성: {sentimentKo[review.sentiment] ?? review.sentiment}
             </span>
           )}
           {(review.categories ?? []).map((c) => (
@@ -125,7 +162,14 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
           <div>
             <span className="text-gray-500">작성일</span>
             <p className="font-medium text-gray-900">
-              {review.review_created_at ? new Date(review.review_created_at).toLocaleDateString('ko-KR') : '-'}
+              {review.review_created_at
+                ? new Date(review.review_created_at).toLocaleDateString('ko-KR')
+                : '-'}
+              {elapsedStr && (
+                <span className={`ml-2 text-xs font-normal ${isSlaWarning ? 'text-amber-600' : 'text-gray-400'}`}>
+                  ({elapsedStr})
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -279,8 +323,11 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
           placeholder="여기에 최종 답변을 작성하거나 붙여넣으세요. 외부 플랫폼에 직접 복사하여 게시하세요."
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-none"
         />
+        <p className={`text-xs text-right mt-1 ${editedReply.length > 1000 ? 'text-amber-600' : 'text-gray-400'}`}>
+          {editedReply.length.toLocaleString()}자
+        </p>
 
-        <div className="mt-3">
+        <div className="mt-2">
           <button
             onClick={() => {
               if (draft) {

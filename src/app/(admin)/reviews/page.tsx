@@ -8,6 +8,15 @@ interface SearchParams {
   channel?: string
   status?: string
   risk?: string
+  q?: string
+}
+
+const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'approved'])
+
+function reviewElapsedDays(review: Review): number | null {
+  const dateStr = review.review_created_at ?? review.created_at
+  if (!dateStr) return null
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
 }
 
 export default async function ReviewsPage({
@@ -31,7 +40,16 @@ export default async function ReviewsPage({
     supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
   ])
 
-  const allReviews: Review[] = reviews ?? []
+  const searchText = (params.q ?? '').toLowerCase()
+  const allReviews: Review[] = (reviews ?? []).filter((r) => {
+    if (!searchText) return true
+    return (
+      r.review_text?.toLowerCase().includes(searchText) ||
+      r.reviewer_name?.toLowerCase().includes(searchText) ||
+      r.branch_code.toLowerCase().includes(searchText) ||
+      r.channel_code.toLowerCase().includes(searchText)
+    )
+  })
 
   const statuses: ReviewStatus[] = ['new', 'ai_done', 'approved', 'manual_published', 'no_reply', 'escalated']
   const riskLevels: RiskLevel[] = ['low', 'medium', 'high', 'critical']
@@ -43,15 +61,35 @@ export default async function ReviewsPage({
           <h2 className="text-xl font-bold text-gray-900">리뷰 목록</h2>
           <p className="text-sm text-gray-600 mt-1">총 {allReviews.length}건</p>
         </div>
-        <Link
-          href="/reviews/register"
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-        >
-          + 리뷰 등록
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/reviews/import"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            CSV 가져오기
+          </Link>
+          <Link
+            href="/reviews/register"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+          >
+            + 1건 등록
+          </Link>
+        </div>
       </div>
 
       <form method="GET" className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
+        {/* 텍스트 검색 */}
+        <div className="mb-3">
+          <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 내용 / 작성자 검색</label>
+          <input
+            type="text"
+            name="q"
+            defaultValue={params.q ?? ''}
+            placeholder="검색어를 입력하세요 (리뷰 내용, 작성자명, 지점/채널 코드)"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">지점</label>
@@ -134,7 +172,8 @@ export default async function ReviewsPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">등록일</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">작성일</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">경과</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">지점</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">채널</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">별점</th>
@@ -147,57 +186,76 @@ export default async function ReviewsPage({
           <tbody className="divide-y divide-gray-100">
             {allReviews.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                  해당 조건의 리뷰가 없습니다.
+                <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
+                  {searchText ? `"${params.q}" 검색 결과가 없습니다.` : '해당 조건의 리뷰가 없습니다.'}
                 </td>
               </tr>
             )}
-            {allReviews.map((review) => (
-              <tr
-                key={review.id}
-                className={`hover:bg-gray-50 transition-colors ${
-                  review.risk_level === 'critical' || review.risk_level === 'high'
-                    ? 'bg-red-50 hover:bg-red-100'
-                    : ''
-                }`}
-              >
-                <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
-                  {new Date(review.created_at).toLocaleDateString('ko-KR')}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-700">{review.branch_code}</td>
-                <td className="px-4 py-3 text-xs text-gray-700">{review.channel_code}</td>
-                <td className="px-4 py-3 text-gray-700">
-                  {review.rating != null ? `${review.rating}★` : '-'}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses(review.status as ReviewStatus)}`}
-                  >
-                    {statusLabel(review.status as ReviewStatus)}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {review.risk_level && (
+            {allReviews.map((review) => {
+              const elapsed = reviewElapsedDays(review)
+              const isActive = ACTIVE_STATUSES.has(review.status)
+              const isOverdue = isActive && elapsed !== null && elapsed >= 3
+              const displayDate = review.review_created_at ?? review.created_at
+
+              return (
+                <tr
+                  key={review.id}
+                  className={`hover:bg-gray-50 transition-colors ${
+                    review.risk_level === 'critical' || review.risk_level === 'high'
+                      ? 'bg-red-50 hover:bg-red-100'
+                      : ''
+                  }`}
+                >
+                  <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
+                    {new Date(displayDate).toLocaleDateString('ko-KR')}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {isActive && elapsed !== null && (
+                      <span
+                        className={`text-xs font-medium ${
+                          isOverdue ? 'text-red-600' : 'text-gray-500'
+                        }`}
+                      >
+                        {elapsed === 0 ? '오늘' : `${elapsed}일`}
+                        {isOverdue && ' ⚠'}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-700">{review.branch_code}</td>
+                  <td className="px-4 py-3 text-xs text-gray-700">{review.channel_code}</td>
+                  <td className="px-4 py-3 text-gray-700 text-xs">
+                    {review.rating != null ? `${review.rating}★` : '-'}
+                  </td>
+                  <td className="px-4 py-3">
                     <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${riskClasses(review.risk_level as RiskLevel)}`}
+                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses(review.status as ReviewStatus)}`}
                     >
-                      {riskLabel(review.risk_level as RiskLevel)}
+                      {statusLabel(review.status as ReviewStatus)}
                     </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-gray-600 max-w-sm truncate text-xs">
-                  {review.review_text?.slice(0, 60) ?? '-'}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Link
-                    href={`/reviews/${review.id}`}
-                    className="text-xs text-blue-600 hover:underline font-medium"
-                  >
-                    상세보기
-                  </Link>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-4 py-3">
+                    {review.risk_level && (
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${riskClasses(review.risk_level as RiskLevel)}`}
+                      >
+                        {riskLabel(review.risk_level as RiskLevel)}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600 max-w-sm truncate text-xs">
+                    {review.review_text?.slice(0, 60) ?? '-'}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <Link
+                      href={`/reviews/${review.id}`}
+                      className="text-xs text-blue-600 hover:underline font-medium"
+                    >
+                      상세보기
+                    </Link>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
