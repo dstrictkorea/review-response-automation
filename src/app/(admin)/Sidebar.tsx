@@ -4,16 +4,28 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const navItems = [
+const mainNav = [
   { href: '/dashboard', label: '대시보드' },
   { href: '/reviews', label: '리뷰 목록' },
   { href: '/reviews/import', label: '리뷰 가져오기' },
   { href: '/reviews/register', label: '1건 수동 입력' },
   { href: '/archive', label: '아카이브' },
-  { href: '/settings', label: '설정' },
 ]
 
-export default function Sidebar({ userEmail }: { userEmail: string }) {
+const settingsNav = [
+  { href: '/settings', label: '설정' },
+  { href: '/settings/users', label: '사용자 관리', adminOnly: true },
+]
+
+export default function Sidebar({
+  userEmail,
+  displayName,
+  isAdmin,
+}: {
+  userEmail: string
+  displayName: string | null
+  isAdmin: boolean
+}) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -23,6 +35,23 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
     router.push('/login')
   }
 
+  function isActive(href: string) {
+    if (href === '/reviews') {
+      return (
+        pathname === '/reviews' ||
+        (pathname.startsWith('/reviews/') &&
+          pathname !== '/reviews/register' &&
+          pathname !== '/reviews/import')
+      )
+    }
+    if (href === '/settings') {
+      return pathname === '/settings'
+    }
+    return pathname === href || pathname.startsWith(href + '/')
+  }
+
+  const visibleSettings = settingsNav.filter(i => !i.adminOnly || isAdmin)
+
   return (
     <aside className="fixed top-0 left-0 h-full w-60 bg-white border-r border-gray-200 flex flex-col z-10">
       <div className="px-5 py-5 border-b border-gray-200">
@@ -30,33 +59,54 @@ export default function Sidebar({ userEmail }: { userEmail: string }) {
         <p className="text-xs text-gray-500 mt-0.5">아르떼뮤지엄 리뷰 관리</p>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => {
-          const isActive =
-            item.href === '/reviews'
-              ? pathname === '/reviews' ||
-                (pathname.startsWith('/reviews/') &&
-                  pathname !== '/reviews/register' &&
-                  pathname !== '/reviews/import')
-              : pathname === item.href || pathname.startsWith(item.href + '/')
-          return (
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        <div className="space-y-1 mb-4">
+          {mainNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive
+                isActive(item.href)
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
               {item.label}
             </Link>
-          )
-        })}
+          ))}
+        </div>
+
+        {visibleSettings.length > 0 && (
+          <div>
+            <p className="px-3 mb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">관리</p>
+            <div className="space-y-1">
+              {visibleSettings.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  {item.label}
+                  {item.adminOnly && (
+                    <span className="ml-1.5 text-xs text-blue-400">관리자</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
 
       <div className="px-3 py-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500 px-3 mb-2 truncate">{userEmail}</p>
+        <div className="px-3 mb-2">
+          {displayName && <p className="text-xs font-semibold text-gray-700">{displayName}</p>}
+          <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+          {isAdmin && <p className="text-xs text-blue-500 mt-0.5">관리자</p>}
+        </div>
         <button
           onClick={handleSignOut}
           className="w-full rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 text-left transition-colors"
