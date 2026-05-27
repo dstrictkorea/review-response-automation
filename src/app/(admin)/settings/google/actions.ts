@@ -12,6 +12,26 @@ async function requireAuth() {
   return { error: null, user }
 }
 
+export async function updateGoogleLocationAction(accountId: string, locationName: string, locationTitle: string) {
+  const { error } = await requireAuth()
+  if (error) return { error }
+
+  const admin = createAdminClient()
+  const { error: e } = await admin
+    .from('google_accounts')
+    .update({
+      google_location_name: locationName,
+      google_account_name: locationName.split('/locations/')[0] ?? locationName,
+      google_location_title: locationTitle || locationName,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', accountId)
+
+  if (e) return { error: e.message }
+  revalidatePath('/settings/google')
+  return { success: true }
+}
+
 export async function updateGoogleBranchAction(accountId: string, branchCode: string) {
   const { error } = await requireAuth()
   if (error) return { error }
