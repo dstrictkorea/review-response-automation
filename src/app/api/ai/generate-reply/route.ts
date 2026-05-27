@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import type { RiskKeyword, ReplyTemplate } from '@/types/database'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 const SYSTEM_PROMPT = `You are ARTE Museum's internal review response assistant.
 Your job is to help staff draft professional, brand-appropriate responses to guest reviews.
@@ -128,15 +128,18 @@ Respond with JSON only.`
   }
 
   try {
-    const model = process.env.ANTHROPIC_MODEL ?? 'claude-opus-4-5'
-    const message = await anthropic.messages.create({
+    const model = process.env.OPENAI_MODEL ?? 'gpt-4o'
+    const completion = await openai.chat.completions.create({
       model,
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+      response_format: { type: 'json_object' },
     })
 
-    const text = message.content[0].type === 'text' ? message.content[0].text : ''
+    const text = completion.choices[0].message.content ?? ''
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('JSON not found in response')
     aiResult = JSON.parse(jsonMatch[0])
@@ -169,7 +172,7 @@ Respond with JSON only.`
     selected_reply: aiResult.draft_standard,
     forbidden_check: aiResult.forbidden_check,
     prompt_version: 'v1.0',
-    model_name: 'claude-sonnet-4-6',
+    model_name: process.env.OPENAI_MODEL ?? 'gpt-4o',
     updated_at: new Date().toISOString(),
   }
 
