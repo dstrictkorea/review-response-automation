@@ -14,6 +14,7 @@ const mainNav = [
 
 const settingsNav = [
   { href: '/settings', label: '설정' },
+  { href: '/settings/google', label: 'Google 연동' },
   { href: '/settings/users', label: '사용자 관리', adminOnly: true },
 ]
 
