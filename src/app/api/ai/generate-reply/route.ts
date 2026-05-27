@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       : undefined,
   })
   const model = geminiKey
-    ? (process.env.GEMINI_MODEL ?? 'gemini-1.5-flash')
+    ? (process.env.GEMINI_MODEL ?? 'gemini-2.0-flash')
     : (process.env.OPENAI_MODEL ?? 'gpt-4o')
 
   const supabase = await createClient()
