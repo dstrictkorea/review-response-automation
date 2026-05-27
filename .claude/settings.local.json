@@ -9,7 +9,11 @@
       "PowerShell(New-Item *)",
       "Bash(npm run *)",
       "Bash(Remove-Item \"C:\\\\Users\\\\hyunh\\\\Desktop\\\\ARTE Review Automation E2E\\\\review-response-automation\\\\src\\\\middleware.ts\" -Force)",
-      "Bash(Write-Output \"deleted\")"
+      "Bash(Write-Output \"deleted\")",
+      "Bash(npx next *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__execute_sql"
     ]
   }
 }
