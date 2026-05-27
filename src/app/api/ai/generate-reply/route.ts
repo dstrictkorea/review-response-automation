@@ -3,24 +3,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { RiskKeyword, ReplyTemplate } from '@/types/database'
 
-async function callGemini(apiKey: string, model: string, systemPrompt: string, userMessage: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-      generationConfig: { maxOutputTokens: 2048 },
-    }),
-  })
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '')
-    throw new Error(`Gemini ${res.status}: ${errBody || '(no body)'}`)
-  }
-  const data = await res.json()
-  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
-}
 
 const SYSTEM_PROMPT = `You are ARTE Museum's internal review response assistant.
 Your job is to help staff draft professional, brand-appropriate responses to guest reviews.
@@ -62,18 +44,27 @@ Risk level guide:
 - critical: Injury/accident reports, legal threats, discrimination allegations, media threats, personal data mentions`
 
 export async function POST(request: NextRequest) {
-  // Resolve which AI provider to use
+  // Resolve which AI provider to use — priority: Groq → Gemini → OpenAI
+  const groqKey = process.env.GROQ_API_KEY
   const geminiKey = process.env.GEMINI_API_KEY
   const openaiKey = process.env.OPENAI_API_KEY
-  if (!geminiKey && !openaiKey) {
+  const activeKey = groqKey ?? geminiKey ?? openaiKey
+  if (!activeKey) {
     return NextResponse.json(
-      { error: 'AI API 키가 설정되지 않았습니다. Vercel 환경변수에 GEMINI_API_KEY를 추가해주세요.' },
+      { error: 'AI API 키가 설정되지 않았습니다. Vercel 환경변수에 GROQ_API_KEY를 추가해주세요.' },
       { status: 500 }
     )
   }
-  const model = geminiKey
-    ? (process.env.GEMINI_MODEL ?? 'gemini-2.0-flash-lite')
-    : (process.env.OPENAI_MODEL ?? 'gpt-4o')
+  const baseURL = groqKey
+    ? 'https://api.groq.com/openai/v1'
+    : geminiKey
+      ? 'https://generativelanguage.googleapis.com/v1beta/openai/'
+      : undefined
+  const model = groqKey
+    ? (process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile')
+    : geminiKey
+      ? (process.env.GEMINI_MODEL ?? 'gemini-2.0-flash-lite')
+      : (process.env.OPENAI_MODEL ?? 'gpt-4o')
 
   const supabase = await createClient()
   const {
@@ -158,23 +149,18 @@ Respond with JSON only.`
   }
 
   try {
-    let text: string
-    if (geminiKey) {
-      text = await callGemini(geminiKey, model, SYSTEM_PROMPT, userMessage)
-    } else {
-      const openai = new OpenAI({ apiKey: openaiKey! })
-      const completion = await openai.chat.completions.create({
-        model,
-        max_tokens: 2048,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userMessage },
-        ],
-      })
-      text = completion.choices[0].message.content ?? ''
-    }
+    const openai = new OpenAI({ apiKey: activeKey, baseURL })
+    const completion = await openai.chat.completions.create({
+      model,
+      max_tokens: 2048,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+    })
+    const text = completion.choices[0].message.content ?? ''
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    const jsonMatch = (text ?? '').match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('JSON not found in response')
     aiResult = JSON.parse(jsonMatch[0])
   } catch (err: any) {
