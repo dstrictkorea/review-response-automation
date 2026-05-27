@@ -128,8 +128,9 @@ Respond with JSON only.`
   }
 
   try {
+    const model = process.env.ANTHROPIC_MODEL ?? 'claude-opus-4-5'
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model,
       max_tokens: 2048,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
@@ -139,9 +140,10 @@ Respond with JSON only.`
     const jsonMatch = text.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('JSON not found in response')
     aiResult = JSON.parse(jsonMatch[0])
-  } catch (err) {
+  } catch (err: any) {
     console.error('AI generation error:', err)
-    return NextResponse.json({ error: 'AI 초안 생성에 실패했습니다. 다시 시도해 주세요.' }, { status: 500 })
+    const msg = err?.message ?? String(err)
+    return NextResponse.json({ error: `AI 초안 생성 실패: ${msg}` }, { status: 500 })
   }
 
   // Hardcoded safety override: critical/high risk reviews always stay at that level
