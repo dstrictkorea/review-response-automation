@@ -256,20 +256,22 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
               ))}
             </div>
 
-            <div className="relative rounded-lg bg-gray-50 border border-gray-200 p-4 mb-3">
+            <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 mb-3">
               <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
                 {selectedDraftText ?? '해당 초안이 없습니다.'}
               </p>
               {selectedDraftText && (
-                <button
-                  onClick={() => {
-                    copyText(selectedDraftText)
-                    setEditedReply(selectedDraftText)
-                  }}
-                  className="absolute top-3 right-3 rounded bg-white border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
-                >
-                  복사 & 편집란에 적용
-                </button>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => {
+                      copyText(selectedDraftText)
+                      setEditedReply(selectedDraftText)
+                    }}
+                    className="rounded bg-white border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    편집란에 적용
+                  </button>
+                </div>
               )}
             </div>
 
