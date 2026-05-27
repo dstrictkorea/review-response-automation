@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
 import { statusLabel, statusClasses, riskClasses, riskLabel } from '@/lib/badges'
+import { checkAutoGeneratable } from '@/lib/autoReply'
 
 const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'approved'])
 
@@ -16,6 +17,7 @@ function elapsedDays(review: Review): number | null {
 export default function ReviewsListClient({ reviews }: { reviews: Review[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [batchStatus, setBatchStatus] = useState<'idle' | 'running' | 'done'>('idle')
+  const [batchMode, setBatchMode] = useState<'ai' | 'auto'>('auto')
   const [batchProgress, setBatchProgress] = useState<{ done: number; total: number; current: string }>({ done: 0, total: 0, current: '' })
   const [batchErrors, setBatchErrors] = useState<{ id: string; error: string }[]>([])
 
@@ -40,18 +42,28 @@ export default function ReviewsListClient({ reviews }: { reviews: Review[] }) {
     })
   }
 
-  async function runBatch() {
-    if (selectedNew.length === 0) return
+  // Separate auto-eligible and AI-required from selection
+  const autoEligible = selectedNew.filter((id) => {
+    const r = reviews.find((rev) => rev.id === id)
+    return r ? checkAutoGeneratable(r.rating, r.review_text).canAuto : false
+  })
+  const aiRequired = selectedNew.filter((id) => !autoEligible.includes(id))
+
+  async function runBatch(mode: 'ai' | 'auto') {
+    const targets = mode === 'auto' ? autoEligible : selectedNew
+    if (targets.length === 0) return
+    setBatchMode(mode)
     setBatchStatus('running')
     setBatchErrors([])
-    setBatchProgress({ done: 0, total: selectedNew.length, current: '' })
+    setBatchProgress({ done: 0, total: targets.length, current: '' })
+    const endpoint = mode === 'auto' ? '/api/ai/auto-reply' : '/api/ai/generate-reply'
 
-    for (let i = 0; i < selectedNew.length; i++) {
-      const id = selectedNew[i]
+    for (let i = 0; i < targets.length; i++) {
+      const id = targets[i]
       const review = reviews.find((r) => r.id === id)
-      setBatchProgress({ done: i, total: selectedNew.length, current: review?.reviewer_name ?? id.slice(0, 8) })
+      setBatchProgress({ done: i, total: targets.length, current: review?.reviewer_name ?? id.slice(0, 8) })
       try {
-        const res = await fetch('/api/ai/generate-reply', {
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ review_id: id }),
@@ -68,7 +80,6 @@ export default function ReviewsListClient({ reviews }: { reviews: Review[] }) {
     setBatchProgress((p) => ({ ...p, done: p.total, current: '' }))
     setBatchStatus('done')
     setSelected(new Set())
-    // Refresh after a moment so statuses update
     setTimeout(() => window.location.reload(), 800)
   }
 
@@ -83,15 +94,26 @@ export default function ReviewsListClient({ reviews }: { reviews: Review[] }) {
           {batchStatus === 'idle' && (
             <>
               <span className="text-sm font-medium text-blue-800">
-                {selectedNew.length}건 선택됨 (신규 상태만 처리 가능)
+                {selectedNew.length}건 선택
+                {autoEligible.length > 0 && <span className="ml-1 text-green-700">({autoEligible.length}건 자동 가능)</span>}
               </span>
-              <button
-                onClick={runBatch}
-                disabled={selectedNew.length === 0}
-                className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
-              >
-                AI 초안 일괄 생성
-              </button>
+              {autoEligible.length > 0 && (
+                <button
+                  onClick={() => runBatch('auto')}
+                  title="토큰 없이 즉시 처리 (4-5★ 짧은 리뷰)"
+                  className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors"
+                >
+                  ⚡ 자동 생성 ({autoEligible.length}건)
+                </button>
+              )}
+              {selectedNew.length > 0 && (
+                <button
+                  onClick={() => runBatch('ai')}
+                  className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                >
+                  AI 초안 생성 ({selectedNew.length}건)
+                </button>
+              )}
               <button
                 onClick={() => setSelected(new Set())}
                 className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-100 transition-colors"
@@ -164,6 +186,7 @@ export default function ReviewsListClient({ reviews }: { reviews: Review[] }) {
               const displayDate = review.review_created_at ?? review.created_at
               const isNew = review.status === 'new'
               const isChecked = selected.has(review.id)
+              const canAuto = isNew && checkAutoGeneratable(review.rating, review.review_text).canAuto
 
               return (
                 <tr
@@ -216,8 +239,9 @@ export default function ReviewsListClient({ reviews }: { reviews: Review[] }) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 max-w-sm truncate text-xs">
-                    {review.review_text?.slice(0, 60) ?? '-'}
+                  <td className="px-4 py-3 text-gray-600 max-w-sm text-xs">
+                    <span className="truncate block">{review.review_text?.slice(0, 60) ?? '-'}</span>
+                    {canAuto && <span className="text-green-600 font-medium">⚡ 자동가능</span>}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <Link href={`/reviews/${review.id}`} className="text-xs text-blue-600 hover:underline font-medium">

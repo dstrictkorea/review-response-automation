@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import type { Review, ReplyDraft, ActivityLog, ReviewStatus, RiskLevel } from '@/types/database'
 import { statusLabel, statusClasses, riskLabel, riskClasses } from '@/lib/badges'
+import { checkAutoGeneratable } from '@/lib/autoReply'
 import { approveReview, escalateReview, markNoReply, markPublished, saveDraft } from './actions'
 
 interface Props {
@@ -45,6 +46,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   const [selectedTab, setSelectedTab] = useState<'standard' | 'short' | 'careful'>('standard')
   const [editedReply, setEditedReply] = useState(initialDraft?.human_edited_reply ?? '')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -78,6 +80,32 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       setIsGenerating(false)
     }
   }
+
+  async function generateAutoReply() {
+    setIsAutoGenerating(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch('/api/ai/auto-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ review_id: review.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setGenerateError(data.error ?? '자동 생성에 실패했습니다.')
+        return
+      }
+      setDraft(data.draft)
+      setReview((r) => ({ ...r, status: 'ai_done', risk_level: data.risk_level, sentiment: data.sentiment, categories: data.categories }))
+      setEditedReply(data.draft?.draft_standard ?? '')
+    } catch {
+      setGenerateError('서버 오류가 발생했습니다.')
+    } finally {
+      setIsAutoGenerating(false)
+    }
+  }
+
+  const autoCheck = checkAutoGeneratable(review.rating, review.review_text)
 
   function handleAction(fn: () => Promise<{ success?: boolean; error?: string }>, successMsg: string) {
     startTransition(async () => {
@@ -221,16 +249,33 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
       {/* AI Draft section */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="text-sm font-semibold text-gray-900">AI 답변 초안</h3>
-          <button
-            onClick={generateDraft}
-            disabled={isGenerating}
-            className="rounded-lg bg-purple-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 transition-colors"
-          >
-            {isGenerating ? '생성 중...' : draft ? '초안 재생성' : 'AI 초안 생성'}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {autoCheck.canAuto && (
+              <button
+                onClick={generateAutoReply}
+                disabled={isAutoGenerating || isGenerating}
+                title="토큰 없이 즉시 생성 (4-5★ 짧은 리뷰)"
+                className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 transition-colors"
+              >
+                {isAutoGenerating ? '생성 중...' : '⚡ 자동 생성'}
+              </button>
+            )}
+            <button
+              onClick={generateDraft}
+              disabled={isGenerating || isAutoGenerating}
+              className="rounded-lg bg-purple-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 transition-colors"
+            >
+              {isGenerating ? '생성 중...' : draft ? 'AI 재생성' : 'AI 초안 생성'}
+            </button>
+          </div>
         </div>
+        {autoCheck.canAuto && !draft && (
+          <p className="mb-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+            ⚡ 이 리뷰는 <strong>자동 생성</strong> 가능합니다 — AI 토큰 없이 즉시 처리됩니다.
+          </p>
+        )}
 
         {generateError && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
