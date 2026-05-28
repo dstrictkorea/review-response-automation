@@ -5,26 +5,41 @@ import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
 import ReviewsListClient from '../reviews/ReviewsListClient'
 import DashboardStats from './DashboardStats'
 
-export default async function DashboardPage() {
+const PENDING_PAGE_SIZE = 20
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pending_page?: string }>
+}) {
+  const params = await searchParams
+  const page = Math.max(1, parseInt(params.pending_page ?? '1', 10))
+  const offset = (page - 1) * PENDING_PAGE_SIZE
+
   const supabase = await createClient()
 
-  const [{ data: allData }, { data: pendingData }] = await Promise.all([
+  const [{ data: allData }, pendingResult] = await Promise.all([
     // Project only fields needed for DashboardStats (counts/ratings/dates) and recentActivity table.
     // Avoids transferring heavy fields (review_text bulk, import metadata) for the full-dataset query.
     supabase
       .from('reviews')
       .select('id, branch_code, channel_code, rating, review_text, review_created_at, created_at, status, risk_level, sentiment')
       .order('created_at', { ascending: false }),
-    // Pending list: full projection needed by ReviewsListClient for display + editing
+    // Pending list: paginated 20/page — full projection needed by ReviewsListClient
     supabase
       .from('reviews')
-      .select('id, branch_code, channel_code, source_review_id, review_url, reviewer_name, rating, review_text, review_language, review_created_at, status, risk_level, categories, risk_reasons, sentiment, internal_note_ko, normalized_hash, created_at, updated_at')
+      .select('id, branch_code, channel_code, source_review_id, review_url, reviewer_name, rating, review_text, review_language, review_created_at, status, risk_level, categories, risk_reasons, sentiment, internal_note_ko, normalized_hash, created_at, updated_at', { count: 'exact' })
       .in('status', ['new', 'ai_done', 'pending_approval'])
-      .order('review_created_at', { ascending: false }),
+      .order('review_created_at', { ascending: false })
+      .range(offset, offset + PENDING_PAGE_SIZE - 1),
   ])
 
-  const allReviews: Review[]     = allData     ?? []
-  const pendingReviews: Review[] = pendingData ?? []
+  const pendingData = pendingResult.data
+  const pendingTotal = pendingResult.count ?? 0
+  const pendingTotalPages = Math.max(1, Math.ceil(pendingTotal / PENDING_PAGE_SIZE))
+
+  const allReviews: Review[]     = (allData     ?? []) as unknown as Review[]
+  const pendingReviews: Review[] = (pendingData ?? []) as unknown as Review[]
 
   // 대기 리뷰 답변 초안 미리보기
   const pendingIds = pendingReviews.map(r => r.id)
@@ -74,7 +89,60 @@ export default async function DashboardPage() {
         </div>
 
         {pendingReviews.length > 0 ? (
-          <ReviewsListClient reviews={pendingReviews} draftMap={pendingDraftMap} defaultStatusFilter="new" />
+          <>
+            <ReviewsListClient reviews={pendingReviews} draftMap={pendingDraftMap} defaultStatusFilter="new" />
+
+            {/* Pagination UI */}
+            {pendingTotalPages > 1 && (
+              <div className="mt-3 flex items-center justify-between px-1">
+                <p className="text-xs text-gray-500">
+                  {pendingTotal}건 중 {offset + 1}–{Math.min(offset + PENDING_PAGE_SIZE, pendingTotal)}건
+                </p>
+                <div className="flex items-center gap-1">
+                  {page > 1 && (
+                    <Link
+                      href={`/dashboard?pending_page=${page - 1}`}
+                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      ← 이전
+                    </Link>
+                  )}
+                  {Array.from({ length: pendingTotalPages }, (_, i) => i + 1)
+                    .filter((p) => p === 1 || p === pendingTotalPages || Math.abs(p - page) <= 1)
+                    .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && typeof arr[idx - 1] === 'number' && (p as number) - (arr[idx - 1] as number) > 1) acc.push('...')
+                      acc.push(p)
+                      return acc
+                    }, [])
+                    .map((p, idx) =>
+                      p === '...' ? (
+                        <span key={`ellipsis-${idx}`} className="px-2 text-xs text-gray-400">…</span>
+                      ) : (
+                        <Link
+                          key={p}
+                          href={`/dashboard?pending_page=${p}`}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                            p === page
+                              ? 'bg-blue-600 text-white'
+                              : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {p}
+                        </Link>
+                      ),
+                    )}
+                  {page < pendingTotalPages && (
+                    <Link
+                      href={`/dashboard?pending_page=${page + 1}`}
+                      className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      다음 →
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="bg-white rounded-xl border border-gray-200 px-5 py-10 text-center">
             <p className="text-gray-500 text-sm">처리 대기 중인 리뷰가 없습니다 ✓</p>

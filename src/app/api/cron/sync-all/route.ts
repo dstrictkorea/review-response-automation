@@ -37,7 +37,7 @@ function makeHash(str: string): string {
 async function syncOneAccount(
   admin: ReturnType<typeof createAdminClient>,
   googleAccountId: string,
-): Promise<{ imported: number }> {
+): Promise<{ imported: number; orchestrated: number }> {
   const { data: ga } = await admin
     .from('google_accounts')
     .select('*')

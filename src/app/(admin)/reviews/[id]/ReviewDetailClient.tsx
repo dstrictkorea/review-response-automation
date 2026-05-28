@@ -3,7 +3,6 @@
 import { useState, useTransition } from 'react'
 import type { Review, ReplyDraft, ActivityLog, ReviewStatus, RiskLevel } from '@/types/database'
 import { statusLabel, statusClasses, riskLabel, riskClasses } from '@/lib/badges'
-import { checkAutoGeneratable } from '@/lib/autoReply'
 import { approveReview, escalateReview, markNoReply, markPublished, saveDraft, resetReviewStatus, deleteReview } from './actions'
 
 interface Props {
@@ -83,7 +82,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   const [selectedTab, setSelectedTab] = useState<'standard' | 'short' | 'careful'>('standard')
   const [editedReply, setEditedReply] = useState(initialDraft?.human_edited_reply ?? '')
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isAutoGenerating, setIsAutoGenerating] = useState(false)
+  const [isReprocessing, setIsReprocessing] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -167,31 +166,36 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     )
   }
 
-  async function generateAutoReply() {
-    setIsAutoGenerating(true)
+  async function handleReprocess() {
+    setIsReprocessing(true)
     setGenerateError(null)
     try {
-      const res = await fetch('/api/ai/auto-reply', {
+      const res = await fetch('/api/review/re-process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ review_id: review.id, draft_type: selectedTab }),
+        body: JSON.stringify({ review_id: review.id }),
       })
       const data = await res.json()
       if (!res.ok) {
-        setGenerateError(data.error ?? '자동 생성에 실패했습니다.')
+        setGenerateError(data.error ?? 'AI 재분석에 실패했습니다.')
         return
       }
       setDraft(data.draft)
-      setReview((r) => ({ ...r, status: 'ai_done', risk_level: data.risk_level, sentiment: data.sentiment, categories: data.categories }))
+      setReview((r) => ({
+        ...r,
+        status: data.review?.status ?? r.status,
+        risk_level: data.review?.risk_level ?? r.risk_level,
+        sentiment: data.review?.sentiment ?? r.sentiment,
+        categories: data.review?.categories ?? r.categories,
+        risk_reasons: data.review?.risk_reasons ?? r.risk_reasons,
+      }))
       setEditedReply(data.draft?.draft_standard ?? '')
     } catch {
       setGenerateError('서버 오류가 발생했습니다.')
     } finally {
-      setIsAutoGenerating(false)
+      setIsReprocessing(false)
     }
   }
-
-  const autoCheck = checkAutoGeneratable(review.rating, review.review_text)
 
   function handleAction(fn: () => Promise<{ success?: boolean; error?: string }>, successMsg: string) {
     startTransition(async () => {
@@ -211,7 +215,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     draft?.draft_standard
 
   const isHighRisk = review.risk_level === 'high' || review.risk_level === 'critical'
-  const canApprove = review.status === 'ai_done' || review.status === 'approved'
+  const canApprove = review.status === 'ai_done' || review.status === 'pending_approval' || review.status === 'approved'
   const canPublish = review.status === 'approved'
 
   const isActive = ACTIVE_STATUSES.has(review.status)
@@ -224,6 +228,51 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
   return (
     <div className="space-y-5">
+      {/* AI 격리 배너 — pending_approval */}
+      {review.status === 'pending_approval' && (
+        <div className="rounded-xl bg-amber-50 border-2 border-amber-400 px-5 py-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-amber-600 font-bold text-xl">⚠</span>
+            <p className="text-sm font-bold text-amber-900">AI 격리됨 — 2차 검토 필요</p>
+          </div>
+          <p className="text-xs text-amber-800 mb-3">
+            이 리뷰는 AI가 위험 요소를 감지하여 자동 격리했습니다. 반드시 직접 검토 후 승인하세요.
+          </p>
+          {(review.risk_reasons ?? []).length > 0 && (
+            <div className="mb-2">
+              <p className="text-xs font-semibold text-amber-800 mb-1">위험 사유</p>
+              <ul className="space-y-0.5">
+                {(review.risk_reasons ?? []).map((reason, i) => (
+                  <li key={i} className="text-xs text-amber-900 flex items-start gap-1.5">
+                    <span className="text-amber-500 mt-0.5">▸</span>{reason}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {draft?.forbidden_check && Object.entries(draft.forbidden_check).some(([, v]) => v === true) && (
+            <div className="mt-2 rounded-lg bg-rose-50 border border-rose-300 px-3 py-2">
+              <p className="text-xs font-semibold text-rose-700 mb-1">⛔ 금지 표현 감지</p>
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                {Object.entries(draft.forbidden_check)
+                  .filter(([, v]) => v === true)
+                  .map(([key]) => {
+                    const labels: Record<string, string> = {
+                      refund_promise: '환불 약속',
+                      legal_admission: '법적 책임 인정',
+                      cctv_mention: 'CCTV 언급',
+                      staff_discipline: '직원 징계 약속',
+                    }
+                    return (
+                      <span key={key} className="text-xs text-rose-800 font-medium">✗ {labels[key] ?? key}</span>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* SLA 경고 배너 */}
       {isSlaWarning && (
         <div className="rounded-xl bg-amber-50 border border-amber-300 px-5 py-3 flex items-center gap-3">
@@ -338,30 +387,23 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="text-sm font-semibold text-gray-900">AI 답변 초안</h3>
           <div className="flex items-center gap-2 flex-wrap">
-            {autoCheck.canAuto && (
-              <button
-                onClick={generateAutoReply}
-                disabled={isAutoGenerating || isGenerating}
-                title="토큰 없이 즉시 생성 (4-5★ 짧은 리뷰)"
-                className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 transition-colors"
-              >
-                {isAutoGenerating ? '생성 중...' : '⚡ 자동 생성'}
-              </button>
-            )}
             <button
               onClick={generateDraft}
-              disabled={isGenerating || isAutoGenerating}
+              disabled={isGenerating || isReprocessing}
               className="rounded-lg bg-purple-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 transition-colors"
             >
               {isGenerating ? '생성 중...' : draft ? 'AI 재생성' : 'AI 초안 생성'}
             </button>
+            <button
+              onClick={handleReprocess}
+              disabled={isReprocessing || isGenerating}
+              title="IntelligentOrchestrator로 AI 재분석 — 위험도 재평가 및 초안 재생성"
+              className="rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+            >
+              {isReprocessing ? '분석 중...' : '🔄 AI 재분석'}
+            </button>
           </div>
         </div>
-        {autoCheck.canAuto && !draft && (
-          <p className="mb-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-            ⚡ 이 리뷰는 <strong>자동 생성</strong> 가능합니다 — AI 토큰 없이 즉시 처리됩니다.
-          </p>
-        )}
 
         {generateError && (
           <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">

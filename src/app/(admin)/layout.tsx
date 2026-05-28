@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from './Sidebar'
 import ScrollToTop from './ScrollToTop'
+import { LanguageProvider } from '@/context/LanguageContext'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,14 +21,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isAdmin = profile?.role === 'admin'
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar
-        userEmail={user.email ?? ''}
-        displayName={profile?.display_name ?? null}
-        isAdmin={isAdmin}
-      />
-      <main className="flex-1 ml-60 p-6 bg-gray-50 min-h-screen">{children}</main>
-      <ScrollToTop />
-    </div>
+    <LanguageProvider>
+      <div className="flex min-h-screen">
+        <Sidebar
+          userEmail={user.email ?? ''}
+          displayName={profile?.display_name ?? null}
+          isAdmin={isAdmin}
+        />
+        <main className="flex-1 ml-60 p-6 bg-gray-50 min-h-screen">{children}</main>
+        <ScrollToTop />
+      </div>
+    </LanguageProvider>
   )
 }

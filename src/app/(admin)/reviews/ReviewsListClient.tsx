@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
 import { statusLabel, statusClasses, riskClasses, riskLabel } from '@/lib/badges'
-import { checkAutoGeneratable } from '@/lib/autoReply'
 import { createClient } from '@/lib/supabase/client'
 
 // ── Types ───────────────────────────────────────────────────────────────────────
@@ -285,11 +284,6 @@ export default function ReviewsListClient({
 
   const batchCandidates = displayed.filter((r) => r.status === 'new')
   const selectedNew = [...selected].filter((id) => batchCandidates.some((r) => r.id === id))
-  const autoEligible = selectedNew.filter((id) => {
-    const r = reviews.find((rev) => rev.id === id)
-    return r ? checkAutoGeneratable(r.rating, r.review_text).canAuto : false
-  })
-  const aiOnly = selectedNew.filter((id) => !autoEligible.includes(id))
 
   function toggleAll() {
     if (batchCandidates.length > 0 && batchCandidates.every((r) => selected.has(r.id))) {
@@ -300,52 +294,6 @@ export default function ReviewsListClient({
   }
   function toggleOne(id: string) {
     setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
-  }
-
-  // ── 자동 생성 (bulk API — 단일 요청) ────────────────────────────────────────
-  async function runAutoBatch() {
-    if (!autoEligible.length) return
-    abortRef.current = false
-    setBatchStatus('running')
-    setBatchProgress({ done: 0, total: autoEligible.length, current: '처리 중...' })
-
-    try {
-      const res = await fetch('/api/ai/bulk-auto-reply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ review_ids: autoEligible, draft_type: batchDraftType }),
-      })
-      const data = await res.json()
-
-      const results: BatchResultItem[] = (data.results ?? []).map((r: any) => {
-        const review = reviews.find((rev) => rev.id === r.review_id)
-        return {
-          id: r.review_id,
-          reviewerName: review?.reviewer_name ?? '익명',
-          reviewText: review?.review_text ?? '',
-          rating: review?.rating ?? null,
-          status: r.status,
-          error: r.error,
-          draftId: r.draft?.id,
-          draftShort: r.draft?.draft_short,
-          draftStandard: r.draft?.draft_standard,
-          draftCareful: r.draft?.draft_careful,
-          selectedReply: r.draft?.selected_reply,
-        }
-      })
-
-      setBatchProgress({ done: autoEligible.length, total: autoEligible.length, current: '' })
-      setBatchResults(results)
-    } catch {
-      setBatchResults(autoEligible.map((id) => {
-        const review = reviews.find((r) => r.id === id)
-        return { id, reviewerName: review?.reviewer_name ?? '익명', reviewText: review?.review_text ?? '', rating: review?.rating ?? null, status: 'error', error: '네트워크 오류' }
-      }))
-    }
-
-    setBatchStatus('done')
-    setSelected(new Set())
-    setShowModal(true)
   }
 
   // ── AI 생성 (병렬 처리) ──────────────────────────────────────────────────────
@@ -462,8 +410,6 @@ export default function ReviewsListClient({
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium text-blue-800">
                 신규 {selectedNew.length}건 선택
-                {autoEligible.length > 0 && <span className="ml-1.5 text-green-700">⚡ {autoEligible.length}건 자동</span>}
-                {aiOnly.length > 0 && <span className="ml-1.5 text-blue-600">AI {aiOnly.length}건</span>}
               </span>
               {/* 답변 유형 선택 */}
               <div className="flex items-center gap-1.5 border-l border-blue-200 pl-3">
@@ -476,13 +422,6 @@ export default function ReviewsListClient({
                 ))}
               </div>
               <div className="flex items-center gap-2 ml-auto">
-                {autoEligible.length > 0 && (
-                  <button onClick={runAutoBatch}
-                    title="AI 토큰 없이 즉시 처리 (4-5★ 짧은 긍정 리뷰) — 단일 요청으로 빠르게 처리"
-                    className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-green-700 transition-colors">
-                    ⚡ 자동 생성 ({autoEligible.length}건)
-                  </button>
-                )}
                 {selectedNew.length > 0 && (
                   <button onClick={runAiBatch}
                     className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
@@ -520,7 +459,7 @@ export default function ReviewsListClient({
 
       {/* ── 테이블 ───────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm table-fixed min-w-[640px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-3 py-3 w-0">
@@ -569,7 +508,6 @@ export default function ReviewsListClient({
               const displayDate = review.review_created_at ?? review.created_at
               const isNew = review.status === 'new'
               const isChecked = selected.has(review.id)
-              const canAuto = isNew && checkAutoGeneratable(review.rating, review.review_text).canAuto
               const isHighRisk = review.risk_level === 'critical' || review.risk_level === 'high'
               const draftSnippet = draftMap[review.id]
 
@@ -624,9 +562,6 @@ export default function ReviewsListClient({
                       <p className="text-xs text-blue-600 mt-1 line-clamp-1 break-words">
                         ↳ {draftSnippet}
                       </p>
-                    )}
-                    {canAuto && !draftSnippet && (
-                      <span className="text-green-600 font-medium text-xs">⚡ 자동가능</span>
                     )}
                   </td>
                   <td className="px-3 py-3 whitespace-nowrap w-0" onClick={(e) => e.stopPropagation()}>

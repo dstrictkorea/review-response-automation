@@ -3,24 +3,13 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Review } from '@/types/database'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface Props {
   allReviews: Review[]
 }
 
 type Preset = 'today' | '1w' | '1m' | '3m' | '6m' | '1y' | 'ytd' | 'custom' | 'all'
-
-const PRESET_LABELS: Record<Preset, string> = {
-  all:    '전체',
-  today:  '오늘',
-  '1w':   '1주',
-  '1m':   '1달',
-  '3m':   '3개월',
-  '6m':   '6개월',
-  '1y':   '1년',
-  ytd:    'YTD',
-  custom: '직접 설정',
-}
 
 function presetRange(preset: Preset): { from: Date | null; to: Date | null } {
   const now = new Date()
@@ -48,9 +37,22 @@ function fmt(d: Date) {
 }
 
 export default function DashboardStats({ allReviews }: Props) {
+  const { t } = useLanguage()
   const [preset, setPreset]         = useState<Preset>('all')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo,   setCustomTo]   = useState('')
+
+  const PRESET_LABELS: Record<Preset, string> = {
+    all:    t.period_all,
+    today:  t.period_today,
+    '1w':   t.period_1w,
+    '1m':   t.period_1m,
+    '3m':   t.period_3m,
+    '6m':   t.period_6m,
+    '1y':   t.period_1y,
+    ytd:    t.period_ytd,
+    custom: t.period_custom,
+  }
 
   const filtered = useMemo(() => {
     let from: Date | null = null
@@ -113,7 +115,7 @@ export default function DashboardStats({ allReviews }: Props) {
       {/* ── 기간 선택 ──────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 mb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-500 mr-1">기간</span>
+          <span className="text-xs font-medium text-gray-500 mr-1">{t.stat_period_label}</span>
           {(Object.keys(PRESET_LABELS) as Preset[]).map(p => (
             <button
               key={p}
@@ -161,14 +163,14 @@ export default function DashboardStats({ allReviews }: Props) {
         {/* Average rating card */}
         <div className="bg-white rounded-xl border border-gray-200 px-6 py-5 flex items-center gap-5">
           <div>
-            <p className="text-xs text-gray-500 mb-1">평균 별점</p>
+            <p className="text-xs text-gray-500 mb-1">{t.stat_avg_rating}</p>
             <div className="flex items-end gap-2">
               <span className={`text-5xl font-bold tracking-tight ${avgColor}`}>
                 {avgRating != null ? avgRating.toFixed(1) : '—'}
               </span>
-              <span className="text-base text-gray-400 mb-1">/ 5.0</span>
+              <span className="text-base text-gray-400 mb-1">{t.stat_per_5}</span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">{rated.length}건 기준</p>
+            <p className="text-xs text-gray-400 mt-1">{rated.length}{t.stat_rating_basis}</p>
           </div>
           {/* Star visual */}
           {avgRating != null && (
@@ -191,12 +193,12 @@ export default function DashboardStats({ allReviews }: Props) {
 
         {/* Response rate card */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-6 py-5">
-          <p className="text-xs text-blue-600 font-medium mb-1">응답률</p>
+          <p className="text-xs text-blue-600 font-medium mb-1">{t.stat_response_rate}</p>
           <div className="flex items-end gap-2">
             <span className="text-5xl font-bold tracking-tight text-blue-700">{responseRate}</span>
             <span className="text-base text-blue-400 mb-1">%</span>
           </div>
-          <p className="text-xs text-blue-500 mt-1">{published}건 게시 완료 / {total}건 중</p>
+          <p className="text-xs text-blue-500 mt-1">{published}{t.stat_published_of} {total}{t.stat_unit}</p>
         </div>
       </div>
 
@@ -209,9 +211,9 @@ export default function DashboardStats({ allReviews }: Props) {
             newCount > 0 ? 'bg-orange-50 border-orange-300' : 'bg-white border-gray-200'
           }`}
         >
-          <p className="text-xs font-medium text-orange-600 mb-1">신규 — 답변 대기</p>
+          <p className="text-xs font-medium text-orange-600 mb-1">{t.stat_new}</p>
           <p className={`text-3xl font-bold ${newCount > 0 ? 'text-orange-600' : 'text-gray-400'}`}>{newCount}</p>
-          <p className="text-xs text-gray-400 mt-0.5">건</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t.stat_unit}</p>
         </Link>
 
         {/* AI done */}
@@ -219,9 +221,9 @@ export default function DashboardStats({ allReviews }: Props) {
           href="/reviews?status=ai_done"
           className="bg-white border border-gray-200 rounded-xl px-4 py-4 hover:border-purple-300 hover:shadow-sm transition-all"
         >
-          <p className="text-xs text-gray-500 mb-1">AI 초안 완료</p>
+          <p className="text-xs text-gray-500 mb-1">{t.stat_ai_done}</p>
           <p className={`text-3xl font-bold ${aiDone > 0 ? 'text-purple-700' : 'text-gray-400'}`}>{aiDone}</p>
-          <p className="text-xs text-gray-400 mt-0.5">건</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t.stat_unit}</p>
         </Link>
 
         {/* AI isolated — pending_approval */}
@@ -231,9 +233,9 @@ export default function DashboardStats({ allReviews }: Props) {
             pendingApproval > 0 ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'
           }`}
         >
-          <p className={`text-xs font-medium mb-1 ${pendingApproval > 0 ? 'text-amber-700' : 'text-gray-500'}`}>AI 격리 — 2차 확인</p>
+          <p className={`text-xs font-medium mb-1 ${pendingApproval > 0 ? 'text-amber-700' : 'text-gray-500'}`}>{t.stat_pending_approval}</p>
           <p className={`text-3xl font-bold ${pendingApproval > 0 ? 'text-amber-700' : 'text-gray-400'}`}>{pendingApproval}</p>
-          <p className="text-xs text-gray-400 mt-0.5">건</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t.stat_unit}</p>
         </Link>
 
         {/* Escalated */}
@@ -243,9 +245,9 @@ export default function DashboardStats({ allReviews }: Props) {
             escalated > 0 ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
           }`}
         >
-          <p className="text-xs text-red-600 mb-1">에스컬레이션</p>
+          <p className="text-xs text-red-600 mb-1">{t.stat_escalated}</p>
           <p className={`text-3xl font-bold ${escalated > 0 ? 'text-red-700' : 'text-gray-400'}`}>{escalated}</p>
-          <p className="text-xs text-gray-400 mt-0.5">건</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t.stat_unit}</p>
         </Link>
 
         {/* High risk */}
@@ -253,9 +255,9 @@ export default function DashboardStats({ allReviews }: Props) {
           href="/reviews?risk=high"
           className="bg-white border border-gray-200 rounded-xl px-4 py-4 hover:border-orange-300 hover:shadow-sm transition-all"
         >
-          <p className="text-xs text-orange-600 mb-1">고위험</p>
+          <p className="text-xs text-orange-600 mb-1">{t.stat_high_risk}</p>
           <p className={`text-3xl font-bold ${highRisk > 0 ? 'text-orange-700' : 'text-gray-400'}`}>{highRisk}</p>
-          <p className="text-xs text-gray-400 mt-0.5">건</p>
+          <p className="text-xs text-gray-400 mt-0.5">{t.stat_unit}</p>
         </Link>
       </div>
     </div>
