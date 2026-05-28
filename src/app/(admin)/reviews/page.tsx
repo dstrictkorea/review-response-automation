@@ -10,6 +10,8 @@ interface SearchParams {
   status?: string
   risk?: string
   q?: string
+  date_from?: string
+  date_to?: string
 }
 
 export default async function ReviewsPage({
@@ -20,12 +22,14 @@ export default async function ReviewsPage({
   const params = await searchParams
   const supabase = await createClient()
 
-  let query = supabase.from('reviews').select('*').order('created_at', { ascending: false })
+  let query = supabase.from('reviews').select('*').order('review_created_at', { ascending: false })
 
   if (params.branch) query = query.eq('branch_code', params.branch)
   if (params.channel) query = query.eq('channel_code', params.channel)
   if (params.status) query = query.eq('status', params.status)
   if (params.risk) query = query.eq('risk_level', params.risk)
+  if (params.date_from) query = query.gte('review_created_at', params.date_from)
+  if (params.date_to) query = query.lte('review_created_at', params.date_to + 'T23:59:59')
 
   const [{ data: reviews }, { data: branches }, { data: channels }] = await Promise.all([
     query,
@@ -44,12 +48,21 @@ export default async function ReviewsPage({
     )
   })
 
+  // ── 통계 계산 ──────────────────────────────────────────────────────────────
+  const rated = allReviews.filter((r) => r.rating != null)
+  const avgRating = rated.length > 0
+    ? rated.reduce((sum, r) => sum + r.rating!, 0) / rated.length
+    : null
+  const ratingDist = ([5, 4, 3, 2, 1] as const).map((star) => ({
+    star,
+    count: rated.filter((r) => r.rating === star).length,
+  }))
   const statuses: ReviewStatus[] = ['new', 'ai_done', 'approved', 'manual_published', 'no_reply', 'escalated']
   const riskLevels: RiskLevel[] = ['low', 'medium', 'high', 'critical']
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">리뷰 목록</h2>
           <p className="text-sm text-gray-600 mt-1">총 {allReviews.length}건</p>
@@ -81,6 +94,28 @@ export default async function ReviewsPage({
             placeholder="검색어를 입력하세요 (리뷰 내용, 작성자명, 지점/채널 코드)"
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none"
           />
+        </div>
+
+        {/* 기간 선택 */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 작성일 (시작)</label>
+            <input
+              type="date"
+              name="date_from"
+              defaultValue={params.date_from ?? ''}
+              className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 작성일 (종료)</label>
+            <input
+              type="date"
+              name="date_to"
+              defaultValue={params.date_to ?? ''}
+              className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -160,6 +195,53 @@ export default async function ReviewsPage({
           </Link>
         </div>
       </form>
+
+      {/* 통계 요약 */}
+      {allReviews.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 px-5 py-3 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+          {/* 기간 표시 */}
+          {(params.date_from || params.date_to) && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 border-r border-gray-200 pr-6">
+              <span>📅</span>
+              <span>
+                {params.date_from ?? '—'} ~ {params.date_to ?? '—'}
+              </span>
+            </div>
+          )}
+
+          {/* 총 건수 */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">총</span>
+            <span className="text-base font-bold text-gray-900">{allReviews.length}건</span>
+          </div>
+
+          {/* 평균 별점 */}
+          {avgRating !== null && (
+            <div className="flex items-center gap-2 border-l border-gray-200 pl-6">
+              <span className="text-xs text-gray-500">평균 별점</span>
+              <span className={`text-base font-bold ${avgRating >= 4.5 ? 'text-green-600' : avgRating >= 3.5 ? 'text-yellow-500' : 'text-red-500'}`}>
+                ★ {avgRating.toFixed(1)}
+              </span>
+              <span className="text-xs text-gray-400">/ 5.0</span>
+            </div>
+          )}
+
+          {/* 별점 분포 */}
+          {rated.length > 0 && (
+            <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
+              {ratingDist.filter((d) => d.count > 0).map(({ star, count }) => (
+                <div key={star} className="flex items-center gap-1">
+                  <span className="text-xs text-yellow-500 font-medium">{star}★</span>
+                  <span className="text-xs font-semibold text-gray-700">{count}</span>
+                  <span className="text-xs text-gray-400">
+                    ({Math.round((count / rated.length) * 100)}%)
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <ReviewsListClient reviews={allReviews} />
     </div>
