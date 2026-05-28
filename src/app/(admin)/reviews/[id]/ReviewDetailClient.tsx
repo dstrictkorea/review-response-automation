@@ -29,7 +29,7 @@ const sentimentKo: Record<string, string> = {
   negative: '부정',
 }
 
-const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'approved'])
+const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'pending_approval', 'approved'])
 
 function elapsedLabel(dateStr: string | null): string | null {
   if (!dateStr) return null
@@ -42,6 +42,7 @@ function elapsedLabel(dateStr: string | null): string | null {
 // 현재 상태에서 되돌릴 수 있는 상태 맵
 const REVERT_STATUS: Partial<Record<string, string>> = {
   ai_done: 'new',
+  pending_approval: 'new',
   approved: 'ai_done',
   manual_published: 'approved',
   no_reply: 'new',
@@ -50,6 +51,7 @@ const REVERT_STATUS: Partial<Record<string, string>> = {
 
 const REVERT_LABEL: Partial<Record<string, string>> = {
   ai_done: '신규로 되돌리기',
+  pending_approval: '신규로 되돌리기',
   approved: 'AI완료로 되돌리기',
   manual_published: '승인됨으로 되돌리기',
   no_reply: '신규로 되돌리기',

@@ -1,10 +1,12 @@
 export type ReviewStatus =
   | 'new'
   | 'ai_done'
+  | 'pending_approval'  // AI auto-isolated: medium/high/critical risk or forbidden flag triggered
   | 'approved'
   | 'manual_published'
   | 'no_reply'
   | 'escalated'
+  | 'failed'            // sync/processing error
 
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 

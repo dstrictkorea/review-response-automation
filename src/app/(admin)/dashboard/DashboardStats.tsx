@@ -74,12 +74,13 @@ export default function DashboardStats({ allReviews }: Props) {
   }, [allReviews, preset, customFrom, customTo])
 
   // ── Stats ──────────────────────────────────────────────────────────────────
-  const total       = filtered.length
-  const newCount    = filtered.filter(r => r.status === 'new').length
-  const aiDone      = filtered.filter(r => r.status === 'ai_done').length
-  const escalated   = filtered.filter(r => r.status === 'escalated').length
-  const highRisk    = filtered.filter(r => r.risk_level === 'high' || r.risk_level === 'critical').length
-  const published   = filtered.filter(r => r.status === 'manual_published').length
+  const total           = filtered.length
+  const newCount        = filtered.filter(r => r.status === 'new').length
+  const aiDone          = filtered.filter(r => r.status === 'ai_done').length
+  const pendingApproval = filtered.filter(r => r.status === 'pending_approval').length
+  const escalated       = filtered.filter(r => r.status === 'escalated').length
+  const highRisk        = filtered.filter(r => r.risk_level === 'high' || r.risk_level === 'critical').length
+  const published       = filtered.filter(r => r.status === 'manual_published').length
   const responseRate = total > 0 ? Math.round((published / total) * 100) : 0
 
   const rated    = filtered.filter(r => r.rating != null)
@@ -200,7 +201,7 @@ export default function DashboardStats({ allReviews }: Props) {
       </div>
 
       {/* ── 상태별 지표 카드 ────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {/* New */}
         <Link
           href="/reviews?status=new"
@@ -220,6 +221,18 @@ export default function DashboardStats({ allReviews }: Props) {
         >
           <p className="text-xs text-gray-500 mb-1">AI 초안 완료</p>
           <p className={`text-3xl font-bold ${aiDone > 0 ? 'text-purple-700' : 'text-gray-400'}`}>{aiDone}</p>
+          <p className="text-xs text-gray-400 mt-0.5">건</p>
+        </Link>
+
+        {/* AI isolated — pending_approval */}
+        <Link
+          href="/reviews?status=pending_approval"
+          className={`rounded-xl border px-4 py-4 transition-all hover:shadow-sm ${
+            pendingApproval > 0 ? 'bg-amber-50 border-amber-300' : 'bg-white border-gray-200'
+          }`}
+        >
+          <p className={`text-xs font-medium mb-1 ${pendingApproval > 0 ? 'text-amber-700' : 'text-gray-500'}`}>AI 격리 — 2차 확인</p>
+          <p className={`text-3xl font-bold ${pendingApproval > 0 ? 'text-amber-700' : 'text-gray-400'}`}>{pendingApproval}</p>
           <p className="text-xs text-gray-400 mt-0.5">건</p>
         </Link>
 

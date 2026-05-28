@@ -9,11 +9,17 @@ export default async function DashboardPage() {
   const supabase = await createClient()
 
   const [{ data: allData }, { data: pendingData }] = await Promise.all([
-    supabase.from('reviews').select('*').order('created_at', { ascending: false }),
+    // Project only fields needed for DashboardStats (counts/ratings/dates) and recentActivity table.
+    // Avoids transferring heavy fields (review_text bulk, import metadata) for the full-dataset query.
     supabase
       .from('reviews')
-      .select('*')
-      .in('status', ['new', 'ai_done'])
+      .select('id, branch_code, channel_code, rating, review_text, review_created_at, created_at, status, risk_level, sentiment')
+      .order('created_at', { ascending: false }),
+    // Pending list: full projection needed by ReviewsListClient for display + editing
+    supabase
+      .from('reviews')
+      .select('id, branch_code, channel_code, source_review_id, review_url, reviewer_name, rating, review_text, review_language, review_created_at, status, risk_level, categories, risk_reasons, sentiment, internal_note_ko, normalized_hash, created_at, updated_at')
+      .in('status', ['new', 'ai_done', 'pending_approval'])
       .order('review_created_at', { ascending: false }),
   ])
 
@@ -34,8 +40,9 @@ export default async function DashboardPage() {
     if (d.selected_reply) pendingDraftMap[d.review_id] = d.selected_reply
   }
 
-  const newCount    = allReviews.filter(r => r.status === 'new').length
-  const aiDoneCount = allReviews.filter(r => r.status === 'ai_done').length
+  const newCount             = allReviews.filter(r => r.status === 'new').length
+  const aiDoneCount          = allReviews.filter(r => r.status === 'ai_done').length
+  const pendingApprovalCount = allReviews.filter(r => r.status === 'pending_approval').length
 
   // 최근 완료·게시된 리뷰 5건
   const recentActivity = allReviews
@@ -58,7 +65,7 @@ export default async function DashboardPage() {
           <div>
             <h3 className="text-sm font-semibold text-gray-900">처리 대기 리뷰</h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              신규({newCount}건) + AI완료({aiDoneCount}건) — 체크박스 선택 후 일괄 답변 생성
+              신규({newCount}건) + AI완료({aiDoneCount}건) + AI격리({pendingApprovalCount}건) — 체크박스 선택 후 일괄 답변 생성
             </p>
           </div>
           <Link href="/reviews?status=new" className="text-xs text-blue-600 hover:underline">

@@ -35,9 +35,9 @@ interface FilterState {
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────────
-const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'approved'])
+const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'pending_approval', 'approved'])
 const RISK_ORDER: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 }
-const ALL_STATUSES: ReviewStatus[] = ['new', 'ai_done', 'approved', 'manual_published', 'no_reply', 'escalated']
+const ALL_STATUSES: ReviewStatus[] = ['new', 'ai_done', 'pending_approval', 'approved', 'manual_published', 'no_reply', 'escalated']
 const ALL_RISKS: RiskLevel[] = ['critical', 'high', 'medium', 'low']
 const DRAFT_TYPE_LABELS: Record<DraftType, string> = { standard: '표준', short: '짧게', careful: '조심스럽게' }
 const CONCURRENCY = 4 // AI 생성 동시 처리 수

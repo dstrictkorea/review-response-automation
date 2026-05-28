@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getValidAccessToken, listGoogleReviews } from '@/lib/google/api'
+import { IntelligentOrchestrator } from '@/lib/automation/IntelligentOrchestrator'
 
 // ── Helpers (duplicated from /api/google/sync to avoid cross-route import) ──────
 
@@ -50,6 +51,7 @@ async function syncOneAccount(
   const token = await getValidAccessToken(googleAccountId)
   let imported = 0
   let nextPageToken: string | undefined
+  const newReviewIds: string[] = []  // IDs of genuinely new (non-duplicate) inserts
 
   do {
     const data = await listGoogleReviews(ga.google_location_name, token, nextPageToken)
@@ -60,7 +62,9 @@ async function syncOneAccount(
       const sourceId: string = review.name
       const hash = makeHash(sourceId)
 
-      const { error } = await admin.from('reviews').upsert(
+      // With ignoreDuplicates:true, maybeSingle() returns the inserted row for new
+      // reviews and null for duplicates — lets us identify truly new reviews.
+      const { data: upserted, error } = await admin.from('reviews').upsert(
         {
           branch_code: ga.branch_code,
           channel_code: 'google',
@@ -76,8 +80,12 @@ async function syncOneAccount(
           normalized_hash: hash,
         },
         { onConflict: 'branch_code,channel_code,normalized_hash', ignoreDuplicates: true },
-      )
-      if (!error) imported++
+      ).select('id').maybeSingle()
+
+      if (!error && upserted?.id) {
+        imported++
+        newReviewIds.push(upserted.id)
+      }
     }
   } while (nextPageToken)
 
@@ -86,7 +94,14 @@ async function syncOneAccount(
     .update({ last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', googleAccountId)
 
-  return { imported }
+  // ── Kick off AI draft generation + risk routing for each new review ────────
+  let orchestrated = 0
+  if (newReviewIds.length > 0) {
+    const { processed } = await IntelligentOrchestrator.processBatch(newReviewIds)
+    orchestrated = processed
+  }
+
+  return { imported, orchestrated }
 }
 
 // ── Auth guard ───────────────────────────────────────────────────────────────────
@@ -124,7 +139,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     })
   }
 
-  const results: Record<string, { imported?: number; error?: string }> = {}
+  const results: Record<string, { imported?: number; orchestrated?: number; error?: string }> = {}
 
   for (const account of accounts) {
     const key = account.google_account_email ?? account.id
@@ -135,17 +150,15 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  const totalImported = Object.values(results).reduce(
-    (sum, r) => sum + (r.imported ?? 0),
-    0,
-  )
+  const totalImported     = Object.values(results).reduce((sum, r) => sum + (r.imported     ?? 0), 0)
+  const totalOrchestrated = Object.values(results).reduce((sum, r) => sum + (r.orchestrated ?? 0), 0)
 
   // Activity log — review_id is nullable so cron entries log without a specific review
   await admin.from('activity_logs').insert({
     review_id: null,
     actor_name: 'system:cron',
     action: 'google_sync_cron',
-    detail: { synced_accounts: accounts.length, total_imported: totalImported, results },
+    detail: { synced_accounts: accounts.length, total_imported: totalImported, total_orchestrated: totalOrchestrated, results },
   })
 
   return NextResponse.json({
@@ -153,6 +166,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     ran_at: new Date().toISOString(),
     synced_accounts: accounts.length,
     total_imported: totalImported,
+    total_orchestrated: totalOrchestrated,
     results,
   })
 }
