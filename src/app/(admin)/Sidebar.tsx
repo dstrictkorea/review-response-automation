@@ -55,10 +55,13 @@ export default function Sidebar({
 
   return (
     <aside className="fixed top-0 left-0 h-full w-60 bg-white border-r border-gray-200 flex flex-col z-10">
-      <div className="px-5 py-5 border-b border-gray-200">
+      <Link
+        href="/dashboard"
+        className="px-5 py-5 border-b border-gray-200 block hover:bg-gray-50 transition-colors"
+      >
         <h1 className="text-base font-bold text-gray-900 leading-tight">ARTE Review Desk</h1>
         <p className="text-xs text-gray-500 mt-0.5">아르떼뮤지엄 리뷰 관리</p>
-      </div>
+      </Link>
 
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <div className="space-y-1 mb-4">

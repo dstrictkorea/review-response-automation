@@ -7,6 +7,23 @@ import type { RiskKeyword, ReplyTemplate } from '@/types/database'
 const SYSTEM_PROMPT = `You are ARTE Museum's internal review response assistant.
 Your job is to help staff draft professional, brand-appropriate responses to guest reviews.
 
+CRITICAL CONTEXT — READ THIS FIRST:
+These replies are PUBLIC and posted on Google, Naver, and other platforms.
+They are read by THOUSANDS of future visitors who are deciding whether to visit.
+You are writing to TWO audiences at once:
+  1. The reviewer — acknowledge their experience directly
+  2. Future visitors — reassure them, show the museum is professional and caring
+
+WRITING PRINCIPLES FOR PUBLIC REPLIES:
+- For complaints: briefly acknowledge the specific issue, then add ONE sentence showing what action is being taken or planned (e.g., "We are reviewing our queue management to improve wait times"). Do NOT over-promise.
+- For mixed reviews: thank them genuinely, address the concern, and highlight what makes ARTE special for future visitors.
+- For positive reviews: be specific about what makes the experience unique (light art, immersive digital installations, multi-sensory exhibits). Avoid generic phrases.
+- Write with the tone of a professional, caring museum management team — not a call-centre script.
+- Avoid sounding defensive. If something went wrong, own it briefly and move forward.
+
+ABOUT ARTE MUSEUM:
+ARTE Museum is an immersive digital art museum featuring light installations and multi-sensory experiences across multiple locations in South Korea and internationally. It is a premium cultural destination especially popular for families, couples, and content creation.
+
 ABSOLUTE SAFETY RULES — NEVER VIOLATE:
 1. Never promise refunds or monetary compensation.
 2. Never admit legal liability or responsibility for injuries/accidents.
@@ -16,6 +33,7 @@ ABSOLUTE SAFETY RULES — NEVER VIOLATE:
 6. Always respond in the same language as the review.
 7. Maintain a warm, professional, non-defensive tone.
 8. If the review contains typos, abbreviations, or non-standard spelling, interpret the most likely intended meaning and respond accordingly. Do not point out the typos in your reply.
+9. Never start every reply the same way — vary the opening phrase to avoid repetition.
 
 OUTPUT FORMAT: You must respond with valid JSON only. No markdown, no explanation outside the JSON.
 
@@ -37,6 +55,11 @@ JSON schema:
   "draft_standard": string,
   "draft_careful": string
 }
+
+Draft length guide:
+- draft_short: 1-2 sentences, warm acknowledgment — for quick positive replies
+- draft_standard: 2-4 sentences, balanced — addresses reviewer AND reassures future visitors
+- draft_careful: 4-6 sentences, empathetic and thorough — for medium/high-risk reviews; includes one concrete improvement note
 
 Risk level guide:
 - low: Positive or neutral reviews, no sensitive content
@@ -77,9 +100,11 @@ export async function POST(request: NextRequest) {
   }
 
   let review_id: string
+  let draft_type: 'standard' | 'short' | 'careful' = 'standard'
   try {
     const body = await request.json()
     review_id = body.review_id
+    if (body.draft_type === 'short' || body.draft_type === 'careful') draft_type = body.draft_type
   } catch {
     return NextResponse.json({ error: '요청 형식이 올바르지 않습니다.' }, { status: 400 })
   }
@@ -110,7 +135,11 @@ export async function POST(request: NextRequest) {
 
   const branchInfo = branchData.data
 
-  const userMessage = `Branch: ${review.branch_code}${branchInfo ? ` (${branchInfo.name_ko}${branchInfo.name_en ? ' / ' + branchInfo.name_en : ''})` : ''}
+  const branchDisplayName = branchInfo
+    ? `${branchInfo.name_ko}${branchInfo.name_en ? ' / ' + branchInfo.name_en : ''}`
+    : review.branch_code
+
+  const userMessage = `Branch: ${review.branch_code} (${branchDisplayName})
 Channel: ${review.channel_code}
 Rating: ${review.rating ?? 'Not provided'}/5
 Review date: ${review.review_created_at ?? 'Unknown'}
@@ -119,16 +148,19 @@ Reviewer: ${review.reviewer_name ?? 'Anonymous'}
 Review text:
 ${review.review_text}
 
+CONTEXT FOR YOUR REPLY:
+- This reply will be posted PUBLICLY on ${review.channel_code}. Future visitors will read it.
+- Branch location: ${branchDisplayName}
+- If the reviewer mentions a specific problem (queues, crowds, broken equipment, rude staff, unclear directions), acknowledge it and add one sentence showing the team is addressing or reviewing it.
+- If the review is positive, include one specific detail about ARTE's experience that would be useful for a future visitor who hasn't been yet.
+- Do NOT start with "안녕하세요" or "Dear [name]" — vary the opening.
+
 Active risk keywords to check: ${riskKeywords.filter((k) => k.is_active).map((k) => `"${k.keyword}" (${k.language}, ${k.risk_level})`).join(', ') || 'None configured'}
 
 Available reply templates for reference:
 ${replyTemplates.slice(0, 5).map((t) => `[${t.category}/${t.language}] ${t.name}: ${t.content.slice(0, 100)}...`).join('\n') || 'None configured'}
 
-Generate three reply drafts:
-- draft_short: 1-2 sentences, warm acknowledgment
-- draft_standard: 2-4 sentences, balanced and professional
-- draft_careful: 4-6 sentences, empathetic and thorough, but still no promises
-
+Generate three reply drafts. Remember: write for both the reviewer AND future visitors searching for information about this venue.
 Respond with JSON only.`
 
   let aiResult: {
@@ -184,13 +216,18 @@ Respond with JSON only.`
     .eq('review_id', review_id)
     .maybeSingle()
 
+  const selectedReply =
+    draft_type === 'short' ? aiResult.draft_short
+    : draft_type === 'careful' ? aiResult.draft_careful
+    : aiResult.draft_standard
+
   const draftPayload = {
     review_id,
     draft_short: aiResult.draft_short,
     draft_standard: aiResult.draft_standard,
     draft_careful: aiResult.draft_careful,
-    selected_draft_type: 'standard',
-    selected_reply: aiResult.draft_standard,
+    selected_draft_type: draft_type,
+    selected_reply: selectedReply,
     forbidden_check: aiResult.forbidden_check,
     prompt_version: 'v1.0',
     model_name: model,

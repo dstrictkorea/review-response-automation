@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import type { Review, ReplyDraft, ActivityLog, ReviewStatus, RiskLevel } from '@/types/database'
 import { statusLabel, statusClasses, riskLabel, riskClasses } from '@/lib/badges'
 import { checkAutoGeneratable } from '@/lib/autoReply'
-import { approveReview, escalateReview, markNoReply, markPublished, saveDraft } from './actions'
+import { approveReview, escalateReview, markNoReply, markPublished, saveDraft, resetReviewStatus, deleteReview } from './actions'
 
 interface Props {
   review: Review
@@ -39,6 +39,23 @@ function elapsedLabel(dateStr: string | null): string | null {
   return `${Math.floor(hours / 24)}일 전`
 }
 
+// 현재 상태에서 되돌릴 수 있는 상태 맵
+const REVERT_STATUS: Partial<Record<string, string>> = {
+  ai_done: 'new',
+  approved: 'ai_done',
+  manual_published: 'approved',
+  no_reply: 'new',
+  escalated: 'new',
+}
+
+const REVERT_LABEL: Partial<Record<string, string>> = {
+  ai_done: '신규로 되돌리기',
+  approved: 'AI완료로 되돌리기',
+  manual_published: '승인됨으로 되돌리기',
+  no_reply: '신규로 되돌리기',
+  escalated: '신규로 되돌리기',
+}
+
 export default function ReviewDetailClient({ review: initialReview, draft: initialDraft, logs: initialLogs }: Props) {
   const [review, setReview] = useState(initialReview)
   const [draft, setDraft] = useState(initialDraft)
@@ -50,6 +67,8 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isGooglePosting, setIsGooglePosting] = useState(false)
 
   const copyText = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -81,6 +100,33 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     }
   }
 
+  async function handleGooglePost() {
+    if (!editedReply.trim()) {
+      setActionMessage('게시할 답변을 입력해주세요.')
+      return
+    }
+    if (!confirm('Google 비즈니스 프로필에 이 답변을 직접 게시하시겠습니까?\n게시 후에는 Google에서 직접 수정해야 합니다.')) return
+    setIsGooglePosting(true)
+    try {
+      const res = await fetch('/api/google/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: review.id, comment: editedReply }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setActionMessage(`Google 게시 실패: ${data.error ?? '알 수 없는 오류'}`)
+      } else {
+        setActionMessage('Google에 성공적으로 게시되었습니다!')
+        setTimeout(() => window.location.reload(), 1200)
+      }
+    } catch {
+      setActionMessage('서버 오류가 발생했습니다.')
+    } finally {
+      setIsGooglePosting(false)
+    }
+  }
+
   async function generateAutoReply() {
     setIsAutoGenerating(true)
     setGenerateError(null)
@@ -88,7 +134,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       const res = await fetch('/api/ai/auto-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ review_id: review.id }),
+        body: JSON.stringify({ review_id: review.id, draft_type: selectedTab }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -412,13 +458,25 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
             </button>
           )}
 
+          {/* Google 리뷰: 직접 API 게시 */}
+          {canPublish && review.channel_code === 'google' && (
+            <button
+              onClick={handleGooglePost}
+              disabled={isPending || isGooglePosting || !editedReply.trim()}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {isGooglePosting ? '게시 중...' : '🔵 Google에 직접 게시'}
+            </button>
+          )}
+
+          {/* 비 Google 채널: 수동 복사 후 처리 완료 표시 */}
           {canPublish && (
             <button
               onClick={() => handleAction(() => markPublished(review.id), '게시 완료 처리되었습니다.')}
               disabled={isPending}
               className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
             >
-              게시 완료 처리
+              {review.channel_code === 'google' ? '수동 게시 완료 처리' : '게시 완료 처리'}
             </button>
           )}
 
@@ -441,11 +499,66 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
               에스컬레이션
             </button>
           )}
+
+          {/* 상태 되돌리기 */}
+          {REVERT_STATUS[review.status] && (
+            <button
+              onClick={() =>
+                handleAction(
+                  () => resetReviewStatus(review.id, REVERT_STATUS[review.status]!),
+                  '상태가 되돌려졌습니다.'
+                )
+              }
+              disabled={isPending}
+              className="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 transition-colors"
+            >
+              ↩ {REVERT_LABEL[review.status]}
+            </button>
+          )}
         </div>
 
         {actionMessage && (
           <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
             {actionMessage}
+          </div>
+        )}
+      </div>
+
+      {/* 리뷰 삭제 */}
+      <div className="bg-white rounded-xl border border-red-100 p-5">
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">위험 구역</h3>
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+          >
+            리뷰 삭제
+          </button>
+        ) : (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
+            <p className="text-sm font-semibold text-red-800 mb-1">정말 삭제하시겠습니까?</p>
+            <p className="text-xs text-red-600 mb-3">
+              이 리뷰와 관련된 모든 초안, 처리 이력이 영구 삭제됩니다. 되돌릴 수 없습니다.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  startTransition(async () => {
+                    await deleteReview(review.id)
+                  })
+                }}
+                disabled={isPending}
+                className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {isPending ? '삭제 중...' : '삭제 확인'}
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                취소
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from './Sidebar'
+import ScrollToTop from './ScrollToTop'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -26,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         isAdmin={isAdmin}
       />
       <main className="flex-1 ml-60 p-6 bg-gray-50 min-h-screen">{children}</main>
+      <ScrollToTop />
     </div>
   )
 }

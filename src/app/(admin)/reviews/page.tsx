@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { statusLabel, riskLabel } from '@/lib/badges'
 import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
 import ReviewsListClient from './ReviewsListClient'
+import DateInput from './DateInput'
 
 interface SearchParams {
   branch?: string
@@ -36,6 +37,19 @@ export default async function ReviewsPage({
     supabase.from('branches').select('code, name_ko').eq('is_active', true).order('code'),
     supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
   ])
+
+  // 답변 초안 미리보기 (ai_done 이상 리뷰에만 존재)
+  const reviewIds = (reviews ?? []).map((r) => r.id)
+  const { data: drafts } = reviewIds.length
+    ? await supabase
+        .from('reply_drafts')
+        .select('review_id, selected_reply')
+        .in('review_id', reviewIds)
+    : { data: [] }
+  const draftMap: Record<string, string> = {}
+  for (const d of drafts ?? []) {
+    if (d.selected_reply) draftMap[d.review_id] = d.selected_reply
+  }
 
   const searchText = (params.q ?? '').toLowerCase()
   const allReviews: Review[] = (reviews ?? []).filter((r) => {
@@ -100,21 +114,11 @@ export default async function ReviewsPage({
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 작성일 (시작)</label>
-            <input
-              type="date"
-              name="date_from"
-              defaultValue={params.date_from ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-            />
+            <DateInput name="date_from" defaultValue={params.date_from ?? ''} />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 작성일 (종료)</label>
-            <input
-              type="date"
-              name="date_to"
-              defaultValue={params.date_to ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
-            />
+            <DateInput name="date_to" defaultValue={params.date_to ?? ''} />
           </div>
         </div>
 
@@ -243,7 +247,7 @@ export default async function ReviewsPage({
         </div>
       )}
 
-      <ReviewsListClient reviews={allReviews} />
+      <ReviewsListClient reviews={allReviews} draftMap={draftMap} persistKey="reviews-list-v1" />
     </div>
   )
 }

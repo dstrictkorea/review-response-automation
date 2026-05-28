@@ -109,17 +109,21 @@ export async function importReviewsAction(
     hashes.length
       ? supabase
           .from('reviews')
-          .select('normalized_hash')
+          .select('normalized_hash, reviewer_name')
           .eq('branch_code', batchInfo.branchCode)
           .eq('channel_code', batchInfo.channelCode)
           .in('normalized_hash', hashes)
-      : Promise.resolve({ data: [] as Array<{ normalized_hash: string | null }> }),
+      : Promise.resolve({ data: [] as Array<{ normalized_hash: string | null; reviewer_name: string | null }> }),
   ])
 
   // DB 기존 데이터를 메모리 Set으로 — 이후 조회는 O(1)
+  // ★ 텍스트 해시만으로 중복 판정하지 않고 "리뷰어이름|해시" 조합으로 판정
+  //   → 같은 내용이라도 다른 사람이 쓴 리뷰, 혹은 재방문 리뷰는 허용
   const dupeExtIds = new Set((existingByExtId ?? []).map(r => r.source_review_id).filter(Boolean))
   const dupeUrls   = new Set((existingByUrl   ?? []).map(r => r.review_url).filter(Boolean))
-  const dupeHashes = new Set((existingByHash  ?? []).map(r => r.normalized_hash).filter(Boolean))
+  const dupeHashes = new Set(
+    (existingByHash ?? []).map(r => `${r.reviewer_name ?? ''}|${r.normalized_hash ?? ''}`).filter(Boolean)
+  )
 
   // ── 4. 메모리 내 분류 (쿼리 없음) ────────────────────────────────────────
   type Enriched = (typeof enriched)[0]
@@ -130,19 +134,21 @@ export async function importReviewsAction(
   for (const row of enriched) {
     let dupeReason: string | null = null
 
+    const hashKey = `${row.reviewer_name ?? ''}|${row.normalized_hash}`
+
     if (row.external_review_id && dupeExtIds.has(row.external_review_id))
       dupeReason = `external_review_id "${row.external_review_id}" 이미 존재`
     else if (row.review_url && dupeUrls.has(row.review_url))
       dupeReason = 'review_url 이미 존재'
-    else if (dupeHashes.has(row.normalized_hash))
-      dupeReason = '동일 내용의 리뷰가 이미 존재'
-    else if (seenInBatch.has(row.normalized_hash))
-      dupeReason = '파일 내 중복 리뷰'
+    else if (dupeHashes.has(hashKey))
+      dupeReason = '동일 작성자의 동일 리뷰가 이미 존재'
+    else if (seenInBatch.has(hashKey))
+      dupeReason = '파일 내 동일 작성자 중복 리뷰'
 
     if (dupeReason) {
       duplicates.push({ row, reason: dupeReason })
     } else {
-      seenInBatch.add(row.normalized_hash)
+      seenInBatch.add(hashKey)
       toInsert.push(row)
     }
   }

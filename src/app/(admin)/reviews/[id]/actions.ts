@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 async function getUser() {
   const supabase = await createClient()
@@ -110,4 +111,41 @@ export async function saveDraft(reviewId: string, humanEditedReply: string) {
 
   revalidatePath(`/reviews/${reviewId}`)
   return { success: true }
+}
+
+export async function resetReviewStatus(reviewId: string, targetStatus: string) {
+  const { supabase, user } = await getUser()
+  if (!user) return { error: '인증 필요' }
+
+  await supabase
+    .from('reviews')
+    .update({ status: targetStatus, updated_at: new Date().toISOString() })
+    .eq('id', reviewId)
+
+  await logActivity(supabase, reviewId, user.email ?? 'unknown', 'status_reset', {
+    target_status: targetStatus,
+  })
+
+  revalidatePath(`/reviews/${reviewId}`)
+  revalidatePath('/reviews')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function deleteReview(reviewId: string) {
+  const { supabase, user } = await getUser()
+  if (!user) return { error: '인증 필요' }
+
+  // 연관 데이터 먼저 삭제
+  await supabase.from('reply_drafts').delete().eq('review_id', reviewId)
+  await supabase.from('activity_logs').delete().eq('review_id', reviewId)
+
+  const { error } = await supabase.from('reviews').delete().eq('id', reviewId)
+  if (error) return { error: error.message }
+
+  revalidatePath('/reviews')
+  revalidatePath('/dashboard')
+
+  // 삭제 후 목록으로 redirect — 서버 액션에서는 throw 방식 사용
+  redirect('/reviews')
 }
