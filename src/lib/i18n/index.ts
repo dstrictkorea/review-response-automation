@@ -53,6 +53,15 @@ export interface I18nDict {
   stat_escalated: string
   stat_high_risk: string
   stat_unit: string
+
+  // ── Dashboard global filter bar ────────────────────────────────────────────
+  filter_branch_label: string
+  filter_channel_label: string
+  filter_reset: string
+  filter_all: string
+  filter_channel_google: string
+  filter_channel_manual: string
+  filter_active_label: string
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -91,6 +100,14 @@ export const DICT: Record<Language, I18nDict> = {
     stat_escalated: '에스컬레이션',
     stat_high_risk: '고위험',
     stat_unit: '건',
+
+    filter_branch_label: '지점',
+    filter_channel_label: '채널',
+    filter_reset: '초기화',
+    filter_all: '전체',
+    filter_channel_google: 'Google',
+    filter_channel_manual: '직접 입력',
+    filter_active_label: '필터 적용 중',
   },
   en: {
     nav_dashboard: 'Dashboard',
@@ -127,6 +144,14 @@ export const DICT: Record<Language, I18nDict> = {
     stat_escalated: 'Escalated',
     stat_high_risk: 'High Risk',
     stat_unit: '',
+
+    filter_branch_label: 'Branch',
+    filter_channel_label: 'Channel',
+    filter_reset: 'Reset',
+    filter_all: 'All',
+    filter_channel_google: 'Google',
+    filter_channel_manual: 'Manual',
+    filter_active_label: 'filter active',
   },
   ja: {
     nav_dashboard: 'ダッシュボード',
@@ -163,6 +188,14 @@ export const DICT: Record<Language, I18nDict> = {
     stat_escalated: 'エスカレーション',
     stat_high_risk: '高リスク',
     stat_unit: '件',
+
+    filter_branch_label: '拠点',
+    filter_channel_label: 'チャンネル',
+    filter_reset: 'リセット',
+    filter_all: '全体',
+    filter_channel_google: 'Google',
+    filter_channel_manual: '手動入力',
+    filter_active_label: 'フィルター適用中',
   },
   zh: {
     nav_dashboard: '仪表板',
@@ -199,5 +232,13 @@ export const DICT: Record<Language, I18nDict> = {
     stat_escalated: '升级处理',
     stat_high_risk: '高风险',
     stat_unit: '条',
+
+    filter_branch_label: '地点',
+    filter_channel_label: '渠道',
+    filter_reset: '重置',
+    filter_all: '全部',
+    filter_channel_google: 'Google',
+    filter_channel_manual: '手动录入',
+    filter_active_label: '已筛选',
   },
 }
