@@ -121,9 +121,9 @@ export default async function DashboardPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs text-xs">
-                      <Link href={`/reviews/${review.id}`} className="hover:text-blue-600 hover:underline truncate block">
-                        {review.review_text?.slice(0, 50) ?? '-'}
+                    <td className="px-4 py-3 text-gray-600 max-w-0 w-full text-xs">
+                      <Link href={`/reviews/${review.id}`} className="hover:text-blue-600 hover:underline truncate block break-words">
+                        {review.review_text?.slice(0, 60) ?? '-'}
                       </Link>
                     </td>
                   </tr>

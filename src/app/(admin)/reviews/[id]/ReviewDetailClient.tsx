@@ -56,6 +56,24 @@ const REVERT_LABEL: Partial<Record<string, string>> = {
   escalated: '신규로 되돌리기',
 }
 
+/**
+ * 채널별 관리자(답변 등록) 페이지 URL 매핑.
+ * review.review_url 이 있으면 해당 URL 을 우선 사용.
+ * 없으면 채널 코드로 관리 콘솔 홈을 연다.
+ */
+const CHANNEL_ADMIN_URLS: Record<string, string> = {
+  naver:       'https://smartplace.naver.com/business/review',
+  kakao:       'https://place.map.kakao.com',
+  tripadvisor: 'https://www.tripadvisor.com/Management',
+  klook:       'https://partner.klook.com/activity/review',
+  'trip.com':  'https://ebooking.trip.com',
+}
+
+function getChannelAdminUrl(channelCode: string, reviewUrl?: string | null): string {
+  if (reviewUrl) return reviewUrl
+  return CHANNEL_ADMIN_URLS[channelCode.toLowerCase()] ?? ''
+}
+
 export default function ReviewDetailClient({ review: initialReview, draft: initialDraft, logs: initialLogs }: Props) {
   const [review, setReview] = useState(initialReview)
   const [draft, setDraft] = useState(initialDraft)
@@ -125,6 +143,26 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     } finally {
       setIsGooglePosting(false)
     }
+  }
+
+  /** 비 Google 채널 전용: 답변 클립보드 복사 + 관리자 페이지 새 탭 열기 */
+  async function handleCopyAndOpen() {
+    if (!editedReply.trim()) {
+      setActionMessage('게시할 답변을 입력해주세요.')
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(editedReply)
+    } catch {
+      /* clipboard API 지원 안 하는 환경 — 무시 */
+    }
+    const adminUrl = getChannelAdminUrl(review.channel_code, review.review_url)
+    if (adminUrl) window.open(adminUrl, '_blank', 'noopener,noreferrer')
+    setActionMessage(
+      adminUrl
+        ? '✓ 답변 복사 완료 — 새 탭이 열렸습니다. 붙여넣기 후 "게시 완료 처리"를 눌러주세요.'
+        : '✓ 답변 복사 완료 — 플랫폼 관리자 페이지에 접속해 붙여넣기 후 "게시 완료 처리"를 눌러주세요.',
+    )
   }
 
   async function generateAutoReply() {
@@ -469,14 +507,30 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
             </button>
           )}
 
-          {/* 비 Google 채널: 수동 복사 후 처리 완료 표시 */}
+          {/* 비 Google 채널: 답변 복사 + 관리자 딥링크 원클릭 */}
+          {canPublish && review.channel_code !== 'google' && (
+            <button
+              onClick={handleCopyAndOpen}
+              disabled={isPending || !editedReply.trim()}
+              title={
+                getChannelAdminUrl(review.channel_code, review.review_url)
+                  ? `답변을 복사하고 ${review.channel_code} 관리자 페이지를 새 탭으로 엽니다`
+                  : '답변을 클립보드에 복사합니다'
+              }
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              📋 답변 복사 + 관리자 이동
+            </button>
+          )}
+
+          {/* 게시 완료 확인 버튼 — 모든 채널 (플랫폼에 실제 게시한 뒤 클릭) */}
           {canPublish && (
             <button
               onClick={() => handleAction(() => markPublished(review.id), '게시 완료 처리되었습니다.')}
               disabled={isPending}
               className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
             >
-              {review.channel_code === 'google' ? '수동 게시 완료 처리' : '게시 완료 처리'}
+              {review.channel_code === 'google' ? '수동 게시 완료 처리' : '✓ 게시 완료 처리'}
             </button>
           )}
 

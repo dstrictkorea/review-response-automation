@@ -617,11 +617,11 @@ export default function ReviewsListClient({
                       </span>
                     )}
                   </td>
-                  {/* 리뷰 미리보기 + 답변 초안 */}
-                  <td className="px-4 py-3">
-                    <p className="text-xs text-gray-700 line-clamp-2">{review.review_text ?? '-'}</p>
+                  {/* 리뷰 미리보기 + 답변 초안 — max-w-0 + w-full 로 열 너비 고정, 다국어 긴 텍스트 방어 */}
+                  <td className="px-4 py-3 max-w-0 w-full">
+                    <p className="text-xs text-gray-700 line-clamp-2 break-words">{review.review_text ?? '-'}</p>
                     {draftSnippet && (
-                      <p className="text-xs text-blue-600 mt-1 line-clamp-1">
+                      <p className="text-xs text-blue-600 mt-1 line-clamp-1 break-words">
                         ↳ {draftSnippet}
                       </p>
                     )}
