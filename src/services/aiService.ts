@@ -321,6 +321,11 @@ export interface ReviewContext {
   reviewText: string
   preFilterNote: string
   activeKeywords: RiskKeyword[]
+  /**
+   * 재방문 고객 감지 — 동일 지점에 이전 리뷰가 있는 경우 > 0
+   * buildUserMessage()가 AI에게 재방문 컨텍스트를 주입하는 데 사용됨
+   */
+  reviewerPreviousCount?: number
 }
 
 /**
@@ -338,11 +343,20 @@ export function buildUserMessage(ctx: ReviewContext): string {
           .join('\n')
       : '  (none configured)'
 
+  // 재방문 고객 컨텍스트 노트
+  const repeatVisitorNote =
+    ctx.reviewerPreviousCount && ctx.reviewerPreviousCount > 0
+      ? `REPEAT VISITOR CONTEXT: This reviewer has submitted ${ctx.reviewerPreviousCount} previous review(s) at this branch. ` +
+        `Naturally acknowledge their loyalty in your reply — e.g. "재방문해 주셔서 깊이 감사드립니다" (KO), ` +
+        `"We're delighted to welcome you back" (EN), "またのご来館ありがとうございます" (JA), "感谢您的再次光临" (ZH).\n`
+      : ''
+
   return (
     `Branch: ${ctx.branchCode} — ${ctx.branchDisplayName}\n` +
     `Channel: ${ctx.channelCode} (${ctx.channelName})\n` +
     `Rating: ${ratingLine}\n` +
     `Reviewer: ${reviewerLine}\n` +
+    `${repeatVisitorNote}` +
     `${ctx.preFilterNote ? ctx.preFilterNote + '\n' : ''}` +
     `Review text:\n${ctx.reviewText}\n\n` +
     `CONTEXT FOR YOUR REPLY:\n` +

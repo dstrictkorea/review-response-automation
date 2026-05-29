@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Review } from '@/types/database'
 import { useLanguage } from '@/context/LanguageContext'
+import { LANG_LOCALE } from '@/lib/i18n'
 
 interface Props {
   allReviews: Review[]
@@ -32,12 +33,16 @@ function presetRange(preset: Preset): { from: Date | null; to: Date | null } {
   }
 }
 
-function fmt(d: Date) {
-  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
-}
+// fmt is locale-aware — called inside the component where lang is in scope
 
 export default function DashboardStats({ allReviews }: Props) {
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
+  const locale = LANG_LOCALE[lang]
+
+  function fmt(d: Date) {
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
+  }
+
   const [preset, setPreset]         = useState<Preset>('all')
   const [customFrom, setCustomFrom] = useState('')
   const [customTo,   setCustomTo]   = useState('')
@@ -148,13 +153,13 @@ export default function DashboardStats({ allReviews }: Props) {
               className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none"
             />
             {rangeLabel && (
-              <span className="text-xs text-gray-400">{total}건</span>
+              <span className="text-xs text-gray-400">{total}{t.stat_unit}</span>
             )}
           </div>
         )}
 
         {rangeLabel && preset !== 'custom' && (
-          <p className="text-xs text-gray-400 mt-1.5">{rangeLabel} · {total}건</p>
+          <p className="text-xs text-gray-400 mt-1.5">{rangeLabel} · {total}{t.stat_unit}</p>
         )}
       </div>
 

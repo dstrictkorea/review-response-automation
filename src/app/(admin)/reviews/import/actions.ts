@@ -25,14 +25,55 @@ export interface ImportResult {
   errorDetails: string[]
 }
 
+// ── 해시 유틸리티 ──────────────────────────────────────────────────────────────
+
+/**
+ * 텍스트 정규화 — 공백 압축 + 소문자 + 트림
+ */
 function normalizeText(text: string): string {
   return text.toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
 /**
+ * 텍스트 클리닝 — 모든 공백·특수문자 제거 (해시 입력 전처리용)
+ */
+function cleanText(text: string): string {
+  return text.toLowerCase().replace(/[\s\r\n\t\p{P}\p{S}]+/gu, '')
+}
+
+/**
+ * 고객 및 상황 인지 5차원 컨텍스트 해시 생성
+ *
+ * 기존: SHA256(text_only)  →  동일 텍스트라면 다른 리뷰어도 충돌
+ * 개선: SHA256(branch | channel | authorId | YYYY-MM-DD | cleanedText)
+ *       → 같은 날 같은 지점에 다른 사람이 쓴 리뷰는 절대 충돌 없음
+ *
+ * @param branchCode   지점 코드 (AMNY, AMBS…)
+ * @param channelCode  채널 코드 (google, naver…)
+ * @param authorId     reviewer_name ?? external_review_id ?? '' (소문자)
+ * @param dateSlug     review_date의 YYYY-MM-DD 부분 (없으면 빈 문자열)
+ * @param reviewText   원본 리뷰 텍스트 (cleaner가 내부 처리)
+ */
+function generateContextHash(
+  branchCode: string,
+  channelCode: string,
+  authorId: string,
+  dateSlug: string,
+  reviewText: string,
+): string {
+  const cleaned = cleanText(reviewText)
+  const input = `${branchCode}|${channelCode}|${authorId}|${dateSlug}|${cleaned}`
+  return crypto.createHash('sha256').update(input).digest('hex')
+}
+
+/**
  * 성능 최적화 버전:
  * - 기존: 행마다 SELECT×3 + INSERT×2 + UPDATE = 100행 → ~600 쿼리 (약 5분)
- * - 개선: 사전 bulk SELECT×3 + bulk INSERT×2 = 항상 7쿼리 (2-5초)
+ * - 개선: 사전 bulk SELECT×3 + bulk UPSERT×1 = 항상 5~7쿼리 (2-5초)
+ *
+ * 중복 판정 알고리즘 v2 — 5차원 컨텍스트 해시:
+ *   branch_code + channel_code + 작성자 식별자 + 작성일 YYYY-MM-DD + 정규화 텍스트
+ *   → 같은 텍스트라도 다른 작성자·날짜이면 다른 해시 → DB 충돌 없음
  */
 export async function importReviewsAction(
   batchInfo: {
@@ -76,17 +117,32 @@ export async function importReviewsAction(
     }
   }
 
-  // ── 2. 전체 행 해시 사전 계산 (CPU, 네트워크 없음) ────────────────────────
+  // ── 2. 전체 행 해시 사전 계산 (CPU만, 네트워크 없음) ─────────────────────
+  //
+  // 5차원 컨텍스트 해시:
+  //   author_identifier = reviewer_name ?? external_review_id ?? ''
+  //   date_slug         = review_date.slice(0, 10) ?? ''
+  //   normalized_hash   = SHA256(branch|channel|authorId|dateSlug|cleanedText)
+  //
   const enriched = rows.map((row, originalIndex) => {
-    const normalized = normalizeText(row.review_text)
-    const normalized_hash = crypto.createHash('sha256').update(normalized).digest('hex')
+    const authorIdentifier = (row.reviewer_name ?? row.external_review_id ?? '').trim().toLowerCase()
+    const dateSlug         = row.review_date?.slice(0, 10) ?? ''
+
+    const normalized_hash = generateContextHash(
+      batchInfo.branchCode,
+      batchInfo.channelCode,
+      authorIdentifier,
+      dateSlug,
+      row.review_text ?? '',
+    )
+
+    // import_hash: 별점 포함 — 파일 내 세분화된 Row 레벨 추적용
     const import_hash = crypto
       .createHash('sha256')
-      .update(
-        `${batchInfo.branchCode}|${batchInfo.channelCode}|${row.rating ?? ''}|${row.reviewer_name ?? ''}|${normalized}`
-      )
+      .update(`${batchInfo.branchCode}|${batchInfo.channelCode}|${row.rating ?? ''}|${authorIdentifier}|${dateSlug}|${cleanText(row.review_text ?? '')}`)
       .digest('hex')
-    return { ...row, normalized, normalized_hash, import_hash, originalIndex }
+
+    return { ...row, authorIdentifier, dateSlug, normalized_hash, import_hash, originalIndex }
   })
 
   // ── 3. 중복 확인: 개별 SELECT×N 대신 IN(…) 쿼리 3개 병렬 실행 ──────────
@@ -106,54 +162,53 @@ export async function importReviewsAction(
     reviewUrls.length
       ? supabase.from('reviews').select('review_url').in('review_url', reviewUrls)
       : Promise.resolve({ data: [] as Array<{ review_url: string | null }> }),
+    // ★ 5차원 해시 자체가 유니크 식별자 — reviewer_name 조합 불필요
     hashes.length
       ? supabase
           .from('reviews')
-          .select('normalized_hash, reviewer_name')
+          .select('normalized_hash')
           .eq('branch_code', batchInfo.branchCode)
           .eq('channel_code', batchInfo.channelCode)
           .in('normalized_hash', hashes)
-      : Promise.resolve({ data: [] as Array<{ normalized_hash: string | null; reviewer_name: string | null }> }),
+      : Promise.resolve({ data: [] as Array<{ normalized_hash: string | null }> }),
   ])
 
-  // DB 기존 데이터를 메모리 Set으로 — 이후 조회는 O(1)
-  // ★ 텍스트 해시만으로 중복 판정하지 않고 "리뷰어이름|해시" 조합으로 판정
-  //   → 같은 내용이라도 다른 사람이 쓴 리뷰, 혹은 재방문 리뷰는 허용
+  // DB 기존 데이터를 메모리 Set으로 — O(1) 조회
   const dupeExtIds = new Set((existingByExtId ?? []).map(r => r.source_review_id).filter(Boolean))
   const dupeUrls   = new Set((existingByUrl   ?? []).map(r => r.review_url).filter(Boolean))
-  const dupeHashes = new Set(
-    (existingByHash ?? []).map(r => `${r.reviewer_name ?? ''}|${r.normalized_hash ?? ''}`).filter(Boolean)
-  )
+  const dupeHashes = new Set((existingByHash  ?? []).map(r => r.normalized_hash).filter(Boolean))
 
   // ── 4. 메모리 내 분류 (쿼리 없음) ────────────────────────────────────────
   type Enriched = (typeof enriched)[0]
-  const toInsert:     Enriched[]                            = []
-  const duplicates:   { row: Enriched; reason: string }[]  = []
+  const toInsert:    Enriched[]                           = []
+  const duplicates:  { row: Enriched; reason: string }[] = []
   const seenInBatch = new Set<string>() // 파일 내 중복 감지
 
   for (const row of enriched) {
     let dupeReason: string | null = null
 
-    const hashKey = `${row.reviewer_name ?? ''}|${row.normalized_hash}`
-
     if (row.external_review_id && dupeExtIds.has(row.external_review_id))
       dupeReason = `external_review_id "${row.external_review_id}" 이미 존재`
     else if (row.review_url && dupeUrls.has(row.review_url))
       dupeReason = 'review_url 이미 존재'
-    else if (dupeHashes.has(hashKey))
-      dupeReason = '동일 작성자의 동일 리뷰가 이미 존재'
-    else if (seenInBatch.has(hashKey))
-      dupeReason = '파일 내 동일 작성자 중복 리뷰'
+    else if (dupeHashes.has(row.normalized_hash))
+      dupeReason = `동일 작성자·날짜·내용 중복 (작성자: ${row.authorIdentifier || '익명'}, 날짜: ${row.dateSlug || '미상'})`
+    else if (seenInBatch.has(row.normalized_hash))
+      dupeReason = `파일 내 동일 작성자·날짜·내용 중복 (작성자: ${row.authorIdentifier || '익명'})`
 
     if (dupeReason) {
       duplicates.push({ row, reason: dupeReason })
     } else {
-      seenInBatch.add(hashKey)
+      seenInBatch.add(row.normalized_hash)
       toInsert.push(row)
     }
   }
 
-  // ── 5. 신규 리뷰 단일 bulk INSERT ─────────────────────────────────────────
+  // ── 5. 신규 리뷰 bulk UPSERT (ON CONFLICT DO NOTHING) ────────────────────
+  //
+  // upsert + ignoreDuplicates: true → 경쟁 조건이나 재처리로 인한 충돌 시
+  // 개별 건만 조용히 스킵, 나머지 정상 리뷰는 안전하게 적재됨
+  //
   let imported = 0
   let errors = 0
   const errorDetails: string[] = []
@@ -162,27 +217,32 @@ export async function importReviewsAction(
   if (toInsert.length > 0) {
     const { data, error: bulkError } = await supabase
       .from('reviews')
-      .insert(
+      .upsert(
         toInsert.map(row => ({
-          branch_code:           batchInfo.branchCode,
-          channel_code:          batchInfo.channelCode,
-          rating:                row.rating,
-          review_text:           row.review_text,
-          review_created_at:     row.review_date || null,
-          review_url:            row.review_url,
-          reviewer_name:         row.reviewer_name,
-          review_language:       row.review_language,
-          source_review_id:      row.external_review_id,
-          normalized_hash:       row.normalized_hash,
-          import_hash:           row.import_hash,
+          branch_code:            batchInfo.branchCode,
+          channel_code:           batchInfo.channelCode,
+          rating:                 row.rating,
+          review_text:            row.review_text,
+          review_created_at:      row.review_date || null,
+          review_url:             row.review_url,
+          reviewer_name:          row.reviewer_name,
+          review_language:        row.review_language,
+          source_review_id:       row.external_review_id,
+          normalized_hash:        row.normalized_hash,
+          import_hash:            row.import_hash,
           source_import_batch_id: batch.id,
-          status:                'new',
-        }))
+          status:                 'new',
+        })),
+        {
+          // migration 004가 reviews_normalized_hash_unique 단독 인덱스를 생성하므로
+          // 단일 컬럼으로 충분. 5차원 해시가 branch+channel을 이미 인코딩함.
+          onConflict:       'normalized_hash',
+          ignoreDuplicates: true,
+        },
       )
       .select('id, import_hash')
 
     if (bulkError) {
-      // 드문 경우(경쟁조건 등) — 오류 기록 후 계속
       errors = toInsert.length
       errorDetails.push(`bulk insert 실패: ${bulkError.message}`)
     } else {
@@ -192,11 +252,9 @@ export async function importReviewsAction(
   }
 
   // ── 6. import_rows 단일 bulk INSERT ───────────────────────────────────────
-  // import_hash → review.id 역매핑 (정렬 순서에 의존하지 않음)
   const hashToReviewId = new Map(insertedReviews.map(r => [r.import_hash, r.id]))
 
   const importRowsPayload = [
-    // 성공 행
     ...toInsert.map(row => ({
       batch_id:       batch.id,
       row_index:      row.originalIndex,
@@ -213,7 +271,6 @@ export async function importReviewsAction(
       status:    errors > 0 ? 'error' : 'imported',
       review_id: hashToReviewId.get(row.import_hash) ?? null,
     })),
-    // 중복 행
     ...duplicates.map(({ row, reason }) => ({
       batch_id:       batch.id,
       row_index:      row.originalIndex,
@@ -252,12 +309,13 @@ export async function importReviewsAction(
       actor_name: user.email,
       action:     'bulk_import_completed',
       detail: {
-        batch_id:     batch.id,
-        branch_code:  batchInfo.branchCode,
-        channel_code: batchInfo.channelCode,
-        total:        rows.length,
+        batch_id:      batch.id,
+        branch_code:   batchInfo.branchCode,
+        channel_code:  batchInfo.channelCode,
+        hash_version:  'ctx-v2',
+        total:         rows.length,
         imported,
-        duplicates:   duplicates.length,
+        duplicates:    duplicates.length,
         errors,
       },
     }),
@@ -267,10 +325,10 @@ export async function importReviewsAction(
   revalidatePath('/dashboard')
 
   return {
-    batchId:      batch.id,
-    total:        rows.length,
+    batchId:    batch.id,
+    total:      rows.length,
     imported,
-    duplicates:   duplicates.length,
+    duplicates: duplicates.length,
     errors,
     errorDetails,
   }

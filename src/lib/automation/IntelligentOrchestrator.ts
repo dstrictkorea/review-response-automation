@@ -131,27 +131,40 @@ export class IntelligentOrchestrator {
         `Your isolation_reason MUST explicitly reference EACH detected expression.\n`
       : ''
 
-    // 지점 표시 이름 (DB에서 직접 조회)
-    const branchData = await admin
-      .from('branches')
-      .select('name_ko, name_en')
-      .eq('code', review.branch_code)
-      .maybeSingle()
+    // 지점 표시 이름 + 재방문 고객 감지 (병렬)
+    const reviewerName = review.reviewer_name?.trim()
+    const [branchData, repeatResult] = await Promise.all([
+      admin
+        .from('branches')
+        .select('name_ko, name_en')
+        .eq('code', review.branch_code)
+        .maybeSingle(),
+      reviewerName
+        ? admin
+            .from('reviews')
+            .select('*', { count: 'exact', head: true })
+            .eq('branch_code', review.branch_code)
+            .eq('reviewer_name', reviewerName)
+            .neq('id', reviewId)
+        : Promise.resolve({ count: 0 }),
+    ])
     const branchDisplayName = branchData.data
       ? `${branchData.data.name_ko}${branchData.data.name_en ? ' / ' + branchData.data.name_en : ''}`
       : review.branch_code
+    const reviewerPreviousCount = repeatResult.count ?? 0
 
     const systemPrompt = buildSystemPrompt(culturalProfile, matchedTemplates)
     const userMessage  = buildUserMessage({
-      branchCode:        review.branch_code,
+      branchCode:             review.branch_code,
       branchDisplayName,
-      channelCode:       review.channel_code,
-      channelName:       review.channel_code,
-      rating:            review.rating,
-      reviewerName:      review.reviewer_name,
-      reviewText:        review.review_text ?? '',
+      channelCode:            review.channel_code,
+      channelName:            review.channel_code,
+      rating:                 review.rating,
+      reviewerName:           review.reviewer_name,
+      reviewText:             review.review_text ?? '',
       preFilterNote,
       activeKeywords,
+      reviewerPreviousCount,
     })
 
     // ── 5. LLM 호출 ────────────────────────────────────────────────────────
@@ -249,8 +262,9 @@ export class IntelligentOrchestrator {
         filter_triggered:    filterResult.triggered,
         filter_keywords:     filterResult.matchedKeywords,
         filter_langs:        filterResult.detectedLangs,
-        has_forbidden:       hasForbiddenFlag,
-        core_complaint:      result.core_complaint || null,
+        has_forbidden:           hasForbiddenFlag,
+        core_complaint:          result.core_complaint || null,
+        reviewer_previous_count: reviewerPreviousCount,
       },
     })
   }
