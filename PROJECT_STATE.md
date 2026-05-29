@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `46e3823` (Wave 8)
+> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `486c0f4` (Wave 9)
 
 ---
 
@@ -58,6 +58,12 @@
 - **`settings/page.tsx`**: `channel_webhooks`, `rating_template_rules` 병렬 조회 추가
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
+
+### Wave 9 (포용적 개선 의지 CS 헌법 + RISK 분류 정밀화)
+- **Global CS Constitution** — 불만/개선 언급 시 변명 금지, 구체적 개선 약속 시스템 프롬프트에 강제 탑재
+- **5개국 개선 의지 문구** — KR/US/AE/JP/CN/AR 각 언어에 현지화된 수용·발전 표현 내장
+- **RISK 분류 정밀화** — "1★ 극찬=LOW, 5★ 직원 불만=MEDIUM" 명시, 별점 의존 완전 제거
+- tsc clean · commit `486c0f4`
 
 ### Wave 8 (평점 격리 폐기 + 프롬프트 대개혁 + DB 참조)
 - **평점 기반 격리 완전 제거**: `ratingFloor`, `rating<=3` 조건 삭제. 1점이어도 위험 키워드 없으면 `ai_done`
