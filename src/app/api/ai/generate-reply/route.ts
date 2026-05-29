@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { RiskKeyword, ReplyTemplate } from '@/types/database'
+import { scanText } from '@/services/filterService'
 
 
 const SYSTEM_PROMPT = `You are ARTE Museum's internal review response assistant.
@@ -127,6 +128,18 @@ export async function POST(request: NextRequest) {
   const riskKeywords: RiskKeyword[] = (riskKeywordsRow?.value as RiskKeyword[]) ?? []
   const replyTemplates: ReplyTemplate[] = (templatesRow?.value as ReplyTemplate[]) ?? []
 
+  // ── 1차 키워드 필터 ────────────────────────────────────────────────────────
+  const activeKeywords = riskKeywords.filter((k) => k.is_active)
+  const filterResult = scanText(review.review_text ?? '', activeKeywords)
+
+  const preFilterNote = filterResult.triggered
+    ? `\nPRE-FILTER ALERT — Keyword filter already detected risk expressions:\n` +
+      filterResult.matches
+        .map((m) => `  - keyword="${m.keyword}" riskLevel=${m.riskLevel} context="${m.context}"`)
+        .join('\n') +
+      `\nMinimum risk_level required: ${filterResult.maxRiskLevel}. Your isolation_reason MUST reference these.\n`
+    : ''
+
   const branchData = await supabase
     .from('branches')
     .select('*')
@@ -144,7 +157,7 @@ Channel: ${review.channel_code}
 Rating: ${review.rating ?? 'Not provided'}/5
 Review date: ${review.review_created_at ?? 'Unknown'}
 Reviewer: ${review.reviewer_name ?? 'Anonymous'}
-
+${preFilterNote}
 Review text:
 ${review.review_text}
 
@@ -202,13 +215,26 @@ Respond with JSON only.`
     return NextResponse.json({ error: `AI 초안 생성 실패: ${msg}` }, { status: 500 })
   }
 
-  // Hardcoded safety override: critical/high risk reviews always stay at that level
-  const ratingRisk =
-    review.rating != null && review.rating <= 2 ? 'high' : null
-  const finalRiskLevel =
-    aiResult.risk_level === 'critical' || ratingRisk === 'high'
-      ? aiResult.risk_level === 'critical' ? 'critical' : 'high'
-      : aiResult.risk_level
+  // ── 위험도 병합 (필터 floor + AI + 평점) ────────────────────────────────────
+  const RISK_RANK_MAP: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 }
+  const RANK_LEVELS = ['low', 'medium', 'high', 'critical'] as const
+  const ratingRisk = review.rating != null && review.rating <= 2 ? 'high' : null
+  const filterRisk = filterResult.triggered ? filterResult.maxRiskLevel : null
+  const maxRank = Math.max(
+    RISK_RANK_MAP[aiResult.risk_level] ?? 0,
+    RISK_RANK_MAP[ratingRisk ?? 'low'] ?? 0,
+    RISK_RANK_MAP[filterRisk ?? 'low'] ?? 0,
+  )
+  const finalRiskLevel = RANK_LEVELS[maxRank] ?? 'low'
+
+  // ── 격리 필요 여부 (pending_approval vs ai_done) ──────────────────────────
+  const hasForbiddenFlag = Object.values(aiResult.forbidden_check ?? {}).some((v) => v === true)
+  const needsReview =
+    filterResult.triggered ||
+    hasForbiddenFlag ||
+    (review.rating != null && review.rating <= 3) ||
+    ['medium', 'high', 'critical'].includes(finalRiskLevel)
+  const finalStatus = needsReview ? 'pending_approval' : 'ai_done'
 
   const { data: existingDraft } = await supabase
     .from('reply_drafts')
@@ -252,25 +278,37 @@ Respond with JSON only.`
     draft = data
   }
 
+  const combinedRiskReasons = [
+    ...filterResult.matchedKeywords.map((k) => `[1차필터] ${k}`),
+    ...(aiResult.risk_reasons ?? []),
+  ]
+  const combinedNote = [
+    filterResult.triggered ? filterResult.isolationSummary : null,
+    aiResult.internal_note_ko || null,
+  ].filter(Boolean).join('\n')
+
   await supabase.from('reviews').update({
-    status: 'ai_done',
+    status: finalStatus,
     risk_level: finalRiskLevel,
     sentiment: aiResult.sentiment,
     categories: aiResult.categories,
-    risk_reasons: aiResult.risk_reasons,
+    risk_reasons: combinedRiskReasons,
     review_language: aiResult.detected_language,
-    internal_note_ko: aiResult.internal_note_ko,
+    internal_note_ko: combinedNote || aiResult.internal_note_ko,
     updated_at: new Date().toISOString(),
   }).eq('id', review_id)
 
   await supabase.from('activity_logs').insert({
     review_id,
     actor_name: user.email,
-    action: 'ai_draft_generated',
+    action: needsReview ? 'review_isolated' : 'ai_draft_generated',
     detail: {
       model,
-      risk_level: finalRiskLevel,
-      sentiment: aiResult.sentiment,
+      risk_level:       finalRiskLevel,
+      status:           finalStatus,
+      sentiment:        aiResult.sentiment,
+      filter_triggered: filterResult.triggered,
+      filter_keywords:  filterResult.matchedKeywords,
     },
   })
 

@@ -1,30 +1,41 @@
 /**
- * IntelligentOrchestrator — background AI draft generation for all incoming reviews.
+ * IntelligentOrchestrator — 리뷰 자동 AI 처리 파이프라인
  *
- * Called by the cron sync route immediately after new reviews are inserted.
- * Uses the admin client (service-role) since it runs without a user session.
+ * 처리 순서:
+ *   1. 1차 키워드 필터 (filterService.scanText) — 즉각적, 동기
+ *   2. AI 문맥 분석 (LLM) — 필터 결과를 프롬프트에 주입하여 정밀도 향상
+ *   3. 위험도 병합 — 필터 결과 / AI 판단 / 평점 중 최고값 적용
+ *   4. 라우팅 결정 — pending_approval (격리) vs ai_done (정상)
+ *   5. DB 원자적 쓰기
+ *   6. 활동 로그
  *
- * Routing matrix (writes to reviews.status):
- *   risk_level 'medium' | 'high' | 'critical'  →  'pending_approval'
- *   any forbidden_check flag true               →  'pending_approval'
- *   rating ≤ 3                                  →  'pending_approval'
- *   otherwise                                   →  'ai_done'
- *
- * 'pending_approval' reviews surface in the dashboard's "AI 격리 — 2차 확인" card
- * and in the pending review list, so staff can review and approve them.
+ * 격리 조건:
+ *   - 1차 필터 트리거 (medium+)
+ *   - AI risk_level 'medium' | 'high' | 'critical'
+ *   - forbidden_check 플래그 any true
+ *   - rating ≤ 3
  */
 
 import OpenAI from 'openai'
 import type { RiskKeyword, ReplyTemplate } from '@/types/database'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { scanText } from '@/services/filterService'
 
-// ── Provider URL map (all expose an OpenAI-compatible /chat/completions endpoint) ──
+// ── Provider URL map ──────────────────────────────────────────────────────────
 const PROVIDER_BASE_URLS: Record<string, string> = {
   groq:   'https://api.groq.com/openai/v1',
   gemini: 'https://generativelanguage.googleapis.com/v1beta/openai/',
 }
 
-// ── System prompt ─────────────────────────────────────────────────────────────────
+const RISK_RANK: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 }
+const RANK_TO_LEVEL = ['low', 'medium', 'high', 'critical'] as const
+
+function floorRisk(...levels: Array<string | null | undefined>): string {
+  const max = Math.max(...levels.map(l => RISK_RANK[l ?? 'low'] ?? 0))
+  return RANK_TO_LEVEL[max]
+}
+
+// ── System prompt ─────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the Reputation Manager for ARTE Museum.
 Analyze the review and generate exactly 3 reply drafts as a valid JSON object.
 
@@ -45,7 +56,11 @@ RISK CLASSIFICATION GUIDE:
 - low: Positive/neutral, no sensitive content
 - medium: Minor complaints, requests for improvement
 - high: Refund requests, safety concerns, staff complaints, 1-2★ with strong language
-- critical: Injury/accident reports, legal threats, discrimination, media threats
+- critical: Injury/accident reports, legal threats, discrimination, media threats, police reports
+
+If a PRE-FILTER ALERT section appears in the user message, it means a keyword filter already
+detected risk expressions. Your risk_level must be at LEAST the pre-filter level.
+Your isolation_reason must explicitly reference the detected expressions.
 
 OUTPUT: Valid JSON only — no markdown wrapper, no prose outside JSON.
 {
@@ -54,7 +69,8 @@ OUTPUT: Valid JSON only — no markdown wrapper, no prose outside JSON.
   "risk_level": "low" | "medium" | "high" | "critical",
   "categories": ["string"],
   "risk_reasons": ["string"],
-  "internal_note_ko": "string",
+  "isolation_reason": "격리 사유 한국어 서술 (필터 적발 표현 + AI 판단 근거). 격리 불필요 시 빈 문자열.",
+  "internal_note_ko": "담당자에게 전달할 내부 메모 (한국어)",
   "forbidden_check": {
     "refund_promise": false,
     "legal_admission": false,
@@ -66,16 +82,15 @@ OUTPUT: Valid JSON only — no markdown wrapper, no prose outside JSON.
   "draft_careful": "4-6 sentences — empathetic, thorough, one concrete improvement note"
 }`
 
-// ── Main class ────────────────────────────────────────────────────────────────────
+// ── Main class ─────────────────────────────────────────────────────────────────
 export class IntelligentOrchestrator {
   /**
-   * Process a single review: fetch context, call LLM, route by risk, write atomically.
-   * Throws on unrecoverable errors — caller is responsible for catch/log.
+   * 단일 리뷰 처리: DB 조회 → 1차 필터 → AI → 위험도 병합 → DB 쓰기 → 로그
    */
   static async processReview(reviewId: string): Promise<void> {
     const admin = createAdminClient()
 
-    // ── 1. Parallel fetch: review + live settings ─────────────────────────────
+    // ── 1. 병렬 조회 ────────────────────────────────────────────────────────
     const [reviewRes, keywordsRes, templatesRes] = await Promise.all([
       admin.from('reviews').select('*').eq('id', reviewId).single(),
       admin.from('app_settings').select('value').eq('key', 'risk_keywords').maybeSingle(),
@@ -86,14 +101,17 @@ export class IntelligentOrchestrator {
       throw new Error(`[Orchestrator] Review not found: ${reviewId}`)
     }
 
-    const review       = reviewRes.data
-    const dbKeywords   = (keywordsRes.data?.value  as RiskKeyword[])    ?? []
-    const dbTemplates  = (templatesRes.data?.value as ReplyTemplate[])  ?? []
+    const review      = reviewRes.data
+    const dbKeywords  = (keywordsRes.data?.value  as RiskKeyword[])   ?? []
+    const dbTemplates = (templatesRes.data?.value as ReplyTemplate[]) ?? []
 
     const activeKeywords   = dbKeywords.filter(k => k.is_active)
     const matchedTemplates = dbTemplates.filter(t => t.language === review.review_language)
 
-    // ── 2. Resolve AI provider ────────────────────────────────────────────────
+    // ── 2. 1차 키워드 필터 ──────────────────────────────────────────────────
+    const filterResult = scanText(review.review_text ?? '', activeKeywords)
+
+    // ── 3. AI 프로바이더 선택 ────────────────────────────────────────────────
     const groqKey   = process.env.GROQ_API_KEY
     const geminiKey = process.env.GEMINI_API_KEY
     const openaiKey = process.env.OPENAI_API_KEY
@@ -111,41 +129,39 @@ export class IntelligentOrchestrator {
                 : geminiKey ? (process.env.GEMINI_MODEL ?? 'gemini-2.0-flash-lite')
                 :             (process.env.OPENAI_MODEL ?? 'gpt-4o')
 
-    // ── 3. Build user message with live DB settings injected ──────────────────
+    // ── 4. 프롬프트 구성 (필터 결과 주입) ────────────────────────────────────
     const riskKeywordContext = activeKeywords.length > 0
-      ? activeKeywords
-          .map(k => `  - "${k.keyword}" (${k.language}, risk: ${k.risk_level})`)
-          .join('\n')
+      ? activeKeywords.map(k => `  - "${k.keyword}" (${k.language}, risk: ${k.risk_level})`).join('\n')
       : '  (none configured)'
 
     const templateContext = matchedTemplates.length > 0
-      ? matchedTemplates
-          .slice(0, 5)
-          .map(t => `  [${t.category}] ${t.name}: ${t.content.slice(0, 120)}`)
-          .join('\n')
+      ? matchedTemplates.slice(0, 5).map(t => `  [${t.category}] ${t.name}: ${t.content.slice(0, 120)}`).join('\n')
       : '  (none for this language)'
 
-    const userMessage = `Branch: ${review.branch_code}
-Channel: ${review.channel_code}
-Rating: ${review.rating ?? 'N/A'} / 5
-Reviewer: ${review.reviewer_name ?? 'Anonymous'}
+    const preFilterNote = filterResult.triggered
+      ? `\nPRE-FILTER ALERT — Keyword filter already detected risk expressions:\n` +
+        filterResult.matches.map(m =>
+          `  - keyword="${m.keyword}" riskLevel=${m.riskLevel} source=${m.source} context="${m.context}"`
+        ).join('\n') +
+        `\nMinimum risk_level required: ${filterResult.maxRiskLevel}. ` +
+        `Your isolation_reason MUST explain each detected expression.\n`
+      : ''
 
-Review text:
-${review.review_text ?? '(no text provided)'}
+    const userMessage =
+      `Branch: ${review.branch_code}\n` +
+      `Channel: ${review.channel_code}\n` +
+      `Rating: ${review.rating ?? 'N/A'} / 5\n` +
+      `Reviewer: ${review.reviewer_name ?? 'Anonymous'}\n` +
+      `${preFilterNote}\n` +
+      `Review text:\n${review.review_text ?? '(no text provided)'}\n\n` +
+      `CONTEXT:\n` +
+      `- This reply will be posted PUBLICLY on ${review.channel_code}.\n` +
+      `- Future visitors will read it when deciding whether to visit.\n\n` +
+      `ACTIVE RISK KEYWORDS (from settings):\n${riskKeywordContext}\n\n` +
+      `REPLY STYLE REFERENCE (language-matched templates):\n${templateContext}\n\n` +
+      `Generate three reply drafts and classify the review. Return JSON only.`
 
-CONTEXT:
-- This reply will be posted PUBLICLY on ${review.channel_code}.
-- Future visitors will read it when deciding whether to visit.
-
-ACTIVE RISK KEYWORDS (from settings — elevate risk_level if matched):
-${riskKeywordContext}
-
-REPLY STYLE REFERENCE (language-matched templates):
-${templateContext}
-
-Generate three reply drafts and classify the review. Return JSON only.`
-
-    // ── 4. LLM call ───────────────────────────────────────────────────────────
+    // ── 5. LLM 호출 ────────────────────────────────────────────────────────
     const openai = new OpenAI({ apiKey: activeKey, baseURL })
     const completion = await openai.chat.completions.create({
       model,
@@ -167,6 +183,7 @@ Generate three reply drafts and classify the review. Return JSON only.`
       risk_level: string
       categories: string[]
       risk_reasons: string[]
+      isolation_reason: string
       internal_note_ko: string
       forbidden_check: {
         refund_promise: boolean
@@ -179,60 +196,83 @@ Generate three reply drafts and classify the review. Return JSON only.`
       draft_careful: string
     }
 
-    // ── 5. Hardcoded risk floor (matches existing generate-reply route) ────────
-    const ratingFloor  = review.rating != null && review.rating <= 2 ? 'high' : null
-    const finalRisk    =
-      result.risk_level === 'critical' ? 'critical'
-      : ratingFloor === 'high'         ? 'high'
-      : result.risk_level
+    // ── 6. 위험도 병합 (필터 floor + AI + 평점) ───────────────────────────────
+    const ratingFloor = review.rating != null && review.rating <= 2 ? 'high' : null
+    const finalRisk   = floorRisk(
+      result.risk_level,
+      filterResult.triggered ? filterResult.maxRiskLevel : null,
+      ratingFloor,
+    )
 
-    // ── 6. Routing decision ───────────────────────────────────────────────────
-    const hasForbiddenFlag =
-      Object.values(result.forbidden_check ?? {}).some(v => v === true)
+    // ── 7. 격리 사유 통합 (internal_note_ko) ─────────────────────────────────
+    const combinedNote = [
+      filterResult.triggered ? filterResult.isolationSummary : null,
+      result.isolation_reason || null,
+      result.internal_note_ko || null,
+    ].filter(Boolean).join('\n')
+
+    // ── 8. risk_reasons 통합 ──────────────────────────────────────────────────
+    const combinedRiskReasons = [
+      ...filterResult.matchedKeywords.map(k => `[1차필터] ${k}`),
+      ...(result.risk_reasons ?? []),
+    ]
+
+    // ── 9. 라우팅 결정 ────────────────────────────────────────────────────────
+    const hasForbiddenFlag = Object.values(result.forbidden_check ?? {}).some(v => v === true)
 
     const needsSecondaryReview =
+      filterResult.triggered ||
       (review.rating != null && review.rating <= 3) ||
       ['medium', 'high', 'critical'].includes(finalRisk) ||
       hasForbiddenFlag
 
     const finalStatus = needsSecondaryReview ? 'pending_approval' : 'ai_done'
 
-    // ── 7. Atomic write via RPC ───────────────────────────────────────────────
+    // ── 10. DB 원자적 쓰기 ────────────────────────────────────────────────────
     const { error: rpcErr } = await admin.rpc('update_review_and_save_drafts', {
       p_review_id:       reviewId,
       p_status:          finalStatus,
       p_risk_level:      finalRisk,
       p_sentiment:       result.sentiment,
-      p_categories:      result.categories      ?? [],
-      p_risk_reasons:    result.risk_reasons     ?? [],
-      p_forbidden_check: result.forbidden_check  ?? {},
+      p_categories:      result.categories        ?? [],
+      p_risk_reasons:    combinedRiskReasons,
+      p_forbidden_check: result.forbidden_check   ?? {},
       p_draft_short:     result.draft_short,
       p_draft_standard:  result.draft_standard,
       p_draft_careful:   result.draft_careful,
       p_model_name:      model,
-      p_prompt_version:  'io-v1',
+      p_prompt_version:  'io-v2',
     })
 
     if (rpcErr) throw new Error(`[Orchestrator] RPC failed: ${rpcErr.message}`)
 
-    // ── 8. Activity log ───────────────────────────────────────────────────────
+    // internal_note_ko는 RPC에 포함되지 않으므로 별도 업데이트
+    if (combinedNote) {
+      await admin
+        .from('reviews')
+        .update({ internal_note_ko: combinedNote, updated_at: new Date().toISOString() })
+        .eq('id', reviewId)
+    }
+
+    // ── 11. 활동 로그 ─────────────────────────────────────────────────────────
     await admin.from('activity_logs').insert({
       review_id:  reviewId,
       actor_name: 'system:orchestrator',
-      action:     'ai_draft_generated',
+      action:     needsSecondaryReview ? 'review_isolated' : 'ai_draft_generated',
       detail: {
         model,
-        risk_level:   finalRisk,
-        status:       finalStatus,
-        is_isolated:  needsSecondaryReview,
-        has_forbidden: hasForbiddenFlag,
+        risk_level:          finalRisk,
+        status:              finalStatus,
+        is_isolated:         needsSecondaryReview,
+        filter_triggered:    filterResult.triggered,
+        filter_keywords:     filterResult.matchedKeywords,
+        has_forbidden:       hasForbiddenFlag,
       },
     })
   }
 
   /**
-   * Process a batch of review IDs with limited concurrency.
-   * Errors are caught per-review so one failure doesn't abort the whole batch.
+   * 배치 처리 — 제한된 동시성으로 복수 리뷰 처리
    */
   static async processBatch(reviewIds: string[], concurrency = 3): Promise<{
     processed: number

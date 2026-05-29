@@ -168,6 +168,41 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     )
   }
 
+  /**
+   * 통합 자동 게시 — /api/review/publish 호출
+   * Google: GBP API, 웹훅 설정 채널: 웹훅, 그 외: 클립보드 fallback
+   */
+  async function handleAutoPublish() {
+    if (!editedReply.trim()) {
+      setActionMessage('게시할 답변을 입력해주세요.')
+      return
+    }
+    if (!confirm(`이 답변을 ${review.channel_code}에 게시하시겠습니까?`)) return
+
+    setIsGooglePosting(true)
+    try {
+      const res = await fetch('/api/review/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId: review.id, finalReply: editedReply }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setActionMessage(`게시 실패: ${data.error ?? '알 수 없는 오류'}`)
+      } else if (data.method === 'fallback_manual') {
+        // 웹훅·API 미설정 채널 → 클립보드 복사 + 플랫폼 이동으로 fallback
+        await handleCopyAndOpen()
+      } else {
+        setActionMessage('✅ 게시 완료!')
+        setTimeout(() => window.location.reload(), 1200)
+      }
+    } catch {
+      setActionMessage('서버 오류가 발생했습니다.')
+    } finally {
+      setIsGooglePosting(false)
+    }
+  }
+
   async function handleReprocess() {
     setIsReprocessing(true)
     setGenerateError(null)
@@ -215,12 +250,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   function handlePanelAction(action: ReviewPanelAction) {
     switch (action) {
       case 'publish':
-        // marketing_staff: Google이면 직접 게시, 아니면 복사+이동
-        if (review.channel_code === 'google') {
-          handleGooglePost()
-        } else {
-          handleCopyAndOpen()
-        }
+        handleAutoPublish()
         break
       case 'escalate':
         // 관장 결재 요청 = 에스컬레이션
@@ -556,6 +586,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       <ReviewActionPanel
         role={userRole}
         channel={review.channel_code}
+        riskLevel={review.risk_level ?? null}
         isLoading={isPending || isGooglePosting}
         onAction={handlePanelAction}
       />

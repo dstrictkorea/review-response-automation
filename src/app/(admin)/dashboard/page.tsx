@@ -36,12 +36,16 @@ export default async function DashboardPage({
 
   const supabase = await createClient()
 
-  // ── Parallel fetch: all stats + pending page + filter option lists ──────────
+  // ── 현재 사용자 역할 조회 ─────────────────────────────────────────────────────
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // ── Parallel fetch: all stats + pending page + filter option lists + profile ─
   const [
     { data: allData },
     pendingResult,
     { data: branches },
     { data: channels },
+    { data: profile },
   ] = await Promise.all([
     // Full dataset (filtered by branch/channel) — used by DashboardStats
     (() => {
@@ -75,6 +79,11 @@ export default async function DashboardPage({
     // Filter option lists (fetched once per render; cheap query)
     supabase.from('branches').select('code, name_ko, name_en').eq('is_active', true).order('code'),
     supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
+
+    // Profile role
+    user
+      ? supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
 
   const pendingData       = pendingResult.data
@@ -97,6 +106,25 @@ export default async function DashboardPage({
   for (const d of pendingDrafts ?? []) {
     if (d.selected_reply) pendingDraftMap[d.review_id] = d.selected_reply
   }
+
+  // ── 역할 판별 (admin / director → director 권한) ─────────────────────────────
+  const isDirector =
+    profile?.role === 'admin' || profile?.role === 'director'
+
+  // ── 격리 리뷰 (director 전용 섹션용) — risk 내림차순 → 날짜 내림차순 ─────────
+  const RISK_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+  const isolatedReviews = allReviews
+    .filter((r) => r.status === 'pending_approval')
+    .sort((a, b) => {
+      const ra = RISK_ORDER[a.risk_level ?? 'low'] ?? 3
+      const rb = RISK_ORDER[b.risk_level ?? 'low'] ?? 3
+      if (ra !== rb) return ra - rb
+      return (
+        new Date(b.review_created_at ?? b.created_at).getTime() -
+        new Date(a.review_created_at ?? a.created_at).getTime()
+      )
+    })
+    .slice(0, 30)
 
   // ── Status counters (derived from the branch/channel-filtered full set) ─────
   const newCount             = allReviews.filter((r) => r.status === 'new').length
@@ -140,6 +168,96 @@ export default async function DashboardPage({
 
       {/* ── 지점별 차트 ─────────────────────────────────────────────────────── */}
       <DashboardCharts allData={allReviews} />
+
+      {/* ── 🚨 director 전용: 고위험 격리 리뷰 ──────────────────────────────── */}
+      {isDirector && isolatedReviews.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-lg leading-none">🚨</span>
+              <div>
+                <h3 className="text-sm font-bold text-red-800">고위험 격리 리뷰</h3>
+                <p className="text-xs text-red-600 mt-0.5">
+                  AI·필터가 자동 격리한 리뷰 {isolatedReviews.length}건 — 관장 검토 필요
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/reviews?status=pending_approval"
+              className="text-xs text-red-600 hover:underline font-medium"
+            >
+              전체 보기 →
+            </Link>
+          </div>
+
+          <div className="rounded-xl border-2 border-red-200 overflow-hidden">
+            <table className="w-full text-sm table-fixed min-w-[540px]">
+              <thead>
+                <tr className="bg-red-50 border-b border-red-200">
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-red-700 whitespace-nowrap w-24">
+                    위험도
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-red-700 whitespace-nowrap w-24">
+                    지점
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-red-700 whitespace-nowrap w-20">
+                    채널
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-red-700 whitespace-nowrap w-14">
+                    별점
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-red-700 whitespace-nowrap w-24">
+                    작성일
+                  </th>
+                  <th className="px-4 py-2.5 text-left text-xs font-semibold text-red-700">
+                    리뷰 미리보기
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-red-100 bg-white">
+                {isolatedReviews.map((rev) => (
+                  <tr key={rev.id} className="hover:bg-red-50 transition-colors">
+                    <td className="px-4 py-3">
+                      {rev.risk_level && (
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${riskClasses(
+                            rev.risk_level as RiskLevel,
+                          )}`}
+                        >
+                          {riskLabel(rev.risk_level as RiskLevel)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-700 truncate">
+                      {rev.branch_code}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-700 truncate">
+                      {rev.channel_code}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-medium text-gray-700 whitespace-nowrap">
+                      {rev.rating != null ? `${rev.rating}★` : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                      {new Date(rev.review_created_at ?? rev.created_at).toLocaleDateString('ko-KR')}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-700 max-w-0 w-full">
+                      <Link
+                        href={`/reviews/${rev.id}`}
+                        className="hover:text-red-700 hover:underline font-medium block truncate"
+                      >
+                        🔍 검토 →{' '}
+                        <span className="font-normal text-gray-600">
+                          {rev.review_text?.slice(0, 80) ?? '-'}
+                        </span>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* ── 처리 대기 리뷰 ────────────────────────────────────────────────── */}
       <div className="mb-8">
