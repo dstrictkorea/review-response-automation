@@ -150,8 +150,11 @@ selected_draft_type  text    -- short|standard|careful
 selected_reply       text    -- 선택된 초안
 human_edited_reply   text    -- 최종 편집본
 forbidden_check      jsonb   -- {refund_promise,legal_admission,cctv_mention,staff_discipline}
-prompt_version       text    -- gr-v3 / io-v3
-model_name           text
+prompt_version       text    -- gr-v3 / io-v4 / algo-v1
+model_name           text    -- llama-… / template-engine-v1
+intent_code          text    ← Wave 11: pg_trgm 검출 인텐트 (algo) 또는 LLM categories[0]
+intent_confidence    float   ← Wave 11: word_similarity 신뢰도 (0-1). LLM 경로는 NULL
+pipeline_engine      text    ← Wave 11: 'template' = Algorithm-First, 'llm' = LLM Fallback
 created_at / updated_at
 ```
 
@@ -494,6 +497,43 @@ needsSecondaryReview =
   hasForbiddenFlag ||                 // forbidden_check any true
   review.rating <= 3                  // 별점 ≤ 3
 ```
+
+---
+
+## 8b. 리뷰 목록 UI 아키텍처 (Wave 11)
+
+```
+/reviews (서버 컴포넌트 page.tsx)
+   │  URL: ?page&limit&status&risk&rating&q&branch&channel&date_from&date_to
+   │
+   ├─ rows 쿼리: .eq(필터…).or(q ilike).range(from,to) + count:exact   → 현재 페이지 행
+   ├─ stats 쿼리: select('rating') + 동일 필터                          → 전체 집합 평균/분포
+   ├─ reply_drafts 조인 (현재 페이지 id만)                             → draftMap + telemetryMap
+   │
+   ▼
+ReviewsListClient (클라이언트)  ── server prop 유무로 모드 분기
+   │   server O → /reviews: URL 기반 필터·페이지네이션 (퀵필터칩 = router.push)
+   │   server X → 대시보드: 인메모리 필터·정렬 (페이지네이션 UI 없음)
+   │
+   ├─ 고밀도 그리드 (table-fixed + colgroup): 지점/채널/별점/상태/위험도
+   │   + 인텐트 배지(신뢰도%) + 파이프라인 배지(⚡Template/✨AI) + 미리보기(truncate/hover)
+   ├─ 배치 AI 생성 (현재 페이지 new 리뷰 선택 → /api/ai/generate-reply 병렬)
+   │
+   ▼ 행 클릭 (라우팅 없음)
+ReviewDrawer (우측 슬라이드오버)
+   │  - reply_drafts 풀 로드 (브라우저 supabase)
+   │  - 3대 변형 탭 (short/standard/careful) 인라인 스위칭
+   │  - textarea 편집 → selected_reply/human_edited_reply 인라인 저장
+   │  - CS 헌법 가이드 레이어, 텔레메트리 배지
+   │  - "전체 상세 페이지" 딥링크 → /reviews/[id] (승인·게시 고급 워크플로우)
+   │  - 저장 시 draftOverrides 머지 → 테이블 미리보기 즉시 갱신 (상태 비파괴)
+```
+
+**설계 원칙 (Stripe/Linear 규격):**
+- 모든 뷰 상태를 URL에 직렬화 → 새로고침/공유/뒤로가기 무결성
+- 페이지 렌더는 limit건으로 제한 (대량 DOM 렌더 방지), 통계는 별도 경량 쿼리
+- 라우팅/모달 대신 슬라이드오버 → 메인 컨텍스트(스크롤·필터·페이지) 100% 보존
+- table-fixed + colgroup minmax + truncate/hover → 4개국어 폭발 방어 (1px 무결점)
 
 ---
 

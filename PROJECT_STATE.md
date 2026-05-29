@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `8df258d` (Wave 10)
+> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `cc4f110` (Wave 11)
 
 ---
 
@@ -58,6 +58,16 @@
 - **`settings/page.tsx`**: `channel_webhooks`, `rating_template_rules` 병렬 조회 추가
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
+
+### Wave 11 (대시보드 UI/UX 전면 개편 + Wave 10 텔레메트리 연동)
+- **서버사이드 페이지네이션**: `reviews/page.tsx` `.range()` + `count:exact`, limit 10/20/50/100, 전 상태 URL 동기화 (새로고침 무결성). 통계는 경량 select로 필터 전체 집합 기준 산출
+- **Wave 10 텔레메트리 그리드**: 인텐트 배지 + 신뢰도% + 파이프라인 배지(⚡Template/✨AI) — `reply_drafts` 조인
+- **`migration 006`**: `reply_drafts.intent_code/intent_confidence/pipeline_engine` (RPC 미변경, follow-up update). Orchestrator io-v4, generate-reply gr-v3 텔레메트리 기록
+- **`lib/intents.ts`** (신규): 인텐트 라벨(4개국어)/배지색 + `inferPipelineEngine` (레거시 draft 역추론)
+- **`ReviewDrawer.tsx`** (신규): Context 보존형 우측 슬라이드오버 — 라우팅/모달 제거, 3대 변형 탭 인라인 스위칭 + 편집/저장, CS 헌법 가이드, 상세 페이지 딥링크 보존
+- **4개국어 플루이드 그리드**: table-fixed + colgroup + truncate/hover, i18n 키 40여종 추가
+- **기술 부채 청산**: `google/api.ts` 타입화로 `any[]` 3곳 제거, `catch(err:any)→unknown` 일괄, ReviewDetailClient Date.now() 모듈 헬퍼화, 죽은 sessionStorage 영속화 제거
+- **eslint 0 problems** (기존 15개 debt 포함 전량 청산) · tsc 0 · build EXIT 0 · commit `cc4f110`
 
 ### Wave 10 (Algorithm-First, LLM-Fallback 파이프라인)
 - **`supabase/migrations/005`**: `pg_trgm` + `review_intents`(20개) + `intent_keywords` + `reply_template_variants` + `detect_review_intent` RPC
