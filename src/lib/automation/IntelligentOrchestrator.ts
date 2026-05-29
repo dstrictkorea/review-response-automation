@@ -1,22 +1,24 @@
 /**
- * IntelligentOrchestrator — 리뷰 자동 AI 처리 파이프라인 (io-v3)
+ * IntelligentOrchestrator — Algorithm-First, LLM-Fallback 파이프라인 (io-v4)
  *
  * 처리 순서:
  *   1. DB 병렬 조회 (리뷰 + 키워드 + 템플릿)
  *   2. 1차 글로벌 키워드 필터 (filterService.scanText)
- *   3. 지점 문화 프로파일 결정 (aiService.getCulturalProfile)
- *   4. 시스템 프롬프트 + 유저 메시지 빌드 (aiService.buildSystemPrompt / buildUserMessage)
- *   5. LLM 호출 (Groq → Gemini → OpenAI 우선순위)
- *   6. 위험도 병합 — 필터 floor + AI + 평점
- *   7. 격리 사유 통합 (isolationSummary + isolation_reason + internal_note_ko)
+ *   ── [Algorithm-First] ──────────────────────────────────────────
+ *   3a. TemplateEngineService: pg_trgm 인텐트 검출 + 신뢰도 평가
+ *   3b. 신뢰도 ≥ 0.50 + 단일 인텐트 + 비-critical → 템플릿 즉시 조합 → DONE
+ *   ── [LLM-Fallback — 복합/고위험/모호한 10%] ───────────────────
+ *   4. 문화 프로파일 결정 + 프롬프트 빌드
+ *   5. LLM 호출 (Groq → Gemini → OpenAI)
+ *   6. 위험도 병합 (필터 floor + AI)
+ *   7. 격리 사유 통합
  *   8. DB 원자적 쓰기 (RPC)
  *   9. 활동 로그
  *
- * 격리 조건 (needsSecondaryReview):
+ * 격리 조건:
  *   - 1차 필터 트리거
- *   - AI risk_level 'medium' | 'high' | 'critical'
+ *   - AI/인텐트 risk_level 'medium'|'high'|'critical'
  *   - forbidden_check 플래그 any true
- *   - rating ≤ 3
  */
 
 import OpenAI from 'openai'
@@ -28,6 +30,10 @@ import {
   buildSystemPrompt,
   buildUserMessage,
 } from '@/services/aiService'
+import {
+  resolveTemplateForReview,
+  INTENT_SENTIMENT,
+} from '@/services/templateEngineService'
 
 // ── Provider URL map ──────────────────────────────────────────────────────────
 const PROVIDER_BASE_URLS: Record<string, string> = {
@@ -96,7 +102,7 @@ export class IntelligentOrchestrator {
     // ── 2. 1차 글로벌 키워드 필터 ────────────────────────────────────────────
     const filterResult = scanText(review.review_text ?? '', activeKeywords)
 
-    // ── 3. AI 프로바이더 선택 ─────────────────────────────────────────────────
+    // ── 3. AI 프로바이더 선택 (Algorithm + LLM 공통) ──────────────────────────
     const groqKey   = process.env.GROQ_API_KEY
     const geminiKey = process.env.GEMINI_API_KEY
     const openaiKey = process.env.OPENAI_API_KEY
@@ -146,6 +152,60 @@ export class IntelligentOrchestrator {
       ? `${branchData.data.name_ko}${branchData.data.name_en ? ' / ' + branchData.data.name_en : ''}`
       : review.branch_code
     const reviewerPreviousCount = repeatResult.count ?? 0
+
+    // ── 3a. [Algorithm-First] 인텐트 검출 → 템플릿 즉시 조합 ─────────────────
+    // 1차 필터 미트리거 리뷰만 알고리즘 경로 시도.
+    // 위험 키워드 감지 리뷰는 반드시 LLM이 깊이 분석.
+    if (!filterResult.triggered) {
+      const templateResult = await resolveTemplateForReview({
+        reviewText:        review.review_text ?? '',
+        reviewLang,
+        reviewerName:      review.reviewer_name,
+        branchDisplayName,   // branchData 이후 확보된 정식 표시명
+        admin,
+      })
+
+      if (!templateResult.shouldUseLlm) {
+        // ── 알고리즘 경로 — LLM 호출 완전 생략 ──────────────────────────────
+        const algoRisk    = templateResult.riskLevel ?? 'low'
+        const needsReview = ['medium', 'high', 'critical'].includes(algoRisk)
+        const finalStatus = needsReview ? 'pending_approval' : 'ai_done'
+        const sentiment   = INTENT_SENTIMENT[templateResult.topIntent ?? ''] ?? 'neutral'
+
+        const { error: rpcErr } = await admin.rpc('update_review_and_save_drafts', {
+          p_review_id:       reviewId,
+          p_status:          finalStatus,
+          p_risk_level:      algoRisk,
+          p_sentiment:       sentiment,
+          p_categories:      templateResult.topIntent ? [templateResult.topIntent] : [],
+          p_risk_reasons:    [],
+          p_forbidden_check: { refund_promise: false, legal_admission: false, cctv_mention: false, staff_discipline: false },
+          p_draft_short:     templateResult.draft_short,
+          p_draft_standard:  templateResult.draft_standard,
+          p_draft_careful:   templateResult.draft_careful,
+          p_model_name:      'template-engine-v1',
+          p_prompt_version:  'algo-v1',
+        })
+        if (rpcErr) throw new Error(`[Orchestrator/algo] RPC failed: ${rpcErr.message}`)
+
+        await admin.from('activity_logs').insert({
+          review_id:  reviewId,
+          actor_name: 'system:orchestrator',
+          action:     needsReview ? 'review_isolated' : 'algo_draft_generated',
+          detail: {
+            engine:         'algorithm_first',
+            intent:         templateResult.topIntent,
+            confidence:     templateResult.confidence,
+            risk_level:     algoRisk,
+            status:         finalStatus,
+            prompt_version: 'algo-v1',
+          },
+        })
+
+        return   // ← LLM 완전 생략
+      }
+      // shouldUseLlm=true → 아래 LLM 경로로 자연스럽게 진행
+    }
 
     // ── 문화 프로파일 결정 (PHASE 4: DB country_code 우선) ─────────────────────
     const culturalProfile = getCulturalProfile(
