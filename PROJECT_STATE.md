@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `486c0f4` (Wave 9)
+> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `8df258d` (Wave 10)
 
 ---
 
@@ -59,6 +59,14 @@
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
 
+### Wave 10 (Algorithm-First, LLM-Fallback 파이프라인)
+- **`supabase/migrations/005`**: `pg_trgm` + `review_intents`(20개) + `intent_keywords` + `reply_template_variants` + `detect_review_intent` RPC
+- **`templateEngineService.ts`**: Step A(pg_trgm 인텐트 검출) + Step B(신뢰도·다중인텐트·위험도 판단) + 랜덤 변형 선택 + 동적 변수 주입
+- **`IntelligentOrchestrator` (io-v4)**: 알고리즘 경로 우선, `shouldUseLlm=false` 시 LLM 호출 완전 생략
+- **템플릿 콘텐츠**: KO 5변형×11인텐트 + EN 5변형×5인텐트 = 80개 프로덕션 템플릿
+- **Fallback 조건**: confidence < 0.50 || 복수 인텐트 경합 || requires_llm || 템플릿 없음
+- tsc clean · commit `8df258d`
+
 ### Wave 9 (포용적 개선 의지 CS 헌법 + RISK 분류 정밀화)
 - **Global CS Constitution** — 불만/개선 언급 시 변명 금지, 구체적 개선 약속 시스템 프롬프트에 강제 탑재
 - **5개국 개선 의지 문구** — KR/US/AE/JP/CN/AR 각 언어에 현지화된 수용·발전 표현 내장
@@ -95,6 +103,7 @@
 | 평점 기반 격리 | ✅ 완료 | Wave 8: `ratingFloor` + `rating<=3` 조건 완전 제거. 오직 filterService·AI·forbidden_check 기반 격리 |
 | 한국어 한자 혼입 방지 | ✅ 완료 | Wave 8: KR 프로파일에 언어 순도 절대 규칙 + 시스템 프롬프트에 CRITICAL LANGUAGE PURITY 추가 |
 | 5개국 프롬프트 대개혁 | ✅ 완료 | Wave 8: KR/US/AE/JP/CN/AR 모두 현장 비즈니스 예법 기반으로 재작성 |
+| Algorithm-First 파이프라인 | ✅ 완료 | Wave 10: pg_trgm + TemplateEngineService + Orchestrator io-v4 |
 | `filterService` 패턴 DB 이관 | 🔴 미완 | 35개 패턴이 코드 내 하드코딩. `app_settings`로 이관 후 관리자 UI 편집 가능하도록 개편 필요 |
 | `ReviewsListClient` i18n | 🟡 부분 | 리뷰 목록 컴포넌트의 한국어 하드코딩 strings 아직 미번역 |
 | `badge.ts` 다국어화 | 🟡 부분 | `statusLabel`, `riskLabel` Korean only. Dashboard는 i18n dict 사용하므로 실질 영향 없음 |

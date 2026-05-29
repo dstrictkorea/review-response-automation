@@ -404,7 +404,82 @@ getCulturalProfile(branchCode, language)
 
 ---
 
-## 7. 위험도 병합 알고리즘 (floorRisk)
+## 7. Algorithm-First, LLM-Fallback 파이프라인 (Wave 10)
+
+```
+리뷰 인입
+    │
+    ▼
+filterService.scanText()
+    │
+    ├─ [위험 키워드 감지] ──────────────────────────────────► LLM Fallback (Step C)
+    │
+    ▼ [키워드 미감지]
+templateEngineService.resolveTemplateForReview()
+    │
+    ├─ Step A: detect_review_intent RPC (pg_trgm word_similarity)
+    │          intent_keywords 테이블에서 keyword ↔ review_text 유사도 계산
+    │          상위 3개 인텐트 + confidence score 반환
+    │
+    ├─ Step B: 신뢰도 평가 & 분기
+    │
+    │   confidence < 0.50 ──────────────────────────────────► LLM Fallback (복합/모호)
+    │   requires_llm=true ──────────────────────────────────► LLM Fallback (고위험)
+    │   2위 인텐트와 gap < 0.12 ─────────────────────────────► LLM Fallback (복수 불만)
+    │   DB 템플릿 없음 ─────────────────────────────────────► LLM Fallback
+    │
+    │   ▼ [Algorithm OK — 약 90% 해당]
+    │   reply_template_variants에서 랜덤 변형(1-5) 선택
+    │   {{reviewer_name}} / {{branch_name}} 동적 변수 주입
+    │   → draft_short / draft_standard / draft_careful 즉시 완성
+    │   → DB RPC 저장 (model='template-engine-v1', prompt_version='algo-v1')
+    │   → activity_log: 'algo_draft_generated'
+    │   → RETURN (LLM 호출 없음, 비용 0, 지연 ~50ms)
+    │
+    ▼ [LLM Fallback — 약 10%]
+    getCulturalProfile (DB country_code 우선)
+    buildSystemPrompt + buildUserMessage (aiService SSOT)
+    LLM 호출 (Groq → Gemini → OpenAI)
+    floorRisk (filter + AI)
+    DB RPC 저장 (model='llama-xxx', prompt_version='io-v4')
+    → activity_log: 'ai_draft_generated' or 'review_isolated'
+```
+
+### 20개 인텐트 매트릭스
+
+| 코드 | 한국어 | risk | LLM강제 |
+|---|---|---|---|
+| `positive_overall` | 긍정 전반 | low | - |
+| `immersive_exp` | 몰입 경험 | low | - |
+| `photo_zone` | 포토존/사진 | low | - |
+| `lighting_display` | 조명/전시물 | low | - |
+| `staff_praise` | 직원 칭찬 | low | - |
+| `child_friendly` | 가족/아이 | low | - |
+| `repeat_visit` | 재방문 의사 | low | - |
+| `crowd_complaint` | 혼잡 불만 | low | - |
+| `wait_time` | 대기시간 불만 | low | - |
+| `cleanliness` | 청결 불만 | low | - |
+| `ticket_price` | 가격 불만 | low | - |
+| `ticket_booking` | 예매/예약 불편 | low | - |
+| `staff_complaint` | 직원 불만 | medium | - |
+| `parking` | 주차 불편 | low | - |
+| `food_cafe` | 카페/식음료 | low | - |
+| `souvenir_merch` | 굿즈/기념품 | low | - |
+| `accessibility` | 장애인/접근성 | low | - |
+| `location_access` | 위치/교통 | low | - |
+| `safety_concern` | 안전 우려 | **high** | **✓** |
+| `refund_complaint` | 환불/보상 | **high** | **✓** |
+
+### 신뢰도 임계값 (templateEngineService.ts)
+
+| 상수 | 값 | 설명 |
+|---|---|---|
+| `CONFIDENCE_THRESHOLD` | 0.50 | 이 이상이어야 알고리즘 경로 |
+| `MULTI_INTENT_GAP` | 0.12 | 1위-2위 차이가 이 미만 → LLM |
+
+---
+
+## 8. 위험도 병합 알고리즘 (floorRisk)
 
 ```typescript
 finalRisk = MAX(
