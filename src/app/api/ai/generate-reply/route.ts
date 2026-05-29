@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
   const [branchData, repeatResult] = await Promise.all([
     supabase
       .from('branches')
-      .select('name_ko, name_en')
+      .select('name_ko, name_en, country_code')   // PHASE 4: country_code for dynamic profile
       .eq('code', review.branch_code)
       .maybeSingle(),
     reviewerName
@@ -143,7 +143,11 @@ export async function POST(request: NextRequest) {
 
   // ── 문화 프로파일 + 프롬프트 구성 (aiService SSOT) ──────────────────────────
   const reviewLang       = review.review_language ?? 'ko'
-  const culturalProfile  = getCulturalProfile(review.branch_code, reviewLang)
+  const culturalProfile  = getCulturalProfile(
+    review.branch_code,
+    reviewLang,
+    branchData.data?.country_code ?? null,   // PHASE 4: DB value takes priority
+  )
   const matchedTemplates = replyTemplates.filter((t) => t.language === reviewLang)
 
   const systemPrompt = buildSystemPrompt(culturalProfile, matchedTemplates)
@@ -183,20 +187,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `AI 초안 생성 실패: ${msg}` }, { status: 500 })
   }
 
-  // ── 위험도 병합 (필터 floor + AI + 평점) ─────────────────────────────────────
-  const ratingFloor    = review.rating != null && review.rating <= 2 ? 'high' : null
+  // ── 위험도 병합 (필터 floor + AI) — 평점 floor 폐기 (PHASE 1) ───────────────
   const finalRiskLevel = floorRisk(
     aiResult.risk_level,
     filterResult.triggered ? filterResult.maxRiskLevel : null,
-    ratingFloor,
   )
 
-  // ── 격리 필요 여부 ─────────────────────────────────────────────────────────
+  // ── 격리 필요 여부 — 평점 기반 격리 제거, 문맥·키워드 기반만 유지 ───────────
   const hasForbiddenFlag = Object.values(aiResult.forbidden_check ?? {}).some((v) => v === true)
   const needsReview =
     filterResult.triggered ||
     hasForbiddenFlag ||
-    (review.rating != null && review.rating <= 3) ||
     ['medium', 'high', 'critical'].includes(finalRiskLevel)
   const finalStatus = needsReview ? 'pending_approval' : 'ai_done'
 

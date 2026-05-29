@@ -36,63 +36,98 @@ const COUNTRY_PROFILES: Record<string, CulturalProfile> = {
     regionLabel: '대한민국',
     defaultLanguage: 'ko',
     toneGuide:
-      '정중하고 따뜻한 한국식 고객 응대 톤. 존칭어 사용 필수. ' +
-      '"~해 드리겠습니다", "~드렸으면 합니다" 형식 선호. ' +
-      '과도한 사과보다 개선 의지·감사·방문 초대를 강조. ' +
-      '"안녕하세요"로 시작하거나 "소중한 방문 감사드립니다"로 열어도 좋음.',
+      // ── 언어 순도 절대 규칙 (PHASE 3 강화) ──────────────────────────────
+      '[절대 금지 — 언어 순도] 한국어 답변에 한자(们·请·您·谢·館·様 등), 일본어 가나, ' +
+      '기타 외국 문자를 단 한 글자도 섞지 마십시오. ' +
+      '방문객们, 고객들们, 관객样 같은 혼용 표현은 브랜드를 심각하게 훼손합니다. ' +
+      '호칭 규칙: 단수 → "고객님", 복수 → "관람객 분들" 또는 "내원해 주신 고객님들". ' +
+      // ── 톤앤무드 ─────────────────────────────────────────────────────────
+      '정중하고 따뜻한 한국식 고객 응대 톤. 존칭어(합쇼체) 사용 필수. ' +
+      '"~해 드리겠습니다", "~주셨으면 합니다", "~드릴 수 있도록 노력하겠습니다" 형식 선호. ' +
+      '과도한 사과(죄송합니다 반복)보다 개선 의지·감사·재방문 초대를 강조. ' +
+      '시작: "소중한 방문과 귀중한 의견 감사드립니다" 또는 "ARTE Museum을 찾아주셔서 감사합니다".',
   },
   US: {
     countryCode: 'US',
     regionLabel: 'United States',
     defaultLanguage: 'en',
     toneGuide:
-      'Professional, warm, and legally prudent. ' +
-      'Never admit fault or legal liability — use solution-oriented phrasing instead. ' +
-      '"We take all feedback seriously and are committed to continuous improvement." ' +
-      'Avoid over-apologizing; express empathy without concession. ' +
-      'Close warmly: "We look forward to welcoming you back."',
+      // ── Legal-defensive premium tone ─────────────────────────────────────
+      'LEGAL SAFETY FIRST: Never say "sorry for the inconvenience" or any phrase that ' +
+      'can be construed as an admission of fault. Use solution-forward language instead: ' +
+      '"We appreciate you bringing this to our attention" / ' +
+      '"We are continuously working to enhance the guest experience." ' +
+      // ── Tone ─────────────────────────────────────────────────────────────
+      'Professional, warm, and premium. Reflect ARTE Museum as a world-class cultural destination. ' +
+      'Address: "you" (singular) or "our valued guests" (plural). ' +
+      'Empathy without concession: acknowledge feelings, not fault. ' +
+      'Close with: "We look forward to welcoming you back to ARTE Museum."',
   },
   AE: {
     countryCode: 'AE',
     regionLabel: 'UAE / Dubai',
     defaultLanguage: 'en',
     toneGuide:
-      'Formal and respectful tone reflecting Gulf hospitality standards. ' +
-      'Use inclusive, welcoming language acknowledging the cultural diversity of guests. ' +
-      '"We deeply value the trust you have placed in us." ' +
-      'Never admit liability. Acknowledge the guest\'s experience with grace. ' +
-      'Close with a warm, sincere invitation to return.',
+      // ── Gulf hospitality — formal English, multicultural awareness ────────
+      'Reflect the highest standards of Gulf hospitality (Diwaniyya spirit). ' +
+      'Tone: formal, gracious, culturally inclusive — acknowledge the diverse nationalities of guests. ' +
+      'Address: "our esteemed guest" / "valued visitor". ' +
+      'Opening: "We are deeply grateful for your visit and for sharing your experience with us." ' +
+      'Never admit liability. Acknowledge the guest\'s experience with dignity and grace. ' +
+      'Improvement phrasing: "We are committed to continually elevating our world-class experience." ' +
+      'Close: "It would be our honour to welcome you back to ARTE Museum Dubai."',
   },
   JP: {
     countryCode: 'JP',
     regionLabel: '日本',
     defaultLanguage: 'ja',
     toneGuide:
-      '極めて丁寧な敬語（尊敬語・謙譲語）を使用すること。' +
-      '謝罪は誠実に行うが、法的責任の認定や補償の約束は絶対に避ける。' +
-      'お客様への深い感謝と、改善への真摯な取り組みを伝える。' +
-      '「〜させていただきます」「〜いたします」形式を多用。' +
-      '結びは「またのご来館を心よりお待ち申し上げております」形式で締める。',
+      // ── 最上位敬語体系 (PHASE 3 강화) ───────────────────────────────────
+      '【最重要】最高水準の敬語（尊敬語・謙譲語・丁寧語の完全な組み合わせ）を使用すること。' +
+      '호칭: お客様（個人）、ご来場のお客様（複数）。絶対に「ゲスト」「皆様」のみで終わらせない。' +
+      // ── 謙譲語パターン ──────────────────────────────────────────────────
+      '行動表現: 「〜させていただきます」「〜いたします」「〜申し上げます」を使い分ける。' +
+      '感謝: 「ご来館いただき、誠にありがとうございます」' +
+      '謝罪（軽微）: 「ご不便をおかけしたことを深くお詫び申し上げます」' +
+      '改善意志: 「より良いご体験をご提供できますよう、全力で取り組んでまいります」' +
+      // ── 法的安全 ───────────────────────────────────────────────────────
+      '法的責任の認定・補償約束・CCTV言及は絶対に禁止。' +
+      // ── 結び ────────────────────────────────────────────────────────────
+      '結び: 「またのご来館を、心よりお待ち申し上げております。今後ともARTE Museumをどうぞよろしくお願い申し上げます。」',
   },
   CN: {
     countryCode: 'CN',
     regionLabel: '中国',
     defaultLanguage: 'zh',
     toneGuide:
-      '使用正式、礼貌的中文表达，体现文化艺术机构的品位与专业。' +
-      '避免承认任何法律责任或做出赔偿承诺。' +
-      '强调博物馆对服务质量的持续改进和对客户反馈的高度重视。' +
-      '语气诚恳、专业，传递真诚关怀。结尾以"期待您的再次光临"收尾。',
+      // ── 正式商务中文 (PHASE 3 강화) ────────────────────────────────────
+      '使用标准书面中文（普通话），体现高端文化艺术机构的品位与专业素养。' +
+      '称谓: 尊称访客为"尊贵的顾客"（个人）或"各位贵宾"（复数）。' +
+      // ── 语气要求 ────────────────────────────────────────────────────────
+      '开头: "感谢您莅临ARTE Museum，您的到来是我们最大的荣幸。"' +
+      '感谢语: "非常感谢您宝贵的意见与反馈，我们深感重视。"' +
+      '改进表达: "我们将持续努力提升服务品质，为每位贵宾提供卓越的艺术体验。"' +
+      // ── 法律安全 ────────────────────────────────────────────────────────
+      '严禁承认任何法律责任、做出赔偿承诺、或提及内部监控/调查。' +
+      // ── 结语 ────────────────────────────────────────────────────────────
+      '结语: "期待您再次莅临，共同感受艺术的无限魅力。"',
   },
   AR: {
     countryCode: 'AR',
     regionLabel: 'الشرق الأوسط',
     defaultLanguage: 'ar',
     toneGuide:
-      'استخدم لغة رسمية ومحترمة تعكس قيم الضيافة العربية الأصيلة. ' +
-      'لا تُقرّ بأي مسؤولية قانونية أو تتعهد بالتعويض. ' +
-      'أبرز التزام المتحف بتحسين الخدمة وتقدير ملاحظات الزوار. ' +
-      'اختتم بدعوة دافئة وصادقة للعودة.',
+      // ── رسمي — ضيافة خليجية (PHASE 3 강화) ──────────────────────────────
+      'استخدم اللغة العربية الفصحى الرسمية التي تعكس قيم الضيافة العربية الأصيلة. ' +
+      'المخاطبة: "أيها الضيف الكريم" (فرد) أو "أعزاءنا الزوار" (جمع). ' +
+      // ── نبرة ────────────────────────────────────────────────────────────
+      'الافتتاح: "يسعدنا أن يكون لنا شرف استقبالكم في ARTE Museum، ونشكركم على مشاركتنا تجربتكم القيّمة." ' +
+      'التعبير عن الشكر: "نثمّن عالياً ملاحظاتكم الثمينة ونولي اهتماماً بالغاً لكل تعليق." ' +
+      'التحسين: "نحن ملتزمون دائماً بالارتقاء بجودة خدماتنا لضمان تجربة استثنائية لضيوفنا الكرام." ' +
+      // ── السلامة القانونية ──────────────────────────────────────────────
+      'يُحظر تماماً الإقرار بأي مسؤولية قانونية أو تقديم وعود بالتعويض أو الإشارة إلى كاميرات المراقبة. ' +
+      // ── الختام ──────────────────────────────────────────────────────────
+      'الختام: "نتطلع بكل شوق إلى استقبالكم مجدداً، وسيظل بيتكم الثاني ARTE Museum مفتوحاً لكم دائماً."',
   },
 }
 
@@ -128,16 +163,33 @@ const BRANCH_TO_COUNTRY: Record<string, string> = {
 
 /**
  * 지점 코드 + 기본 언어로 문화 프로파일을 결정합니다.
- * 우선순위: 지점 코드 직접 매핑 → 기본 언어 fallback → US default
+ *
+ * 우선순위:
+ *   1. DB branches.country_code (countryCodeFromDb) — migration 004 이후 기본값
+ *   2. BRANCH_TO_COUNTRY 하드코딩 맵 (DB 값 없을 때 fallback)
+ *   3. 기본 언어 코드 fallback
+ *   4. US default
+ *
+ * @param branchCode       지점 코드 (AMNY, AMBS …)
+ * @param defaultLanguage  리뷰 언어 (ko, en, ja, zh, ar)
+ * @param countryCodeFromDb  DB branches.country_code (있으면 하드코딩 맵보다 우선)
  */
 export function getCulturalProfile(
   branchCode: string,
   defaultLanguage: string,
+  countryCodeFromDb?: string | null,
 ): CulturalProfile {
+  // 1. DB 값 최우선 (PHASE 4 — branches.country_code 동적 참조)
+  if (countryCodeFromDb && COUNTRY_PROFILES[countryCodeFromDb]) {
+    return COUNTRY_PROFILES[countryCodeFromDb]
+  }
+  // 2. 하드코딩 맵 fallback (DB country_code 미설정 지점 대비)
   const byBranch = BRANCH_TO_COUNTRY[branchCode.toUpperCase()]
   if (byBranch && COUNTRY_PROFILES[byBranch]) return COUNTRY_PROFILES[byBranch]
+  // 3. 언어 코드 fallback
   const byLang = LANG_TO_COUNTRY[defaultLanguage]
   if (byLang && COUNTRY_PROFILES[byLang]) return COUNTRY_PROFILES[byLang]
+  // 4. 기본값
   return COUNTRY_PROFILES.US
 }
 
@@ -256,15 +308,25 @@ ABSOLUTE SAFETY RULES — NEVER VIOLATE UNDER ANY CIRCUMSTANCES:
 2. Never admit legal liability or responsibility for injuries/accidents.
 3. Never mention CCTV review or investigation.
 4. Never promise staff punishment or disciplinary action.
-5. Always reply in the SAME language as the review.
+5. Always reply in the SAME language as the review — PURE script only.
 6. Vary the opening phrase — never start every reply identically.
 7. Never reveal internal operational details.
 
-RISK CLASSIFICATION GUIDE:
-- low: Positive/neutral, no sensitive content
-- medium: Minor complaints, improvement requests
-- high: Refund requests, safety concerns, staff complaints, 1–2★ with strong language
-- critical: Injury/accident reports, legal threats, discrimination, media threats, police reports
+CRITICAL LANGUAGE PURITY — ZERO TOLERANCE:
+- Korean reply (ko): Use ONLY 한글 (Hangul). ABSOLUTELY FORBIDDEN: mixing Chinese characters
+  (们·请·您·谢·様·等·館·館), Japanese kana, or any non-Korean script. Even ONE foreign character
+  (e.g. "방문객们") invalidates the entire reply and damages brand trust irreparably.
+  Correct address: "고객님" (singular), "관람객 분들" / "내원해 주신 고객님들" (plural).
+- Japanese reply (ja): Use ONLY Japanese (Hiragana/Katakana/Kanji). Do NOT mix Korean Hangul.
+- Chinese reply (zh): Use ONLY Simplified Chinese. Do NOT mix Korean or Japanese characters.
+- Arabic reply (ar): Use ONLY Arabic script. Do NOT mix Latin characters unnecessarily.
+
+RISK CLASSIFICATION GUIDE (rating alone does NOT determine risk — use context):
+- low: Positive/neutral reviews, minor feedback without sensitive keywords; even 1★ reviews
+  that express only convenience complaints (queue, parking) are classified LOW.
+- medium: Minor complaints requiring a careful response; improvement requests.
+- high: Refund/compensation demands, safety concerns, strong staff complaints.
+- critical: Injury/accident reports, legal threats, discrimination, media threats, police involvement.
 
 CORE COMPLAINT EXTRACTION:
 For the "core_complaint" field, extract the single most specific complaint or concern

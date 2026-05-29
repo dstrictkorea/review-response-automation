@@ -114,12 +114,6 @@ export class IntelligentOrchestrator {
                 : geminiKey ? (process.env.GEMINI_MODEL ?? 'gemini-2.0-flash-lite')
                 :             (process.env.OPENAI_MODEL ?? 'gpt-4o')
 
-    // ── 4. 문화 프로파일 + 프롬프트 구성 (aiService SSOT) ──────────────────────
-    const culturalProfile = getCulturalProfile(
-      review.branch_code,
-      review.review_language ?? 'ko',
-    )
-
     const preFilterNote = filterResult.triggered
       ? `\nPRE-FILTER ALERT — 글로벌 위험 키워드 필터가 다음 표현을 탐지했습니다:\n` +
         filterResult.matches
@@ -131,12 +125,12 @@ export class IntelligentOrchestrator {
         `Your isolation_reason MUST explicitly reference EACH detected expression.\n`
       : ''
 
-    // 지점 표시 이름 + 재방문 고객 감지 (병렬)
+    // ── 4. 지점 표시 이름 + 문화 프로파일 + 재방문 고객 감지 (병렬) ────────────
     const reviewerName = review.reviewer_name?.trim()
     const [branchData, repeatResult] = await Promise.all([
       admin
         .from('branches')
-        .select('name_ko, name_en')
+        .select('name_ko, name_en, country_code')   // PHASE 4: country_code for dynamic profile
         .eq('code', review.branch_code)
         .maybeSingle(),
       reviewerName
@@ -152,6 +146,13 @@ export class IntelligentOrchestrator {
       ? `${branchData.data.name_ko}${branchData.data.name_en ? ' / ' + branchData.data.name_en : ''}`
       : review.branch_code
     const reviewerPreviousCount = repeatResult.count ?? 0
+
+    // ── 문화 프로파일 결정 (PHASE 4: DB country_code 우선) ─────────────────────
+    const culturalProfile = getCulturalProfile(
+      review.branch_code,
+      review.review_language ?? 'ko',
+      branchData.data?.country_code ?? null,
+    )
 
     const systemPrompt = buildSystemPrompt(culturalProfile, matchedTemplates)
     const userMessage  = buildUserMessage({
@@ -185,12 +186,12 @@ export class IntelligentOrchestrator {
 
     const result = JSON.parse(jsonMatch[0]) as LLMResult
 
-    // ── 6. 위험도 병합 (필터 floor + AI + 평점) ─────────────────────────────
-    const ratingFloor = review.rating != null && review.rating <= 2 ? 'high' : null
+    // ── 6. 위험도 병합 (필터 floor + AI) ────────────────────────────────────
+    // 평점 기반 격리 폐기 (PHASE 1) — 낮은 별점 자체는 위험 신호가 아님.
+    // 오직 위험 키워드 적발 또는 AI 문맥 판정(medium+)만 격리 트리거.
     const finalRisk   = floorRisk(
       result.risk_level,
       filterResult.triggered ? filterResult.maxRiskLevel : null,
-      ratingFloor,
     )
 
     // ── 7. 격리 사유 통합 ────────────────────────────────────────────────────
@@ -210,7 +211,6 @@ export class IntelligentOrchestrator {
 
     const needsSecondaryReview =
       filterResult.triggered ||
-      (review.rating != null && review.rating <= 3) ||
       ['medium', 'high', 'critical'].includes(finalRisk) ||
       hasForbiddenFlag
 
