@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ReviewDetailClient from './ReviewDetailClient'
-import type { Review, ReplyDraft, ActivityLog } from '@/types/database'
+import type { Review, ReplyDraft, ActivityLog, UserRole } from '@/types/database'
 
 export default async function ReviewDetailPage({
   params,
@@ -11,6 +11,17 @@ export default async function ReviewDetailPage({
 }) {
   const { id } = await params
   const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+    : { data: null }
+
+  // admin/director → director 권한, 그 외 → marketing_staff
+  const userRole: UserRole =
+    profile?.role === 'admin' || profile?.role === 'director'
+      ? 'director'
+      : 'marketing_staff'
 
   const [{ data: review }, { data: draft }, { data: logs }] = await Promise.all([
     supabase.from('reviews').select('*').eq('id', id).single(),
@@ -38,6 +49,7 @@ export default async function ReviewDetailPage({
         review={review as Review}
         draft={draft as ReplyDraft | null}
         logs={(logs as ActivityLog[]) ?? []}
+        userRole={userRole}
       />
     </div>
   )

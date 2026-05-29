@@ -1,3 +1,5 @@
+export type UserRole = 'marketing_staff' | 'director'
+
 export type ReviewStatus =
   | 'new'
   | 'ai_done'

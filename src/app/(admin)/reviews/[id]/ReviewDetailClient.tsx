@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import type { Review, ReplyDraft, ActivityLog, ReviewStatus, RiskLevel } from '@/types/database'
+import type { Review, ReplyDraft, ActivityLog, ReviewStatus, RiskLevel, UserRole } from '@/types/database'
 import { statusLabel, statusClasses, riskLabel, riskClasses } from '@/lib/badges'
 import { approveReview, escalateReview, markNoReply, markPublished, saveDraft, resetReviewStatus, deleteReview } from './actions'
+import ReviewActionPanel, { type ReviewPanelAction } from '@/components/dashboard/ReviewActionPanel'
 
 interface Props {
   review: Review
   draft: ReplyDraft | null
   logs: ActivityLog[]
+  userRole: UserRole
 }
 
 const actionLabels: Record<string, string> = {
@@ -75,7 +77,7 @@ function getChannelAdminUrl(channelCode: string, reviewUrl?: string | null): str
   return CHANNEL_ADMIN_URLS[channelCode.toLowerCase()] ?? ''
 }
 
-export default function ReviewDetailClient({ review: initialReview, draft: initialDraft, logs: initialLogs }: Props) {
+export default function ReviewDetailClient({ review: initialReview, draft: initialDraft, logs: initialLogs, userRole }: Props) {
   const [review, setReview] = useState(initialReview)
   const [draft, setDraft] = useState(initialDraft)
   const [logs] = useState(initialLogs)
@@ -207,6 +209,36 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         window.location.reload()
       }
     })
+  }
+
+  /** ReviewActionPanel 액션 → 기존 서버 액션으로 매핑 */
+  function handlePanelAction(action: ReviewPanelAction) {
+    switch (action) {
+      case 'publish':
+        // marketing_staff: Google이면 직접 게시, 아니면 복사+이동
+        if (review.channel_code === 'google') {
+          handleGooglePost()
+        } else {
+          handleCopyAndOpen()
+        }
+        break
+      case 'escalate':
+        // 관장 결재 요청 = 에스컬레이션
+        handleAction(() => escalateReview(review.id), '관장 결재 요청이 접수되었습니다.')
+        break
+      case 'approve':
+        // director: 전결 승인 (승인 후 바로 게시 완료 처리)
+        handleAction(async () => {
+          const approveResult = await approveReview(review.id, editedReply)
+          if (approveResult.error) return approveResult
+          return markPublished(review.id)
+        }, '지점장 전결 승인 및 게시 완료 처리되었습니다.')
+        break
+      case 'hq_escalate':
+        // 본사 이관 = 에스컬레이션 (HQ)
+        handleAction(() => escalateReview(review.id), '본사(HQ) 이관 처리되었습니다.')
+        break
+    }
   }
 
   const selectedDraftText =
@@ -520,107 +552,124 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">처리 액션</h3>
+      {/* 역할 기반 주요 액션 패널 */}
+      <ReviewActionPanel
+        role={userRole}
+        channel={review.channel_code}
+        isLoading={isPending || isGooglePosting}
+        onAction={handlePanelAction}
+      />
 
-        <div className="flex flex-wrap gap-3">
-          {canApprove && (
-            <button
-              onClick={() =>
-                handleAction(
-                  () => approveReview(review.id, editedReply),
-                  '답변이 승인되었습니다.'
-                )
-              }
-              disabled={isPending || !editedReply.trim()}
-              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
-            >
-              승인
-            </button>
-          )}
+      {/* director 전용: 고급 처리 옵션 */}
+      {userRole === 'director' && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">고급 처리 옵션</h3>
 
-          {/* Google 리뷰: 직접 API 게시 */}
-          {canPublish && review.channel_code === 'google' && (
-            <button
-              onClick={handleGooglePost}
-              disabled={isPending || isGooglePosting || !editedReply.trim()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {isGooglePosting ? '게시 중...' : '🔵 Google에 직접 게시'}
-            </button>
-          )}
+          <div className="flex flex-wrap gap-3">
+            {canApprove && (
+              <button
+                onClick={() =>
+                  handleAction(
+                    () => approveReview(review.id, editedReply),
+                    '답변이 승인되었습니다.'
+                  )
+                }
+                disabled={isPending || !editedReply.trim()}
+                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                승인
+              </button>
+            )}
 
-          {/* 비 Google 채널: 답변 복사 + 관리자 딥링크 원클릭 */}
-          {canPublish && review.channel_code !== 'google' && (
-            <button
-              onClick={handleCopyAndOpen}
-              disabled={isPending || !editedReply.trim()}
-              title={
-                getChannelAdminUrl(review.channel_code, review.review_url)
-                  ? `답변을 복사하고 ${review.channel_code} 관리자 페이지를 새 탭으로 엽니다`
-                  : '답변을 클립보드에 복사합니다'
-              }
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-            >
-              📋 답변 복사 + 관리자 이동
-            </button>
-          )}
+            {/* Google 리뷰: 직접 API 게시 */}
+            {canPublish && review.channel_code === 'google' && (
+              <button
+                onClick={handleGooglePost}
+                disabled={isPending || isGooglePosting || !editedReply.trim()}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {isGooglePosting ? '게시 중...' : '🔵 Google에 직접 게시'}
+              </button>
+            )}
 
-          {/* 게시 완료 확인 버튼 — 모든 채널 (플랫폼에 실제 게시한 뒤 클릭) */}
-          {canPublish && (
-            <button
-              onClick={() => handleAction(() => markPublished(review.id), '게시 완료 처리되었습니다.')}
-              disabled={isPending}
-              className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
-            >
-              {review.channel_code === 'google' ? '수동 게시 완료 처리' : '✓ 게시 완료 처리'}
-            </button>
-          )}
+            {/* 비 Google 채널: 답변 복사 + 관리자 딥링크 원클릭 */}
+            {canPublish && review.channel_code !== 'google' && (
+              <button
+                onClick={handleCopyAndOpen}
+                disabled={isPending || !editedReply.trim()}
+                title={
+                  getChannelAdminUrl(review.channel_code, review.review_url)
+                    ? `답변을 복사하고 ${review.channel_code} 관리자 페이지를 새 탭으로 엽니다`
+                    : '답변을 클립보드에 복사합니다'
+                }
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                📋 답변 복사 + 관리자 이동
+              </button>
+            )}
 
-          {review.status !== 'no_reply' && review.status !== 'manual_published' && (
-            <button
-              onClick={() => handleAction(() => markNoReply(review.id), '답변 불필요 처리되었습니다.')}
-              disabled={isPending}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-            >
-              답변 불필요
-            </button>
-          )}
+            {/* 게시 완료 확인 버튼 — 모든 채널 (플랫폼에 실제 게시한 뒤 클릭) */}
+            {canPublish && (
+              <button
+                onClick={() => handleAction(() => markPublished(review.id), '게시 완료 처리되었습니다.')}
+                disabled={isPending}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
+              >
+                {review.channel_code === 'google' ? '수동 게시 완료 처리' : '✓ 게시 완료 처리'}
+              </button>
+            )}
 
-          {review.status !== 'escalated' && (
-            <button
-              onClick={() => handleAction(() => escalateReview(review.id), '에스컬레이션 처리되었습니다.')}
-              disabled={isPending}
-              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
-            >
-              에스컬레이션
-            </button>
-          )}
+            {review.status !== 'no_reply' && review.status !== 'manual_published' && (
+              <button
+                onClick={() => handleAction(() => markNoReply(review.id), '답변 불필요 처리되었습니다.')}
+                disabled={isPending}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                답변 불필요
+              </button>
+            )}
 
-          {/* 상태 되돌리기 */}
-          {REVERT_STATUS[review.status] && (
-            <button
-              onClick={() =>
-                handleAction(
-                  () => resetReviewStatus(review.id, REVERT_STATUS[review.status]!),
-                  '상태가 되돌려졌습니다.'
-                )
-              }
-              disabled={isPending}
-              className="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 transition-colors"
-            >
-              ↩ {REVERT_LABEL[review.status]}
-            </button>
+            {review.status !== 'escalated' && (
+              <button
+                onClick={() => handleAction(() => escalateReview(review.id), '에스컬레이션 처리되었습니다.')}
+                disabled={isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                에스컬레이션
+              </button>
+            )}
+
+            {/* 상태 되돌리기 */}
+            {REVERT_STATUS[review.status] && (
+              <button
+                onClick={() =>
+                  handleAction(
+                    () => resetReviewStatus(review.id, REVERT_STATUS[review.status]!),
+                    '상태가 되돌려졌습니다.'
+                  )
+                }
+                disabled={isPending}
+                className="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 transition-colors"
+              >
+                ↩ {REVERT_LABEL[review.status]}
+              </button>
+            )}
+          </div>
+
+          {actionMessage && (
+            <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
+              {actionMessage}
+            </div>
           )}
         </div>
+      )}
 
-        {actionMessage && (
-          <div className="mt-3 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
-            {actionMessage}
-          </div>
-        )}
-      </div>
+      {/* marketing_staff 전용: 액션 결과 메시지 */}
+      {userRole === 'marketing_staff' && actionMessage && (
+        <div className="rounded-xl bg-green-50 border border-green-200 px-5 py-3 text-sm text-green-700">
+          {actionMessage}
+        </div>
+      )}
 
       {/* 리뷰 삭제 */}
       <div className="bg-white rounded-xl border border-red-100 p-5">

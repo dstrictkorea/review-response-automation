@@ -5,6 +5,7 @@ import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
 import ReviewsListClient from '../reviews/ReviewsListClient'
 import DashboardStats from './DashboardStats'
 import DashboardFilterBar from './DashboardFilterBar'
+import DashboardCharts from '@/components/dashboard/DashboardCharts'
 
 const PENDING_PAGE_SIZE = 20
 
@@ -136,6 +137,9 @@ export default async function DashboardPage({
 
       {/* ── 기간별 지표 (클라이언트 컴포넌트) ───────────────────────────────── */}
       <DashboardStats allReviews={allReviews} />
+
+      {/* ── 지점별 차트 ─────────────────────────────────────────────────────── */}
+      <DashboardCharts allData={allReviews} />
 
       {/* ── 처리 대기 리뷰 ────────────────────────────────────────────────── */}
       <div className="mb-8">
