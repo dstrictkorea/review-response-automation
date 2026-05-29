@@ -236,6 +236,10 @@ export async function POST(request: NextRequest) {
     forbidden_check:      aiResult.forbidden_check,
     prompt_version:       'gr-v3',
     model_name:           model,
+    // ── 텔레메트리 (Wave 11) — 수동 생성은 항상 LLM 경로 ────────────────────
+    pipeline_engine:      'llm',
+    intent_code:          aiResult.categories?.[0] ?? null,
+    intent_confidence:    null,
     updated_at:           new Date().toISOString(),
   }
 

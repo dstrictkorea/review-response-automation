@@ -71,8 +71,21 @@ export interface ReplyDraft {
   forbidden_check: ForbiddenCheck | null
   prompt_version: string | null
   model_name: string | null
+  // ── Wave 11 텔레메트리 ──────────────────────────────────────────────────
+  intent_code: string | null
+  intent_confidence: number | null
+  pipeline_engine: 'template' | 'llm' | null
   created_at: string
   updated_at: string
+}
+
+/** 리뷰 행에 조인되는 경량 텔레메트리 (목록 그리드 배지용) */
+export interface ReviewTelemetry {
+  intent_code: string | null
+  intent_confidence: number | null
+  pipeline_engine: string | null
+  model_name: string | null
+  prompt_version: string | null
 }
 
 export interface ForbiddenCheck {

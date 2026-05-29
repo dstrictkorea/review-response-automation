@@ -56,9 +56,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // ── Run orchestrator ───────────────────────────────────────────────────────
   try {
     await IntelligentOrchestrator.processReview(review_id)
-  } catch (err: any) {
-    console.error('[re-process] Orchestrator failed:', err.message)
-    return NextResponse.json({ error: err.message ?? 'AI 재분석 중 오류가 발생했습니다.' }, { status: 500 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[re-process] Orchestrator failed:', msg)
+    return NextResponse.json({ error: msg || 'AI 재분석 중 오류가 발생했습니다.' }, { status: 500 })
   }
 
   // ── Return updated review + draft ──────────────────────────────────────────

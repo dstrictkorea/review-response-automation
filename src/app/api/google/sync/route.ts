@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     do {
       const data = await listGoogleReviews(ga.google_location_name, token, nextPageToken)
-      const reviews: any[] = data.reviews ?? []
+      const reviews = data.reviews ?? []
       nextPageToken = data.nextPageToken
 
       for (const review of reviews) {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       .eq('id', googleAccountId)
 
     return NextResponse.json({ success: true, imported })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
 }

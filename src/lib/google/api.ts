@@ -57,7 +57,25 @@ export async function listGoogleLocations(accountName: string, token: string) {
   )
 }
 
-export async function listGoogleReviews(locationName: string, token: string, pageToken?: string) {
+/** Google Business Profile v4 리뷰 객체 (사용 필드만) */
+export interface GoogleReview {
+  name: string
+  reviewer?: { displayName?: string | null }
+  starRating: string
+  comment?: string | null
+  createTime?: string | null
+}
+
+export interface GoogleReviewsResponse {
+  reviews?: GoogleReview[]
+  nextPageToken?: string
+}
+
+export async function listGoogleReviews(
+  locationName: string,
+  token: string,
+  pageToken?: string,
+): Promise<GoogleReviewsResponse> {
   const url = new URL(`https://mybusiness.googleapis.com/v4/${locationName}/reviews`)
   url.searchParams.set('pageSize', '50')
   if (pageToken) url.searchParams.set('pageToken', pageToken)

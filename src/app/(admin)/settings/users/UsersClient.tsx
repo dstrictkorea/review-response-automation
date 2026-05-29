@@ -18,7 +18,6 @@ export interface UserRow {
   created_at: string
 }
 
-const roleLabel: Record<string, string> = { admin: '관리자', staff: '일반' }
 const roleClasses: Record<string, string> = {
   admin: 'bg-blue-100 text-blue-700',
   staff: 'bg-gray-100 text-gray-700',

@@ -40,6 +40,12 @@ function elapsedLabel(dateStr: string | null): string | null {
   return `${Math.floor(hours / 24)}일 전`
 }
 
+/** 경과 일수 — 모듈 레벨 헬퍼 (렌더 중 Date.now() 직접 호출 회피) */
+function elapsedDaysSince(dateStr: string | null): number | null {
+  if (!dateStr) return null
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
+}
+
 // 현재 상태에서 되돌릴 수 있는 상태 맵
 const REVERT_STATUS: Partial<Record<string, string>> = {
   ai_done: 'new',
@@ -283,9 +289,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   const isActive = ACTIVE_STATUSES.has(review.status)
   const reviewDateStr = review.review_created_at ?? null
   const elapsedStr = elapsedLabel(reviewDateStr)
-  const elapsedDays = reviewDateStr
-    ? Math.floor((Date.now() - new Date(reviewDateStr).getTime()) / 86400000)
-    : null
+  const elapsedDays = elapsedDaysSince(reviewDateStr)
   const isSlaWarning = isActive && elapsedDays !== null && elapsedDays >= 3
 
   return (

@@ -123,6 +123,52 @@ export interface I18nDict {
   risk_medium: string
   risk_high: string
   risk_critical: string
+
+  // ── Reviews list view (Wave 11) ──────────────────────────────────────────────
+  rv_col_date: string
+  rv_col_elapsed: string
+  rv_col_branch: string
+  rv_col_channel: string
+  rv_col_rating: string
+  rv_col_status: string
+  rv_col_risk: string
+  rv_col_intent: string
+  rv_col_pipeline: string
+  rv_col_preview: string
+  rv_view_detail: string
+  rv_pipeline_template: string
+  rv_pipeline_llm: string
+  rv_empty: string
+  rv_today: string
+  rv_filter_status: string
+  rv_filter_rating: string
+  rv_filter_risk: string
+  rv_filter_reset: string
+  rv_per_page: string
+  rv_prev: string
+  rv_next: string
+  // batch
+  rv_batch_selected: string
+  rv_draft_type: string
+  rv_generate: string
+  rv_deselect: string
+  rv_processing: string
+  rv_cancel: string
+  rv_draft_standard: string
+  rv_draft_short: string
+  rv_draft_careful: string
+  // drawer
+  rv_drawer_reply: string
+  rv_save: string
+  rv_saving: string
+  rv_saved: string
+  rv_edited: string
+  rv_open_full: string
+  rv_close: string
+  rv_confidence: string
+  rv_cs_guide: string
+  rv_original_review: string
+  rv_no_draft: string
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -214,6 +260,49 @@ export const DICT: Record<Language, I18nDict> = {
     risk_medium: '보통',
     risk_high: '높음',
     risk_critical: '위험',
+
+    rv_col_date: '작성일',
+    rv_col_elapsed: '경과',
+    rv_col_branch: '지점',
+    rv_col_channel: '채널',
+    rv_col_rating: '별점',
+    rv_col_status: '상태',
+    rv_col_risk: '위험도',
+    rv_col_intent: '인텐트',
+    rv_col_pipeline: '파이프라인',
+    rv_col_preview: '리뷰 / 답변 초안',
+    rv_view_detail: '상세',
+    rv_pipeline_template: '템플릿',
+    rv_pipeline_llm: 'AI',
+    rv_empty: '해당 조건의 리뷰가 없습니다.',
+    rv_today: '오늘',
+    rv_filter_status: '상태',
+    rv_filter_rating: '별점',
+    rv_filter_risk: '위험도',
+    rv_filter_reset: '초기화',
+    rv_per_page: '쪽당',
+    rv_prev: '이전',
+    rv_next: '다음',
+    rv_batch_selected: '신규 선택',
+    rv_draft_type: '답변 유형',
+    rv_generate: 'AI 초안 생성',
+    rv_deselect: '선택 해제',
+    rv_processing: '처리 중',
+    rv_cancel: '취소',
+    rv_draft_standard: '표준',
+    rv_draft_short: '짧게',
+    rv_draft_careful: '조심스럽게',
+    rv_drawer_reply: '답변 초안',
+    rv_save: '저장',
+    rv_saving: '저장 중...',
+    rv_saved: '저장됨',
+    rv_edited: '수정됨',
+    rv_open_full: '전체 상세 페이지 열기',
+    rv_close: '닫기',
+    rv_confidence: '신뢰도',
+    rv_cs_guide: '불편/개선 의견에는 변명 없이 "경청하고 개선하겠다"는 뉘앙스를 유지하세요.',
+    rv_original_review: '원문 리뷰',
+    rv_no_draft: '아직 생성된 답변 초안이 없습니다.',
   },
 
   en: {
@@ -304,6 +393,49 @@ export const DICT: Record<Language, I18nDict> = {
     risk_medium: 'Medium',
     risk_high: 'High',
     risk_critical: 'Critical',
+
+    rv_col_date: 'Date',
+    rv_col_elapsed: 'Age',
+    rv_col_branch: 'Branch',
+    rv_col_channel: 'Channel',
+    rv_col_rating: 'Rating',
+    rv_col_status: 'Status',
+    rv_col_risk: 'Risk',
+    rv_col_intent: 'Intent',
+    rv_col_pipeline: 'Pipeline',
+    rv_col_preview: 'Review / Draft',
+    rv_view_detail: 'Detail',
+    rv_pipeline_template: 'Template',
+    rv_pipeline_llm: 'AI',
+    rv_empty: 'No reviews match the current filter.',
+    rv_today: 'Today',
+    rv_filter_status: 'Status',
+    rv_filter_rating: 'Rating',
+    rv_filter_risk: 'Risk',
+    rv_filter_reset: 'Reset',
+    rv_per_page: 'per page',
+    rv_prev: 'Prev',
+    rv_next: 'Next',
+    rv_batch_selected: 'new selected',
+    rv_draft_type: 'Draft type',
+    rv_generate: 'Generate AI drafts',
+    rv_deselect: 'Deselect',
+    rv_processing: 'Processing',
+    rv_cancel: 'Cancel',
+    rv_draft_standard: 'Standard',
+    rv_draft_short: 'Short',
+    rv_draft_careful: 'Careful',
+    rv_drawer_reply: 'Reply Draft',
+    rv_save: 'Save',
+    rv_saving: 'Saving...',
+    rv_saved: 'Saved',
+    rv_edited: 'Edited',
+    rv_open_full: 'Open full detail page',
+    rv_close: 'Close',
+    rv_confidence: 'Confidence',
+    rv_cs_guide: 'For complaints, keep the "we hear you and will improve" tone — never make excuses.',
+    rv_original_review: 'Original Review',
+    rv_no_draft: 'No reply draft has been generated yet.',
   },
 
   ja: {
@@ -394,6 +526,49 @@ export const DICT: Record<Language, I18nDict> = {
     risk_medium: '中',
     risk_high: '高',
     risk_critical: '危険',
+
+    rv_col_date: '日付',
+    rv_col_elapsed: '経過',
+    rv_col_branch: '拠点',
+    rv_col_channel: 'チャネル',
+    rv_col_rating: '評価',
+    rv_col_status: 'ステータス',
+    rv_col_risk: 'リスク',
+    rv_col_intent: 'インテント',
+    rv_col_pipeline: 'パイプライン',
+    rv_col_preview: 'レビュー / 返信案',
+    rv_view_detail: '詳細',
+    rv_pipeline_template: 'テンプレート',
+    rv_pipeline_llm: 'AI',
+    rv_empty: '該当するレビューがありません。',
+    rv_today: '本日',
+    rv_filter_status: 'ステータス',
+    rv_filter_rating: '評価',
+    rv_filter_risk: 'リスク',
+    rv_filter_reset: 'リセット',
+    rv_per_page: '件/頁',
+    rv_prev: '前へ',
+    rv_next: '次へ',
+    rv_batch_selected: '新規選択',
+    rv_draft_type: '返信タイプ',
+    rv_generate: 'AI返信案を生成',
+    rv_deselect: '選択解除',
+    rv_processing: '処理中',
+    rv_cancel: 'キャンセル',
+    rv_draft_standard: '標準',
+    rv_draft_short: '簡潔',
+    rv_draft_careful: '丁寧',
+    rv_drawer_reply: '返信案',
+    rv_save: '保存',
+    rv_saving: '保存中...',
+    rv_saved: '保存済み',
+    rv_edited: '編集済み',
+    rv_open_full: '詳細ページを開く',
+    rv_close: '閉じる',
+    rv_confidence: '信頼度',
+    rv_cs_guide: 'ご不満・改善点には言い訳せず「真摯に受け止め改善する」トーンを保ってください。',
+    rv_original_review: '元のレビュー',
+    rv_no_draft: '返信案はまだ生成されていません。',
   },
 
   zh: {
@@ -484,5 +659,48 @@ export const DICT: Record<Language, I18nDict> = {
     risk_medium: '中',
     risk_high: '高',
     risk_critical: '危险',
+
+    rv_col_date: '日期',
+    rv_col_elapsed: '经过',
+    rv_col_branch: '地点',
+    rv_col_channel: '渠道',
+    rv_col_rating: '评分',
+    rv_col_status: '状态',
+    rv_col_risk: '风险',
+    rv_col_intent: '意图',
+    rv_col_pipeline: '管线',
+    rv_col_preview: '评价 / 回复草稿',
+    rv_view_detail: '详情',
+    rv_pipeline_template: '模板',
+    rv_pipeline_llm: 'AI',
+    rv_empty: '没有符合条件的评价。',
+    rv_today: '今天',
+    rv_filter_status: '状态',
+    rv_filter_rating: '评分',
+    rv_filter_risk: '风险',
+    rv_filter_reset: '重置',
+    rv_per_page: '条/页',
+    rv_prev: '上一页',
+    rv_next: '下一页',
+    rv_batch_selected: '新增已选',
+    rv_draft_type: '回复类型',
+    rv_generate: '生成AI草稿',
+    rv_deselect: '取消选择',
+    rv_processing: '处理中',
+    rv_cancel: '取消',
+    rv_draft_standard: '标准',
+    rv_draft_short: '简短',
+    rv_draft_careful: '谨慎',
+    rv_drawer_reply: '回复草稿',
+    rv_save: '保存',
+    rv_saving: '保存中...',
+    rv_saved: '已保存',
+    rv_edited: '已编辑',
+    rv_open_full: '打开完整详情页',
+    rv_close: '关闭',
+    rv_confidence: '置信度',
+    rv_cs_guide: '面对不便/改进意见，请保持"虚心倾听并积极改进"的语气，切勿辩解。',
+    rv_original_review: '原始评价',
+    rv_no_draft: '尚未生成回复草稿。',
   },
 }

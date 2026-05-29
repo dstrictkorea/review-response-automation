@@ -28,13 +28,6 @@ export interface ImportResult {
 // ── 해시 유틸리티 ──────────────────────────────────────────────────────────────
 
 /**
- * 텍스트 정규화 — 공백 압축 + 소문자 + 트림
- */
-function normalizeText(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim()
-}
-
-/**
  * 텍스트 클리닝 — 모든 공백·특수문자 제거 (해시 입력 전처리용)
  */
 function cleanText(text: string): string {

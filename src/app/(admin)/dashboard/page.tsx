@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { Review } from '@/types/database'
+import type { Review, ReviewTelemetry } from '@/types/database'
 import DashboardPageContent from './DashboardPageContent'
 
 const PENDING_PAGE_SIZE = 20
@@ -78,18 +78,26 @@ export default async function DashboardPage({
   const allReviews: Review[]     = (allData     ?? []) as unknown as Review[]
   const pendingReviews: Review[] = (pendingData ?? []) as unknown as Review[]
 
-  // ── 초안 미리보기 맵 ──────────────────────────────────────────────────────────
+  // ── 초안 미리보기 + 텔레메트리 맵 ─────────────────────────────────────────────
   const pendingIds = pendingReviews.map((r) => r.id)
   const { data: pendingDrafts } = pendingIds.length
     ? await supabase
         .from('reply_drafts')
-        .select('review_id, selected_reply')
+        .select('review_id, selected_reply, intent_code, intent_confidence, pipeline_engine, model_name, prompt_version')
         .in('review_id', pendingIds)
     : { data: [] }
 
   const pendingDraftMap: Record<string, string> = {}
+  const pendingTelemetryMap: Record<string, ReviewTelemetry> = {}
   for (const d of pendingDrafts ?? []) {
     if (d.selected_reply) pendingDraftMap[d.review_id] = d.selected_reply
+    pendingTelemetryMap[d.review_id] = {
+      intent_code:       d.intent_code ?? null,
+      intent_confidence: d.intent_confidence ?? null,
+      pipeline_engine:   d.pipeline_engine ?? null,
+      model_name:        d.model_name ?? null,
+      prompt_version:    d.prompt_version ?? null,
+    }
   }
 
   // ── 역할 판별 ──────────────────────────────────────────────────────────────────
@@ -137,6 +145,7 @@ export default async function DashboardPage({
       allReviews={allReviews}
       pendingReviews={pendingReviews}
       pendingDraftMap={pendingDraftMap}
+      pendingTelemetryMap={pendingTelemetryMap}
       pendingTotal={pendingTotal}
       page={page}
       offset={offset}

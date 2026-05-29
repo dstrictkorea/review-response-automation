@@ -56,7 +56,7 @@ export default function GoogleSettingsClient({
       flash('동기화 중...', true)
       const res = await syncGoogleReviewsAction(accountId)
       if (res.error) flash(res.error, false)
-      else flash(`리뷰 ${(res as any).imported}건 가져왔습니다.`)
+      else flash(`리뷰 ${(res as { imported?: number }).imported ?? 0}건 가져왔습니다.`)
     })
   }
 

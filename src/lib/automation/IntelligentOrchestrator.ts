@@ -79,12 +79,10 @@ export class IntelligentOrchestrator {
     const admin = createAdminClient()
 
     // ── 1. 병렬 조회 ────────────────────────────────────────────────────────
-    const [reviewRes, keywordsRes, templatesRes, branchRes] = await Promise.all([
+    const [reviewRes, keywordsRes, templatesRes] = await Promise.all([
       admin.from('reviews').select('*').eq('id', reviewId).single(),
       admin.from('app_settings').select('value').eq('key', 'risk_keywords').maybeSingle(),
       admin.from('app_settings').select('value').eq('key', 'reply_templates').maybeSingle(),
-      // 지점 정보 (문화 프로파일 결정용)
-      admin.from('reviews').select('branch_code').eq('id', reviewId).single(),
     ])
 
     if (reviewRes.error || !reviewRes.data) {
@@ -188,6 +186,16 @@ export class IntelligentOrchestrator {
         })
         if (rpcErr) throw new Error(`[Orchestrator/algo] RPC failed: ${rpcErr.message}`)
 
+        // ── 텔레메트리 (Wave 11) — Algorithm-First 경로 ────────────────────
+        await admin
+          .from('reply_drafts')
+          .update({
+            pipeline_engine:   'template',
+            intent_code:       templateResult.topIntent,
+            intent_confidence: templateResult.confidence,
+          })
+          .eq('review_id', reviewId)
+
         await admin.from('activity_logs').insert({
           review_id:  reviewId,
           actor_name: 'system:orchestrator',
@@ -289,10 +297,21 @@ export class IntelligentOrchestrator {
       p_draft_standard:  result.draft_standard,
       p_draft_careful:   result.draft_careful,
       p_model_name:      model,
-      p_prompt_version:  'io-v3',
+      p_prompt_version:  'io-v4',
     })
 
     if (rpcErr) throw new Error(`[Orchestrator] RPC failed: ${rpcErr.message}`)
+
+    // ── 텔레메트리 (RPC 미포함 — Wave 11) ────────────────────────────────────
+    // LLM Fallback 경로: pipeline_engine='llm', confidence는 N/A
+    await admin
+      .from('reply_drafts')
+      .update({
+        pipeline_engine:   'llm',
+        intent_code:       result.categories?.[0] ?? null,
+        intent_confidence: null,
+      })
+      .eq('review_id', reviewId)
 
     // internal_note_ko + core_complaint는 RPC에 포함되지 않으므로 별도 업데이트
     const noteWithComplaint = [
@@ -314,7 +333,7 @@ export class IntelligentOrchestrator {
       action:     needsSecondaryReview ? 'review_isolated' : 'ai_draft_generated',
       detail: {
         model,
-        prompt_version:      'io-v3',
+        prompt_version:      'io-v4',
         risk_level:          finalRisk,
         status:              finalStatus,
         cultural_profile:    culturalProfile.countryCode,

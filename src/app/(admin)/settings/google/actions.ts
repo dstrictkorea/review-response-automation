@@ -91,7 +91,7 @@ export async function syncGoogleReviewsAction(accountId: string) {
 
     do {
       const data = await listGoogleReviews(ga.google_location_name, token, nextPageToken)
-      const reviews: any[] = data.reviews ?? []
+      const reviews = data.reviews ?? []
       nextPageToken = data.nextPageToken
 
       for (const review of reviews) {
@@ -122,7 +122,7 @@ export async function syncGoogleReviewsAction(accountId: string) {
 
     revalidatePath('/settings/google')
     return { success: true, imported }
-  } catch (err: any) {
-    return { error: err.message }
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : String(err) }
   }
 }

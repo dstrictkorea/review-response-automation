@@ -14,7 +14,7 @@ import Link from 'next/link'
 import { useLanguage } from '@/context/LanguageContext'
 import { LANG_LOCALE } from '@/lib/i18n'
 import { statusClasses, riskClasses } from '@/lib/badges'
-import type { Review, ReviewStatus, RiskLevel } from '@/types/database'
+import type { Review, ReviewStatus, RiskLevel, ReviewTelemetry } from '@/types/database'
 import ReviewsListClient from '../reviews/ReviewsListClient'
 import DashboardStats from './DashboardStats'
 import DashboardFilterBar from './DashboardFilterBar'
@@ -37,6 +37,7 @@ export interface DashboardPageContentProps {
   allReviews:         Review[]
   pendingReviews:     Review[]
   pendingDraftMap:    Record<string, string>
+  pendingTelemetryMap: Record<string, ReviewTelemetry>
   pendingTotal:       number
   page:               number
   offset:             number
@@ -58,6 +59,7 @@ export default function DashboardPageContent({
   allReviews,
   pendingReviews,
   pendingDraftMap,
+  pendingTelemetryMap,
   pendingTotal,
   page,
   offset,
@@ -258,6 +260,7 @@ export default function DashboardPageContent({
             <ReviewsListClient
               reviews={pendingReviews}
               draftMap={pendingDraftMap}
+              telemetryMap={pendingTelemetryMap}
               defaultStatusFilter="new"
             />
 

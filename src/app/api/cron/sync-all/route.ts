@@ -55,7 +55,7 @@ async function syncOneAccount(
 
   do {
     const data = await listGoogleReviews(ga.google_location_name, token, nextPageToken)
-    const reviews: any[] = data.reviews ?? []
+    const reviews = data.reviews ?? []
     nextPageToken = data.nextPageToken
 
     for (const review of reviews) {
@@ -145,8 +145,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     const key = account.google_account_email ?? account.id
     try {
       results[key] = await syncOneAccount(admin, account.id)
-    } catch (err: any) {
-      results[key] = { error: err.message }
+    } catch (err: unknown) {
+      results[key] = { error: err instanceof Error ? err.message : String(err) }
     }
   }
 
