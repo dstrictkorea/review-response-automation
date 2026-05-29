@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `(pending wave7)`
+> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `46e3823` (Wave 8)
 
 ---
 
@@ -59,6 +59,14 @@
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
 
+### Wave 8 (평점 격리 폐기 + 프롬프트 대개혁 + DB 참조)
+- **평점 기반 격리 완전 제거**: `ratingFloor`, `rating<=3` 조건 삭제. 1점이어도 위험 키워드 없으면 `ai_done`
+- **AI 프롬프트 대개혁 (5개국)**: KR 한자 혼입 절대 차단 + 고객님/관람객 호칭 강제; US 법적 방어형 어투; JP 最上位 경어(尊敬語·謙譲語); CN 正式商务중문; AR 걸프 환대 공식 아랍어
+- **시스템 프롬프트**: `CRITICAL LANGUAGE PURITY` 룰 추가 — 스크립트 혼용 제로 톨러런스
+- **RISK 가이드**: 평점 언급 제거, 문맥 기반으로 전환 ("1★도 편의시설 불만이면 low")
+- **`getCulturalProfile` DB 동적 참조**: `countryCodeFromDb` 파라미터, branches 쿼리에 `country_code` 추가
+- tsc clean · build EXIT 0 (22/22 routes) · commit `46e3823`
+
 ### Wave 7 (해시 고도화 + 대시보드 i18n)
 - **`import/actions.ts`** 전면 교체: 5차원 컨텍스트 해시 `generateContextHash(branch|channel|author|date|cleanedText)`, `ON CONFLICT DO NOTHING` via `upsert({ignoreDuplicates:true})`, 중복 사유 메시지 개선 (작성자·날짜 표시)
 - **`src/lib/i18n/index.ts`** 확장: 35개 신규 키 추가 (대시보드 섹션 레이블, status/risk 배지, 페이지네이션, 4개 국어 완성)
@@ -77,11 +85,14 @@
 
 | 항목 | 상태 | 설명 |
 |---|---|---|
-| `branches.country_code` DB 참조 | 🔴 미완 | migration 004에서 컬럼 추가 완료, but `aiService.getCulturalProfile()`은 여전히 `BRANCH_TO_COUNTRY` 하드코딩 맵 사용. DB 참조로 전환 필요 (async 함수화) |
+| `branches.country_code` DB 참조 | ✅ 완료 | Wave 8: `getCulturalProfile(branchCode, lang, countryCodeFromDb)` — DB 값 1순위, 하드코딩 맵 fallback으로 강등 |
+| 평점 기반 격리 | ✅ 완료 | Wave 8: `ratingFloor` + `rating<=3` 조건 완전 제거. 오직 filterService·AI·forbidden_check 기반 격리 |
+| 한국어 한자 혼입 방지 | ✅ 완료 | Wave 8: KR 프로파일에 언어 순도 절대 규칙 + 시스템 프롬프트에 CRITICAL LANGUAGE PURITY 추가 |
+| 5개국 프롬프트 대개혁 | ✅ 완료 | Wave 8: KR/US/AE/JP/CN/AR 모두 현장 비즈니스 예법 기반으로 재작성 |
 | `filterService` 패턴 DB 이관 | 🔴 미완 | 35개 패턴이 코드 내 하드코딩. `app_settings`로 이관 후 관리자 UI 편집 가능하도록 개편 필요 |
 | `ReviewsListClient` i18n | 🟡 부분 | 리뷰 목록 컴포넌트의 한국어 하드코딩 strings 아직 미번역 |
-| `badge.ts` 다국어화 | 🟡 부분 | `statusLabel`, `riskLabel` 함수가 Korean only. Dashboard는 DashboardPageContent에서 i18n dict 사용하므로 실질 영향 없음, 다른 페이지(archive, reviews/[id])는 미번역 |
-| Google sync `normalized_hash` | 🟡 확인 필요 | `sync-all/route.ts`의 `makeHash()` 는 간단한 polynomial hash (Google source_review_id 기반). CSV import의 5차원 hash와 별개. 이중 구조 정리 필요 |
+| `badge.ts` 다국어화 | 🟡 부분 | `statusLabel`, `riskLabel` Korean only. Dashboard는 i18n dict 사용하므로 실질 영향 없음 |
+| Google sync `normalized_hash` | 🟡 확인 필요 | `sync-all/route.ts`의 `makeHash()` polynomial hash (source_review_id 기반). CSV 5차원 hash와 별개. 정리 예정 |
 | 상습 도배 유저 감지 | 🔴 미구현 | 동일 작성자 단기간 N회 인입 시 `pending_approval` 격리 + 대시보드 경보 |
 
 ---
