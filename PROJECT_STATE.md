@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `cc4f110` (Wave 11)
+> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `b702efd` (Wave 12)
 
 ---
 
@@ -58,6 +58,15 @@
 - **`settings/page.tsx`**: `channel_webhooks`, `rating_template_rules` 병렬 조회 추가
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
+
+### Wave 12 (카운트 동기화 + 지점 그룹화 + 풀 i18n)
+- **대시보드 카운트 동기화**: 위젯 상태별 카운트를 exact count 쿼리(head:true)로 분리 → Supabase 1000행 cap 무관, 신규+AI완료+AI격리 합 = pendingTotal = 리스트 전체 건수
+- **`lib/branches.ts`** (신규): 국내/글로벌 공식 코드 집합 + `classifyBranch`(country_code fallback) + 4개국어 도시명. 국내 AMGN/AMYS/AMBS/AMJJ/AKJJ · 글로벌 AMNY/AMLV/AMDB/AMNG/AMLA/AMKH
+- **지점 드롭다운 optgroup**: reviews/page.tsx 국내/글로벌 시각 분할
+- **지점 코드 시각 중심화**: 테이블/드로어/상세에서 굵은 대문자 코드 + 도시명 병기
+- **ReviewDetailClient 전면 i18n**: 버튼·탭·토스트·확인창·에러·배지·이력 라벨 70여종 useLanguage 연동, fmt() 보간, locale 날짜. 하드코딩 0
+- **i18n 사전 확장**: rd_* 70여 키 + rv_group_* × 4개국어
+- tsc 0 · eslint 0 · build 0 · commit `b702efd`
 
 ### Wave 11 (대시보드 UI/UX 전면 개편 + Wave 10 텔레메트리 연동)
 - **서버사이드 페이지네이션**: `reviews/page.tsx` `.range()` + `count:exact`, limit 10/20/50/100, 전 상태 URL 동기화 (새로고침 무결성). 통계는 경량 select로 필터 전체 집합 기준 산출
