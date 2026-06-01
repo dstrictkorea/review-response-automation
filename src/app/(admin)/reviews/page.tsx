@@ -3,6 +3,9 @@ import Link from 'next/link'
 import type { Review, ReviewTelemetry } from '@/types/database'
 import ReviewsListClient, { type ServerPaginationProps } from './ReviewsListClient'
 import DateInput from './DateInput'
+import { classifyBranch } from '@/lib/branches'
+
+interface BranchRow { code: string; name_ko: string; country_code: string | null }
 
 interface SearchParams {
   branch?: string
@@ -69,7 +72,7 @@ export default async function ReviewsPage({
   ] = await Promise.all([
     rowsQuery,
     statsQuery,
-    supabase.from('branches').select('code, name_ko').eq('is_active', true).order('code'),
+    supabase.from('branches').select('code, name_ko, country_code').eq('is_active', true).order('code'),
     supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
   ])
 
@@ -167,7 +170,25 @@ export default async function ReviewsPage({
             <select name="branch" defaultValue={params.branch ?? ''}
               className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none">
               <option value="">전체</option>
-              {(branches ?? []).map((b) => <option key={b.code} value={b.code}>{b.code} — {b.name_ko}</option>)}
+              {(() => {
+                const list = (branches ?? []) as BranchRow[]
+                const domestic = list.filter((b) => classifyBranch(b.code, b.country_code) === 'domestic')
+                const global   = list.filter((b) => classifyBranch(b.code, b.country_code) === 'global')
+                return (
+                  <>
+                    {domestic.length > 0 && (
+                      <optgroup label="🇰🇷 국내 지점">
+                        {domestic.map((b) => <option key={b.code} value={b.code}>{b.code} — {b.name_ko}</option>)}
+                      </optgroup>
+                    )}
+                    {global.length > 0 && (
+                      <optgroup label="🌐 글로벌 지점">
+                        {global.map((b) => <option key={b.code} value={b.code}>{b.code} — {b.name_ko}</option>)}
+                      </optgroup>
+                    )}
+                  </>
+                )
+              })()}
             </select>
           </div>
           <div>

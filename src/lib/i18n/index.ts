@@ -169,6 +169,116 @@ export interface I18nDict {
   rv_cs_guide: string
   rv_original_review: string
   rv_no_draft: string
+
+  // ── Branch grouping (Wave 12) ────────────────────────────────────────────────
+  rv_group_domestic: string
+  rv_group_global: string
+  rv_group_all: string
+
+  // ── Review detail page (Wave 12) ─────────────────────────────────────────────
+  rd_isolated_title: string
+  rd_isolated_desc: string
+  rd_risk_reasons: string
+  rd_forbidden_detected: string
+  rd_sla_title: string
+  rd_sla_desc: string            // {days}
+  rd_label_risk: string
+  rd_label_sentiment: string
+  rd_label_branch: string
+  rd_label_channel: string
+  rd_label_rating: string
+  rd_label_date: string
+  rd_label_reviewer: string
+  rd_review_original: string
+  rd_ai_note: string
+  rd_highrisk_title: string
+  rd_highrisk_desc: string
+  rd_ai_draft_title: string
+  rd_generate: string
+  rd_generating: string
+  rd_regenerate: string
+  rd_reanalyze: string
+  rd_analyzing: string
+  rd_reanalyze_title: string
+  rd_tab_standard: string
+  rd_tab_short: string
+  rd_tab_careful: string
+  rd_no_draft_variant: string
+  rd_apply_to_editor: string
+  rd_forbidden_check: string
+  rd_no_draft_yet: string
+  rd_final_edit: string
+  rd_copy_reply: string
+  rd_editor_placeholder: string
+  rd_chars: string               // {n}
+  rd_temp_save: string
+  rd_advanced: string
+  rd_approve: string
+  rd_google_post: string
+  rd_posting: string
+  rd_copy_and_open: string
+  rd_copy_and_open_title: string // {channel}
+  rd_copy_only_title: string
+  rd_mark_published_manual: string
+  rd_mark_published: string
+  rd_no_reply: string
+  rd_escalate: string
+  rd_danger_zone: string
+  rd_delete: string
+  rd_delete_confirm_title: string
+  rd_delete_confirm_desc: string
+  rd_deleting: string
+  rd_delete_confirm_btn: string
+  rd_cancel: string
+  rd_history: string
+  rd_no_history: string
+  // forbidden labels
+  rd_fb_refund: string
+  rd_fb_legal: string
+  rd_fb_cctv: string
+  rd_fb_staff: string
+  // sentiment
+  rd_sent_positive: string
+  rd_sent_neutral: string
+  rd_sent_mixed: string
+  rd_sent_negative: string
+  // activity log labels
+  rd_act_registered: string
+  rd_act_ai_generated: string
+  rd_act_edited: string
+  rd_act_approved: string
+  rd_act_escalated: string
+  rd_act_no_reply: string
+  rd_act_published: string
+  // revert labels
+  rd_revert_to_new: string
+  rd_revert_to_ai_done: string
+  rd_revert_to_approved: string
+  // toasts / confirms
+  rd_toast_copied: string
+  rd_toast_gen_fail: string
+  rd_toast_server_err: string
+  rd_toast_enter_reply: string
+  rd_confirm_google: string
+  rd_toast_google_fail: string   // {error}
+  rd_toast_google_ok: string
+  rd_toast_copy_opened: string
+  rd_toast_copy_manual: string
+  rd_confirm_publish: string     // {channel}
+  rd_toast_publish_fail: string  // {error}
+  rd_toast_published: string
+  rd_toast_reanalyze_fail: string
+  rd_toast_error: string         // {error}
+  rd_toast_request_director: string
+  rd_toast_approve_publish: string
+  rd_toast_hq_escalate: string
+  rd_toast_approved: string
+  rd_toast_mark_published: string
+  rd_toast_mark_no_reply: string
+  rd_toast_escalated: string
+  rd_toast_reverted: string
+  rd_toast_temp_saved: string
+  rd_unknown_error: string
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -303,6 +413,109 @@ export const DICT: Record<Language, I18nDict> = {
     rv_cs_guide: '불편/개선 의견에는 변명 없이 "경청하고 개선하겠다"는 뉘앙스를 유지하세요.',
     rv_original_review: '원문 리뷰',
     rv_no_draft: '아직 생성된 답변 초안이 없습니다.',
+
+    rv_group_domestic: '국내 지점',
+    rv_group_global: '글로벌 지점',
+    rv_group_all: '전체',
+
+    rd_isolated_title: 'AI 격리됨 — 2차 검토 필요',
+    rd_isolated_desc: '이 리뷰는 AI가 위험 요소를 감지하여 자동 격리했습니다. 반드시 직접 검토 후 승인하세요.',
+    rd_risk_reasons: '위험 사유',
+    rd_forbidden_detected: '⛔ 금지 표현 감지',
+    rd_sla_title: '응답 지연 주의',
+    rd_sla_desc: '이 리뷰가 작성된 지 {days}일이 지났습니다. 빠른 답변 처리가 필요합니다.',
+    rd_label_risk: '위험도',
+    rd_label_sentiment: '감성',
+    rd_label_branch: '지점',
+    rd_label_channel: '채널',
+    rd_label_rating: '별점',
+    rd_label_date: '작성일',
+    rd_label_reviewer: '작성자',
+    rd_review_original: '리뷰 원문',
+    rd_ai_note: 'AI 내부 메모',
+    rd_highrisk_title: '⚠ 고위험 리뷰',
+    rd_highrisk_desc: '이 리뷰는 고위험으로 분류되었습니다. 반드시 직접 검토 후 답변을 작성하세요. 환불 약속, 법적 책임 인정, CCTV 확인, 직원 징계 약속은 절대 포함하지 마세요.',
+    rd_ai_draft_title: 'AI 답변 초안',
+    rd_generate: 'AI 초안 생성',
+    rd_generating: '생성 중...',
+    rd_regenerate: 'AI 재생성',
+    rd_reanalyze: '🔄 AI 재분석',
+    rd_analyzing: '분석 중...',
+    rd_reanalyze_title: 'IntelligentOrchestrator로 AI 재분석 — 위험도 재평가 및 초안 재생성',
+    rd_tab_standard: '표준',
+    rd_tab_short: '짧게',
+    rd_tab_careful: '조심스럽게',
+    rd_no_draft_variant: '해당 초안이 없습니다.',
+    rd_apply_to_editor: '편집란에 적용',
+    rd_forbidden_check: '금지 표현 검사',
+    rd_no_draft_yet: '아직 AI 초안이 없습니다. 위 버튼을 눌러 생성하세요.',
+    rd_final_edit: '최종 답변 편집',
+    rd_copy_reply: '답변 복사',
+    rd_editor_placeholder: '여기에 최종 답변을 작성하거나 붙여넣으세요. 외부 플랫폼에 직접 복사하여 게시하세요.',
+    rd_chars: '{n}자',
+    rd_temp_save: '임시 저장',
+    rd_advanced: '고급 처리 옵션',
+    rd_approve: '승인',
+    rd_google_post: '🔵 Google에 직접 게시',
+    rd_posting: '게시 중...',
+    rd_copy_and_open: '📋 답변 복사 + 관리자 이동',
+    rd_copy_and_open_title: '답변을 복사하고 {channel} 관리자 페이지를 새 탭으로 엽니다',
+    rd_copy_only_title: '답변을 클립보드에 복사합니다',
+    rd_mark_published_manual: '수동 게시 완료 처리',
+    rd_mark_published: '✓ 게시 완료 처리',
+    rd_no_reply: '답변 불필요',
+    rd_escalate: '에스컬레이션',
+    rd_danger_zone: '위험 구역',
+    rd_delete: '리뷰 삭제',
+    rd_delete_confirm_title: '정말 삭제하시겠습니까?',
+    rd_delete_confirm_desc: '이 리뷰와 관련된 모든 초안, 처리 이력이 영구 삭제됩니다. 되돌릴 수 없습니다.',
+    rd_deleting: '삭제 중...',
+    rd_delete_confirm_btn: '삭제 확인',
+    rd_cancel: '취소',
+    rd_history: '처리 이력',
+    rd_no_history: '이력이 없습니다.',
+    rd_fb_refund: '환불 약속',
+    rd_fb_legal: '법적 책임 인정',
+    rd_fb_cctv: 'CCTV 언급',
+    rd_fb_staff: '직원 징계 약속',
+    rd_sent_positive: '긍정',
+    rd_sent_neutral: '중립',
+    rd_sent_mixed: '복합',
+    rd_sent_negative: '부정',
+    rd_act_registered: '리뷰 등록',
+    rd_act_ai_generated: 'AI 초안 생성',
+    rd_act_edited: '답변 수정',
+    rd_act_approved: '승인',
+    rd_act_escalated: '에스컬레이션',
+    rd_act_no_reply: '답변 불필요 처리',
+    rd_act_published: '게시 완료',
+    rd_revert_to_new: '신규로 되돌리기',
+    rd_revert_to_ai_done: 'AI완료로 되돌리기',
+    rd_revert_to_approved: '승인됨으로 되돌리기',
+    rd_toast_copied: '클립보드에 복사되었습니다.',
+    rd_toast_gen_fail: 'AI 초안 생성에 실패했습니다.',
+    rd_toast_server_err: '서버 오류가 발생했습니다.',
+    rd_toast_enter_reply: '게시할 답변을 입력해주세요.',
+    rd_confirm_google: 'Google 비즈니스 프로필에 이 답변을 직접 게시하시겠습니까?\n게시 후에는 Google에서 직접 수정해야 합니다.',
+    rd_toast_google_fail: 'Google 게시 실패: {error}',
+    rd_toast_google_ok: 'Google에 성공적으로 게시되었습니다!',
+    rd_toast_copy_opened: '✓ 답변 복사 완료 — 새 탭이 열렸습니다. 붙여넣기 후 "게시 완료 처리"를 눌러주세요.',
+    rd_toast_copy_manual: '✓ 답변 복사 완료 — 플랫폼 관리자 페이지에 접속해 붙여넣기 후 "게시 완료 처리"를 눌러주세요.',
+    rd_confirm_publish: '이 답변을 {channel}에 게시하시겠습니까?',
+    rd_toast_publish_fail: '게시 실패: {error}',
+    rd_toast_published: '✅ 게시 완료!',
+    rd_toast_reanalyze_fail: 'AI 재분석에 실패했습니다.',
+    rd_toast_error: '오류: {error}',
+    rd_toast_request_director: '관장 결재 요청이 접수되었습니다.',
+    rd_toast_approve_publish: '지점장 전결 승인 및 게시 완료 처리되었습니다.',
+    rd_toast_hq_escalate: '본사(HQ) 이관 처리되었습니다.',
+    rd_toast_approved: '답변이 승인되었습니다.',
+    rd_toast_mark_published: '게시 완료 처리되었습니다.',
+    rd_toast_mark_no_reply: '답변 불필요 처리되었습니다.',
+    rd_toast_escalated: '에스컬레이션 처리되었습니다.',
+    rd_toast_reverted: '상태가 되돌려졌습니다.',
+    rd_toast_temp_saved: '임시 저장되었습니다.',
+    rd_unknown_error: '알 수 없는 오류',
   },
 
   en: {
@@ -436,6 +649,109 @@ export const DICT: Record<Language, I18nDict> = {
     rv_cs_guide: 'For complaints, keep the "we hear you and will improve" tone — never make excuses.',
     rv_original_review: 'Original Review',
     rv_no_draft: 'No reply draft has been generated yet.',
+
+    rv_group_domestic: 'Domestic',
+    rv_group_global: 'Global',
+    rv_group_all: 'All',
+
+    rd_isolated_title: 'AI Isolated — Secondary Review Required',
+    rd_isolated_desc: 'AI detected risk factors and auto-isolated this review. Please review and approve manually.',
+    rd_risk_reasons: 'Risk Reasons',
+    rd_forbidden_detected: '⛔ Forbidden Phrase Detected',
+    rd_sla_title: 'Response Delay Warning',
+    rd_sla_desc: 'This review was posted {days} days ago. A prompt response is needed.',
+    rd_label_risk: 'Risk',
+    rd_label_sentiment: 'Sentiment',
+    rd_label_branch: 'Branch',
+    rd_label_channel: 'Channel',
+    rd_label_rating: 'Rating',
+    rd_label_date: 'Date',
+    rd_label_reviewer: 'Reviewer',
+    rd_review_original: 'Original Review',
+    rd_ai_note: 'AI Internal Note',
+    rd_highrisk_title: '⚠ High-Risk Review',
+    rd_highrisk_desc: 'This review is classified as high-risk. Review carefully before replying. Never include refund promises, admissions of legal liability, CCTV mentions, or staff disciplinary promises.',
+    rd_ai_draft_title: 'AI Reply Draft',
+    rd_generate: 'Generate AI Draft',
+    rd_generating: 'Generating...',
+    rd_regenerate: 'Regenerate',
+    rd_reanalyze: '🔄 Re-analyze',
+    rd_analyzing: 'Analyzing...',
+    rd_reanalyze_title: 'Re-analyze with IntelligentOrchestrator — re-evaluate risk and regenerate drafts',
+    rd_tab_standard: 'Standard',
+    rd_tab_short: 'Short',
+    rd_tab_careful: 'Careful',
+    rd_no_draft_variant: 'No draft for this variant.',
+    rd_apply_to_editor: 'Apply to editor',
+    rd_forbidden_check: 'Forbidden Phrase Check',
+    rd_no_draft_yet: 'No AI draft yet. Click the button above to generate one.',
+    rd_final_edit: 'Final Reply Editor',
+    rd_copy_reply: 'Copy reply',
+    rd_editor_placeholder: 'Write or paste your final reply here, then copy it directly to the external platform.',
+    rd_chars: '{n} chars',
+    rd_temp_save: 'Save draft',
+    rd_advanced: 'Advanced Options',
+    rd_approve: 'Approve',
+    rd_google_post: '🔵 Post directly to Google',
+    rd_posting: 'Posting...',
+    rd_copy_and_open: '📋 Copy reply + open admin',
+    rd_copy_and_open_title: 'Copy the reply and open the {channel} admin page in a new tab',
+    rd_copy_only_title: 'Copy the reply to clipboard',
+    rd_mark_published_manual: 'Mark manually published',
+    rd_mark_published: '✓ Mark published',
+    rd_no_reply: 'No reply needed',
+    rd_escalate: 'Escalate',
+    rd_danger_zone: 'Danger Zone',
+    rd_delete: 'Delete review',
+    rd_delete_confirm_title: 'Delete this review?',
+    rd_delete_confirm_desc: 'All drafts and history for this review will be permanently deleted. This cannot be undone.',
+    rd_deleting: 'Deleting...',
+    rd_delete_confirm_btn: 'Confirm delete',
+    rd_cancel: 'Cancel',
+    rd_history: 'Activity Log',
+    rd_no_history: 'No history.',
+    rd_fb_refund: 'Refund promise',
+    rd_fb_legal: 'Legal admission',
+    rd_fb_cctv: 'CCTV mention',
+    rd_fb_staff: 'Staff discipline',
+    rd_sent_positive: 'Positive',
+    rd_sent_neutral: 'Neutral',
+    rd_sent_mixed: 'Mixed',
+    rd_sent_negative: 'Negative',
+    rd_act_registered: 'Review registered',
+    rd_act_ai_generated: 'AI draft generated',
+    rd_act_edited: 'Reply edited',
+    rd_act_approved: 'Approved',
+    rd_act_escalated: 'Escalated',
+    rd_act_no_reply: 'Marked no reply',
+    rd_act_published: 'Published',
+    rd_revert_to_new: 'Revert to New',
+    rd_revert_to_ai_done: 'Revert to AI Draft',
+    rd_revert_to_approved: 'Revert to Approved',
+    rd_toast_copied: 'Copied to clipboard.',
+    rd_toast_gen_fail: 'Failed to generate AI draft.',
+    rd_toast_server_err: 'A server error occurred.',
+    rd_toast_enter_reply: 'Please enter a reply to publish.',
+    rd_confirm_google: 'Post this reply directly to your Google Business Profile?\nAfter posting, edits must be made directly on Google.',
+    rd_toast_google_fail: 'Google post failed: {error}',
+    rd_toast_google_ok: 'Successfully posted to Google!',
+    rd_toast_copy_opened: '✓ Reply copied — a new tab opened. Paste it, then click "Mark published".',
+    rd_toast_copy_manual: '✓ Reply copied — open the platform admin page, paste it, then click "Mark published".',
+    rd_confirm_publish: 'Publish this reply to {channel}?',
+    rd_toast_publish_fail: 'Publish failed: {error}',
+    rd_toast_published: '✅ Published!',
+    rd_toast_reanalyze_fail: 'Re-analysis failed.',
+    rd_toast_error: 'Error: {error}',
+    rd_toast_request_director: 'Director approval request submitted.',
+    rd_toast_approve_publish: 'Branch manager approved and marked as published.',
+    rd_toast_hq_escalate: 'Escalated to HQ.',
+    rd_toast_approved: 'Reply approved.',
+    rd_toast_mark_published: 'Marked as published.',
+    rd_toast_mark_no_reply: 'Marked as no reply needed.',
+    rd_toast_escalated: 'Escalated.',
+    rd_toast_reverted: 'Status reverted.',
+    rd_toast_temp_saved: 'Draft saved.',
+    rd_unknown_error: 'Unknown error',
   },
 
   ja: {
@@ -569,6 +885,109 @@ export const DICT: Record<Language, I18nDict> = {
     rv_cs_guide: 'ご不満・改善点には言い訳せず「真摯に受け止め改善する」トーンを保ってください。',
     rv_original_review: '元のレビュー',
     rv_no_draft: '返信案はまだ生成されていません。',
+
+    rv_group_domestic: '国内拠点',
+    rv_group_global: 'グローバル拠点',
+    rv_group_all: '全体',
+
+    rd_isolated_title: 'AI隔離 — 二次確認が必要',
+    rd_isolated_desc: 'AIがリスク要素を検知し、このレビューを自動隔離しました。必ず確認のうえ承認してください。',
+    rd_risk_reasons: 'リスク理由',
+    rd_forbidden_detected: '⛔ 禁止表現を検知',
+    rd_sla_title: '返信遅延の注意',
+    rd_sla_desc: 'このレビューが投稿されてから{days}日が経過しました。早急な返信が必要です。',
+    rd_label_risk: 'リスク',
+    rd_label_sentiment: '感情',
+    rd_label_branch: '拠点',
+    rd_label_channel: 'チャネル',
+    rd_label_rating: '評価',
+    rd_label_date: '投稿日',
+    rd_label_reviewer: '投稿者',
+    rd_review_original: 'レビュー原文',
+    rd_ai_note: 'AI内部メモ',
+    rd_highrisk_title: '⚠ 高リスクレビュー',
+    rd_highrisk_desc: 'このレビューは高リスクに分類されました。必ず確認のうえ返信してください。返金の約束、法的責任の認定、防犯カメラの言及、スタッフ処分の約束は絶対に含めないでください。',
+    rd_ai_draft_title: 'AI返信案',
+    rd_generate: 'AI返信案を生成',
+    rd_generating: '生成中...',
+    rd_regenerate: 'AI再生成',
+    rd_reanalyze: '🔄 AI再分析',
+    rd_analyzing: '分析中...',
+    rd_reanalyze_title: 'IntelligentOrchestratorでAI再分析 — リスク再評価と返信案の再生成',
+    rd_tab_standard: '標準',
+    rd_tab_short: '簡潔',
+    rd_tab_careful: '丁寧',
+    rd_no_draft_variant: 'この返信案はありません。',
+    rd_apply_to_editor: '編集欄に適用',
+    rd_forbidden_check: '禁止表現チェック',
+    rd_no_draft_yet: 'AI返信案はまだありません。上のボタンで生成してください。',
+    rd_final_edit: '最終返信の編集',
+    rd_copy_reply: '返信をコピー',
+    rd_editor_placeholder: 'ここに最終返信を入力または貼り付けてください。外部プラットフォームに直接コピーして投稿します。',
+    rd_chars: '{n}文字',
+    rd_temp_save: '一時保存',
+    rd_advanced: '高度な処理オプション',
+    rd_approve: '承認',
+    rd_google_post: '🔵 Googleに直接投稿',
+    rd_posting: '投稿中...',
+    rd_copy_and_open: '📋 返信コピー + 管理画面へ',
+    rd_copy_and_open_title: '返信をコピーし、{channel}の管理画面を新しいタブで開きます',
+    rd_copy_only_title: '返信をクリップボードにコピーします',
+    rd_mark_published_manual: '手動投稿完了として処理',
+    rd_mark_published: '✓ 投稿完了として処理',
+    rd_no_reply: '返信不要',
+    rd_escalate: 'エスカレーション',
+    rd_danger_zone: '危険ゾーン',
+    rd_delete: 'レビュー削除',
+    rd_delete_confirm_title: '本当に削除しますか？',
+    rd_delete_confirm_desc: 'このレビューに関連するすべての返信案・処理履歴が永久に削除されます。元に戻せません。',
+    rd_deleting: '削除中...',
+    rd_delete_confirm_btn: '削除を確認',
+    rd_cancel: 'キャンセル',
+    rd_history: '処理履歴',
+    rd_no_history: '履歴がありません。',
+    rd_fb_refund: '返金の約束',
+    rd_fb_legal: '法的責任の認定',
+    rd_fb_cctv: '防犯カメラの言及',
+    rd_fb_staff: 'スタッフ処分の約束',
+    rd_sent_positive: 'ポジティブ',
+    rd_sent_neutral: 'ニュートラル',
+    rd_sent_mixed: '混在',
+    rd_sent_negative: 'ネガティブ',
+    rd_act_registered: 'レビュー登録',
+    rd_act_ai_generated: 'AI返信案生成',
+    rd_act_edited: '返信編集',
+    rd_act_approved: '承認',
+    rd_act_escalated: 'エスカレーション',
+    rd_act_no_reply: '返信不要処理',
+    rd_act_published: '投稿完了',
+    rd_revert_to_new: '新規に戻す',
+    rd_revert_to_ai_done: 'AI完了に戻す',
+    rd_revert_to_approved: '承認済みに戻す',
+    rd_toast_copied: 'クリップボードにコピーしました。',
+    rd_toast_gen_fail: 'AI返信案の生成に失敗しました。',
+    rd_toast_server_err: 'サーバーエラーが発生しました。',
+    rd_toast_enter_reply: '投稿する返信を入力してください。',
+    rd_confirm_google: 'Googleビジネスプロフィールにこの返信を直接投稿しますか？\n投稿後はGoogle上で直接編集する必要があります。',
+    rd_toast_google_fail: 'Google投稿失敗: {error}',
+    rd_toast_google_ok: 'Googleに正常に投稿されました！',
+    rd_toast_copy_opened: '✓ 返信コピー完了 — 新しいタブが開きました。貼り付け後「投稿完了として処理」を押してください。',
+    rd_toast_copy_manual: '✓ 返信コピー完了 — プラットフォーム管理画面で貼り付け後「投稿完了として処理」を押してください。',
+    rd_confirm_publish: 'この返信を{channel}に投稿しますか？',
+    rd_toast_publish_fail: '投稿失敗: {error}',
+    rd_toast_published: '✅ 投稿完了！',
+    rd_toast_reanalyze_fail: 'AI再分析に失敗しました。',
+    rd_toast_error: 'エラー: {error}',
+    rd_toast_request_director: '館長承認リクエストを受け付けました。',
+    rd_toast_approve_publish: '拠点長による専決承認・投稿完了として処理されました。',
+    rd_toast_hq_escalate: '本社（HQ）へ移管しました。',
+    rd_toast_approved: '返信が承認されました。',
+    rd_toast_mark_published: '投稿完了として処理されました。',
+    rd_toast_mark_no_reply: '返信不要として処理されました。',
+    rd_toast_escalated: 'エスカレーション処理されました。',
+    rd_toast_reverted: 'ステータスを戻しました。',
+    rd_toast_temp_saved: '一時保存しました。',
+    rd_unknown_error: '不明なエラー',
   },
 
   zh: {
@@ -702,5 +1121,108 @@ export const DICT: Record<Language, I18nDict> = {
     rv_cs_guide: '面对不便/改进意见，请保持"虚心倾听并积极改进"的语气，切勿辩解。',
     rv_original_review: '原始评价',
     rv_no_draft: '尚未生成回复草稿。',
+
+    rv_group_domestic: '国内门店',
+    rv_group_global: '全球门店',
+    rv_group_all: '全部',
+
+    rd_isolated_title: 'AI隔离 — 需二次审查',
+    rd_isolated_desc: 'AI检测到风险因素并自动隔离了此评价。请务必人工审查后批准。',
+    rd_risk_reasons: '风险原因',
+    rd_forbidden_detected: '⛔ 检测到禁用表述',
+    rd_sla_title: '回复延迟提醒',
+    rd_sla_desc: '此评价已发布{days}天。需要尽快回复。',
+    rd_label_risk: '风险',
+    rd_label_sentiment: '情感',
+    rd_label_branch: '门店',
+    rd_label_channel: '渠道',
+    rd_label_rating: '评分',
+    rd_label_date: '发布日期',
+    rd_label_reviewer: '评论者',
+    rd_review_original: '评价原文',
+    rd_ai_note: 'AI内部备注',
+    rd_highrisk_title: '⚠ 高风险评价',
+    rd_highrisk_desc: '此评价被归类为高风险。请务必审查后再回复。切勿包含退款承诺、承认法律责任、提及监控录像或承诺处分员工。',
+    rd_ai_draft_title: 'AI回复草稿',
+    rd_generate: '生成AI草稿',
+    rd_generating: '生成中...',
+    rd_regenerate: 'AI重新生成',
+    rd_reanalyze: '🔄 AI重新分析',
+    rd_analyzing: '分析中...',
+    rd_reanalyze_title: '使用IntelligentOrchestrator重新分析 — 重新评估风险并重新生成草稿',
+    rd_tab_standard: '标准',
+    rd_tab_short: '简短',
+    rd_tab_careful: '谨慎',
+    rd_no_draft_variant: '暂无此类草稿。',
+    rd_apply_to_editor: '应用到编辑区',
+    rd_forbidden_check: '禁用表述检查',
+    rd_no_draft_yet: '尚无AI草稿。请点击上方按钮生成。',
+    rd_final_edit: '最终回复编辑',
+    rd_copy_reply: '复制回复',
+    rd_editor_placeholder: '在此撰写或粘贴最终回复，然后直接复制到外部平台发布。',
+    rd_chars: '{n}字',
+    rd_temp_save: '暂存',
+    rd_advanced: '高级处理选项',
+    rd_approve: '批准',
+    rd_google_post: '🔵 直接发布到Google',
+    rd_posting: '发布中...',
+    rd_copy_and_open: '📋 复制回复 + 前往管理页',
+    rd_copy_and_open_title: '复制回复并在新标签页打开{channel}管理页面',
+    rd_copy_only_title: '将回复复制到剪贴板',
+    rd_mark_published_manual: '手动标记为已发布',
+    rd_mark_published: '✓ 标记为已发布',
+    rd_no_reply: '无需回复',
+    rd_escalate: '升级处理',
+    rd_danger_zone: '危险区域',
+    rd_delete: '删除评价',
+    rd_delete_confirm_title: '确定要删除吗？',
+    rd_delete_confirm_desc: '与此评价相关的所有草稿、处理记录将被永久删除，无法恢复。',
+    rd_deleting: '删除中...',
+    rd_delete_confirm_btn: '确认删除',
+    rd_cancel: '取消',
+    rd_history: '处理记录',
+    rd_no_history: '暂无记录。',
+    rd_fb_refund: '退款承诺',
+    rd_fb_legal: '承认法律责任',
+    rd_fb_cctv: '提及监控',
+    rd_fb_staff: '承诺处分员工',
+    rd_sent_positive: '正面',
+    rd_sent_neutral: '中性',
+    rd_sent_mixed: '复杂',
+    rd_sent_negative: '负面',
+    rd_act_registered: '评价登记',
+    rd_act_ai_generated: 'AI草稿生成',
+    rd_act_edited: '回复编辑',
+    rd_act_approved: '批准',
+    rd_act_escalated: '升级处理',
+    rd_act_no_reply: '标记无需回复',
+    rd_act_published: '已发布',
+    rd_revert_to_new: '退回为新增',
+    rd_revert_to_ai_done: '退回为AI完成',
+    rd_revert_to_approved: '退回为已批准',
+    rd_toast_copied: '已复制到剪贴板。',
+    rd_toast_gen_fail: '生成AI草稿失败。',
+    rd_toast_server_err: '发生服务器错误。',
+    rd_toast_enter_reply: '请输入要发布的回复。',
+    rd_confirm_google: '确定将此回复直接发布到Google商家资料吗？\n发布后需在Google上直接修改。',
+    rd_toast_google_fail: 'Google发布失败：{error}',
+    rd_toast_google_ok: '已成功发布到Google！',
+    rd_toast_copy_opened: '✓ 回复已复制 — 新标签页已打开。粘贴后请点击"标记为已发布"。',
+    rd_toast_copy_manual: '✓ 回复已复制 — 请打开平台管理页面粘贴后点击"标记为已发布"。',
+    rd_confirm_publish: '确定将此回复发布到{channel}吗？',
+    rd_toast_publish_fail: '发布失败：{error}',
+    rd_toast_published: '✅ 发布完成！',
+    rd_toast_reanalyze_fail: 'AI重新分析失败。',
+    rd_toast_error: '错误：{error}',
+    rd_toast_request_director: '已提交馆长审批请求。',
+    rd_toast_approve_publish: '已由店长专断批准并标记为已发布。',
+    rd_toast_hq_escalate: '已移交总部（HQ）。',
+    rd_toast_approved: '回复已批准。',
+    rd_toast_mark_published: '已标记为已发布。',
+    rd_toast_mark_no_reply: '已标记为无需回复。',
+    rd_toast_escalated: '已升级处理。',
+    rd_toast_reverted: '状态已还原。',
+    rd_toast_temp_saved: '已暂存。',
+    rd_unknown_error: '未知错误',
   },
 }

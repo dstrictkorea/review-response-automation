@@ -2,9 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import type { Review, ReplyDraft, ActivityLog, ReviewStatus, RiskLevel, UserRole } from '@/types/database'
-import { statusLabel, statusClasses, riskLabel, riskClasses } from '@/lib/badges'
+import { statusClasses, riskClasses } from '@/lib/badges'
 import { approveReview, escalateReview, markNoReply, markPublished, saveDraft, resetReviewStatus, deleteReview } from './actions'
 import ReviewActionPanel, { type ReviewPanelAction } from '@/components/dashboard/ReviewActionPanel'
+import { useLanguage } from '@/context/LanguageContext'
+import { LANG_LOCALE, type I18nDict } from '@/lib/i18n'
+import { branchCity } from '@/lib/branches'
 
 interface Props {
   review: Review
@@ -13,32 +16,7 @@ interface Props {
   userRole: UserRole
 }
 
-const actionLabels: Record<string, string> = {
-  review_registered: '리뷰 등록',
-  ai_draft_generated: 'AI 초안 생성',
-  reply_edited: '답변 수정',
-  review_approved: '승인',
-  review_escalated: '에스컬레이션',
-  review_no_reply: '답변 불필요 처리',
-  review_published: '게시 완료',
-}
-
-const sentimentKo: Record<string, string> = {
-  positive: '긍정',
-  neutral: '중립',
-  mixed: '복합',
-  negative: '부정',
-}
-
 const ACTIVE_STATUSES = new Set(['new', 'ai_done', 'pending_approval', 'approved'])
-
-function elapsedLabel(dateStr: string | null): string | null {
-  if (!dateStr) return null
-  const hours = Math.floor((Date.now() - new Date(dateStr).getTime()) / 3600000)
-  if (hours < 24) return '오늘'
-  if (hours < 48) return '어제'
-  return `${Math.floor(hours / 24)}일 전`
-}
 
 /** 경과 일수 — 모듈 레벨 헬퍼 (렌더 중 Date.now() 직접 호출 회피) */
 function elapsedDaysSince(dateStr: string | null): number | null {
@@ -46,7 +24,54 @@ function elapsedDaysSince(dateStr: string | null): number | null {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
 }
 
-// 현재 상태에서 되돌릴 수 있는 상태 맵
+/** 템플릿 문자열 보간 — {key} → 값 */
+function fmt(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
+}
+
+// ── i18n 매핑 헬퍼 ────────────────────────────────────────────────────────────────
+function tStatus(t: I18nDict, s: ReviewStatus): string {
+  const m: Record<ReviewStatus, string> = {
+    new: t.status_new, ai_done: t.status_ai_done, pending_approval: t.status_pending_approval,
+    approved: t.status_approved, manual_published: t.status_published, no_reply: t.status_no_reply,
+    escalated: t.status_escalated, failed: t.status_failed,
+  }
+  return m[s] ?? s
+}
+function tRisk(t: I18nDict, r: RiskLevel): string {
+  const m: Record<RiskLevel, string> = { low: t.risk_low, medium: t.risk_medium, high: t.risk_high, critical: t.risk_critical }
+  return m[r]
+}
+function tSentiment(t: I18nDict, s: string): string {
+  const m: Record<string, string> = {
+    positive: t.rd_sent_positive, neutral: t.rd_sent_neutral, mixed: t.rd_sent_mixed, negative: t.rd_sent_negative,
+  }
+  return m[s] ?? s
+}
+function tForbidden(t: I18nDict, key: string): string {
+  const m: Record<string, string> = {
+    refund_promise: t.rd_fb_refund, legal_admission: t.rd_fb_legal, cctv_mention: t.rd_fb_cctv, staff_discipline: t.rd_fb_staff,
+  }
+  return m[key] ?? key
+}
+function tActionLog(t: I18nDict, action: string): string {
+  const m: Record<string, string> = {
+    review_registered: t.rd_act_registered,
+    ai_draft_generated: t.rd_act_ai_generated,
+    algo_draft_generated: t.rd_act_ai_generated,
+    review_isolated: t.rd_act_ai_generated,
+    reply_edited: t.rd_act_edited,
+    review_approved: t.rd_act_approved,
+    review_escalated: t.rd_act_escalated,
+    review_no_reply: t.rd_act_no_reply,
+    review_published: t.rd_act_published,
+    google_reply_posted: t.rd_act_published,
+    webhook_reply_posted: t.rd_act_published,
+  }
+  return m[action] ?? action
+}
+
+// 현재 상태에서 되돌릴 수 있는 상태 맵 (로직)
 const REVERT_STATUS: Partial<Record<string, string>> = {
   ai_done: 'new',
   pending_approval: 'new',
@@ -55,20 +80,21 @@ const REVERT_STATUS: Partial<Record<string, string>> = {
   no_reply: 'new',
   escalated: 'new',
 }
-
-const REVERT_LABEL: Partial<Record<string, string>> = {
-  ai_done: '신규로 되돌리기',
-  pending_approval: '신규로 되돌리기',
-  approved: 'AI완료로 되돌리기',
-  manual_published: '승인됨으로 되돌리기',
-  no_reply: '신규로 되돌리기',
-  escalated: '신규로 되돌리기',
+function tRevertLabel(t: I18nDict, status: string): string {
+  const m: Record<string, string> = {
+    ai_done: t.rd_revert_to_new,
+    pending_approval: t.rd_revert_to_new,
+    approved: t.rd_revert_to_ai_done,
+    manual_published: t.rd_revert_to_approved,
+    no_reply: t.rd_revert_to_new,
+    escalated: t.rd_revert_to_new,
+  }
+  return m[status] ?? t.rd_revert_to_new
 }
 
 /**
  * 채널별 관리자(답변 등록) 페이지 URL 매핑.
  * review.review_url 이 있으면 해당 URL 을 우선 사용.
- * 없으면 채널 코드로 관리 콘솔 홈을 연다.
  */
 const CHANNEL_ADMIN_URLS: Record<string, string> = {
   naver:       'https://smartplace.naver.com/business/review',
@@ -84,6 +110,9 @@ function getChannelAdminUrl(channelCode: string, reviewUrl?: string | null): str
 }
 
 export default function ReviewDetailClient({ review: initialReview, draft: initialDraft, logs: initialLogs, userRole }: Props) {
+  const { lang, t } = useLanguage()
+  const locale = LANG_LOCALE[lang]
+
   const [review, setReview] = useState(initialReview)
   const [draft, setDraft] = useState(initialDraft)
   const [logs] = useState(initialLogs)
@@ -99,7 +128,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
   const copyText = (text: string) => {
     navigator.clipboard.writeText(text)
-    setActionMessage('클립보드에 복사되었습니다.')
+    setActionMessage(t.rd_toast_copied)
     setTimeout(() => setActionMessage(null), 2000)
   }
 
@@ -114,14 +143,14 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       })
       const data = await res.json()
       if (!res.ok) {
-        setGenerateError(data.error ?? 'AI 초안 생성에 실패했습니다.')
+        setGenerateError(data.error ?? t.rd_toast_gen_fail)
         return
       }
       setDraft(data.draft)
       setReview((r) => ({ ...r, status: 'ai_done', risk_level: data.risk_level, sentiment: data.sentiment, categories: data.categories }))
       setEditedReply(data.draft?.draft_standard ?? '')
     } catch {
-      setGenerateError('서버 오류가 발생했습니다.')
+      setGenerateError(t.rd_toast_server_err)
     } finally {
       setIsGenerating(false)
     }
@@ -129,10 +158,10 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
   async function handleGooglePost() {
     if (!editedReply.trim()) {
-      setActionMessage('게시할 답변을 입력해주세요.')
+      setActionMessage(t.rd_toast_enter_reply)
       return
     }
-    if (!confirm('Google 비즈니스 프로필에 이 답변을 직접 게시하시겠습니까?\n게시 후에는 Google에서 직접 수정해야 합니다.')) return
+    if (!confirm(t.rd_confirm_google)) return
     setIsGooglePosting(true)
     try {
       const res = await fetch('/api/google/reply', {
@@ -142,13 +171,13 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       })
       const data = await res.json()
       if (!res.ok) {
-        setActionMessage(`Google 게시 실패: ${data.error ?? '알 수 없는 오류'}`)
+        setActionMessage(fmt(t.rd_toast_google_fail, { error: data.error ?? t.rd_unknown_error }))
       } else {
-        setActionMessage('Google에 성공적으로 게시되었습니다!')
+        setActionMessage(t.rd_toast_google_ok)
         setTimeout(() => window.location.reload(), 1200)
       }
     } catch {
-      setActionMessage('서버 오류가 발생했습니다.')
+      setActionMessage(t.rd_toast_server_err)
     } finally {
       setIsGooglePosting(false)
     }
@@ -157,7 +186,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
   /** 비 Google 채널 전용: 답변 클립보드 복사 + 관리자 페이지 새 탭 열기 */
   async function handleCopyAndOpen() {
     if (!editedReply.trim()) {
-      setActionMessage('게시할 답변을 입력해주세요.')
+      setActionMessage(t.rd_toast_enter_reply)
       return
     }
     try {
@@ -167,11 +196,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     }
     const adminUrl = getChannelAdminUrl(review.channel_code, review.review_url)
     if (adminUrl) window.open(adminUrl, '_blank', 'noopener,noreferrer')
-    setActionMessage(
-      adminUrl
-        ? '✓ 답변 복사 완료 — 새 탭이 열렸습니다. 붙여넣기 후 "게시 완료 처리"를 눌러주세요.'
-        : '✓ 답변 복사 완료 — 플랫폼 관리자 페이지에 접속해 붙여넣기 후 "게시 완료 처리"를 눌러주세요.',
-    )
+    setActionMessage(adminUrl ? t.rd_toast_copy_opened : t.rd_toast_copy_manual)
   }
 
   /**
@@ -180,10 +205,10 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
    */
   async function handleAutoPublish() {
     if (!editedReply.trim()) {
-      setActionMessage('게시할 답변을 입력해주세요.')
+      setActionMessage(t.rd_toast_enter_reply)
       return
     }
-    if (!confirm(`이 답변을 ${review.channel_code}에 게시하시겠습니까?`)) return
+    if (!confirm(fmt(t.rd_confirm_publish, { channel: review.channel_code }))) return
 
     setIsGooglePosting(true)
     try {
@@ -194,16 +219,16 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       })
       const data = await res.json()
       if (!res.ok) {
-        setActionMessage(`게시 실패: ${data.error ?? '알 수 없는 오류'}`)
+        setActionMessage(fmt(t.rd_toast_publish_fail, { error: data.error ?? t.rd_unknown_error }))
       } else if (data.method === 'fallback_manual') {
         // 웹훅·API 미설정 채널 → 클립보드 복사 + 플랫폼 이동으로 fallback
         await handleCopyAndOpen()
       } else {
-        setActionMessage('✅ 게시 완료!')
+        setActionMessage(t.rd_toast_published)
         setTimeout(() => window.location.reload(), 1200)
       }
     } catch {
-      setActionMessage('서버 오류가 발생했습니다.')
+      setActionMessage(t.rd_toast_server_err)
     } finally {
       setIsGooglePosting(false)
     }
@@ -220,7 +245,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       })
       const data = await res.json()
       if (!res.ok) {
-        setGenerateError(data.error ?? 'AI 재분석에 실패했습니다.')
+        setGenerateError(data.error ?? t.rd_toast_reanalyze_fail)
         return
       }
       setDraft(data.draft)
@@ -234,7 +259,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       }))
       setEditedReply(data.draft?.draft_standard ?? '')
     } catch {
-      setGenerateError('서버 오류가 발생했습니다.')
+      setGenerateError(t.rd_toast_server_err)
     } finally {
       setIsReprocessing(false)
     }
@@ -244,7 +269,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
     startTransition(async () => {
       const result = await fn()
       if (result.error) {
-        setActionMessage(`오류: ${result.error}`)
+        setActionMessage(fmt(t.rd_toast_error, { error: result.error }))
       } else {
         setActionMessage(successMsg)
         window.location.reload()
@@ -260,7 +285,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         break
       case 'escalate':
         // 관장 결재 요청 = 에스컬레이션
-        handleAction(() => escalateReview(review.id), '관장 결재 요청이 접수되었습니다.')
+        handleAction(() => escalateReview(review.id), t.rd_toast_request_director)
         break
       case 'approve':
         // director: 전결 승인 (승인 후 바로 게시 완료 처리)
@@ -268,11 +293,11 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
           const approveResult = await approveReview(review.id, editedReply)
           if (approveResult.error) return approveResult
           return markPublished(review.id)
-        }, '지점장 전결 승인 및 게시 완료 처리되었습니다.')
+        }, t.rd_toast_approve_publish)
         break
       case 'hq_escalate':
         // 본사 이관 = 에스컬레이션 (HQ)
-        handleAction(() => escalateReview(review.id), '본사(HQ) 이관 처리되었습니다.')
+        handleAction(() => escalateReview(review.id), t.rd_toast_hq_escalate)
         break
     }
   }
@@ -288,9 +313,10 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
   const isActive = ACTIVE_STATUSES.has(review.status)
   const reviewDateStr = review.review_created_at ?? null
-  const elapsedStr = elapsedLabel(reviewDateStr)
   const elapsedDays = elapsedDaysSince(reviewDateStr)
+  const elapsedShort = elapsedDays === null ? null : elapsedDays === 0 ? t.rv_today : `${elapsedDays}d`
   const isSlaWarning = isActive && elapsedDays !== null && elapsedDays >= 3
+  const cityName = branchCity(review.branch_code, lang)
 
   return (
     <div className="space-y-5">
@@ -299,14 +325,12 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         <div className="rounded-xl bg-amber-50 border-2 border-amber-400 px-5 py-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-amber-600 font-bold text-xl">⚠</span>
-            <p className="text-sm font-bold text-amber-900">AI 격리됨 — 2차 검토 필요</p>
+            <p className="text-sm font-bold text-amber-900">{t.rd_isolated_title}</p>
           </div>
-          <p className="text-xs text-amber-800 mb-3">
-            이 리뷰는 AI가 위험 요소를 감지하여 자동 격리했습니다. 반드시 직접 검토 후 승인하세요.
-          </p>
+          <p className="text-xs text-amber-800 mb-3">{t.rd_isolated_desc}</p>
           {(review.risk_reasons ?? []).length > 0 && (
             <div className="mb-2">
-              <p className="text-xs font-semibold text-amber-800 mb-1">위험 사유</p>
+              <p className="text-xs font-semibold text-amber-800 mb-1">{t.rd_risk_reasons}</p>
               <ul className="space-y-0.5">
                 {(review.risk_reasons ?? []).map((reason, i) => (
                   <li key={i} className="text-xs text-amber-900 flex items-start gap-1.5">
@@ -318,21 +342,13 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
           )}
           {draft?.forbidden_check && Object.entries(draft.forbidden_check).some(([, v]) => v === true) && (
             <div className="mt-2 rounded-lg bg-rose-50 border border-rose-300 px-3 py-2">
-              <p className="text-xs font-semibold text-rose-700 mb-1">⛔ 금지 표현 감지</p>
+              <p className="text-xs font-semibold text-rose-700 mb-1">{t.rd_forbidden_detected}</p>
               <div className="flex flex-wrap gap-x-4 gap-y-0.5">
                 {Object.entries(draft.forbidden_check)
                   .filter(([, v]) => v === true)
-                  .map(([key]) => {
-                    const labels: Record<string, string> = {
-                      refund_promise: '환불 약속',
-                      legal_admission: '법적 책임 인정',
-                      cctv_mention: 'CCTV 언급',
-                      staff_discipline: '직원 징계 약속',
-                    }
-                    return (
-                      <span key={key} className="text-xs text-rose-800 font-medium">✗ {labels[key] ?? key}</span>
-                    )
-                  })}
+                  .map(([key]) => (
+                    <span key={key} className="text-xs text-rose-800 font-medium">✗ {tForbidden(t, key)}</span>
+                  ))}
               </div>
             </div>
           )}
@@ -344,10 +360,8 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         <div className="rounded-xl bg-amber-50 border border-amber-300 px-5 py-3 flex items-center gap-3">
           <span className="text-amber-600 font-bold text-lg">!</span>
           <div>
-            <p className="text-sm font-semibold text-amber-800">응답 지연 주의</p>
-            <p className="text-xs text-amber-700">
-              이 리뷰가 작성된 지 <strong>{elapsedDays}일</strong>이 지났습니다. 빠른 답변 처리가 필요합니다.
-            </p>
+            <p className="text-sm font-semibold text-amber-800">{t.rd_sla_title}</p>
+            <p className="text-xs text-amber-700">{fmt(t.rd_sla_desc, { days: elapsedDays ?? 0 })}</p>
           </div>
         </div>
       )}
@@ -356,16 +370,16 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClasses(review.status as ReviewStatus)}`}>
-            {statusLabel(review.status as ReviewStatus)}
+            {tStatus(t, review.status as ReviewStatus)}
           </span>
           {review.risk_level && (
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${riskClasses(review.risk_level as RiskLevel)}`}>
-              위험도: {riskLabel(review.risk_level as RiskLevel)}
+              {t.rd_label_risk}: {tRisk(t, review.risk_level as RiskLevel)}
             </span>
           )}
           {review.sentiment && (
             <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-              감성: {sentimentKo[review.sentiment] ?? review.sentiment}
+              {t.rd_label_sentiment}: {tSentiment(t, review.sentiment)}
             </span>
           )}
           {(review.categories ?? []).map((c) => (
@@ -377,26 +391,29 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm mb-4 sm:grid-cols-4">
           <div>
-            <span className="text-gray-500">지점</span>
-            <p className="font-medium text-gray-900">{review.branch_code}</p>
+            <span className="text-gray-500">{t.rd_label_branch}</span>
+            <p className="font-mono font-bold uppercase tracking-wide text-gray-900">
+              {review.branch_code}
+              {cityName && <span className="ml-1.5 font-sans font-normal text-xs text-gray-500">{cityName}</span>}
+            </p>
           </div>
           <div>
-            <span className="text-gray-500">채널</span>
+            <span className="text-gray-500">{t.rd_label_channel}</span>
             <p className="font-medium text-gray-900">{review.channel_code}</p>
           </div>
           <div>
-            <span className="text-gray-500">별점</span>
+            <span className="text-gray-500">{t.rd_label_rating}</span>
             <p className="font-medium text-gray-900">{review.rating != null ? `${review.rating}★` : '-'}</p>
           </div>
           <div>
-            <span className="text-gray-500">작성일</span>
+            <span className="text-gray-500">{t.rd_label_date}</span>
             <p className="font-medium text-gray-900">
               {review.review_created_at
-                ? new Date(review.review_created_at).toLocaleDateString('ko-KR')
+                ? new Date(review.review_created_at).toLocaleDateString(locale)
                 : '-'}
-              {elapsedStr && (
+              {elapsedShort && (
                 <span className={`ml-2 text-xs font-normal ${isSlaWarning ? 'text-amber-600' : 'text-gray-400'}`}>
-                  ({elapsedStr})
+                  ({elapsedShort})
                 </span>
               )}
             </p>
@@ -404,7 +421,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         </div>
 
         {review.reviewer_name && (
-          <p className="text-xs text-gray-500 mb-2">작성자: {review.reviewer_name}</p>
+          <p className="text-xs text-gray-500 mb-2">{t.rd_label_reviewer}: {review.reviewer_name}</p>
         )}
         {review.review_url && (
           <p className="text-xs text-gray-500 mb-3">
@@ -416,20 +433,20 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
         )}
 
         <div className="rounded-lg bg-gray-50 border border-gray-200 p-4">
-          <p className="text-xs font-medium text-gray-500 mb-2">리뷰 원문</p>
+          <p className="text-xs font-medium text-gray-500 mb-2">{t.rd_review_original}</p>
           <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">{review.review_text}</p>
         </div>
 
         {review.internal_note_ko && (
           <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
-            <p className="text-xs font-medium text-blue-700 mb-1">AI 내부 메모</p>
+            <p className="text-xs font-medium text-blue-700 mb-1">{t.rd_ai_note}</p>
             <p className="text-sm text-blue-900">{review.internal_note_ko}</p>
           </div>
         )}
 
         {(review.risk_reasons ?? []).length > 0 && (
           <div className="mt-3 rounded-lg bg-orange-50 border border-orange-200 px-4 py-3">
-            <p className="text-xs font-medium text-orange-700 mb-1">위험 사유</p>
+            <p className="text-xs font-medium text-orange-700 mb-1">{t.rd_risk_reasons}</p>
             <ul className="text-sm text-orange-900 list-disc list-inside space-y-0.5">
               {(review.risk_reasons ?? []).map((r, i) => <li key={i}>{r}</li>)}
             </ul>
@@ -440,33 +457,30 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       {/* High risk warning */}
       {isHighRisk && (
         <div className="rounded-xl bg-red-50 border border-red-300 px-5 py-4">
-          <p className="text-sm font-semibold text-red-800">⚠ 고위험 리뷰</p>
-          <p className="text-sm text-red-700 mt-1">
-            이 리뷰는 고위험으로 분류되었습니다. 반드시 직접 검토 후 답변을 작성하세요.
-            환불 약속, 법적 책임 인정, CCTV 확인, 직원 징계 약속은 절대 포함하지 마세요.
-          </p>
+          <p className="text-sm font-semibold text-red-800">{t.rd_highrisk_title}</p>
+          <p className="text-sm text-red-700 mt-1">{t.rd_highrisk_desc}</p>
         </div>
       )}
 
       {/* AI Draft section */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="text-sm font-semibold text-gray-900">AI 답변 초안</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t.rd_ai_draft_title}</h3>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={generateDraft}
               disabled={isGenerating || isReprocessing}
               className="rounded-lg bg-purple-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 transition-colors"
             >
-              {isGenerating ? '생성 중...' : draft ? 'AI 재생성' : 'AI 초안 생성'}
+              {isGenerating ? t.rd_generating : draft ? t.rd_regenerate : t.rd_generate}
             </button>
             <button
               onClick={handleReprocess}
               disabled={isReprocessing || isGenerating}
-              title="IntelligentOrchestrator로 AI 재분석 — 위험도 재평가 및 초안 재생성"
+              title={t.rd_reanalyze_title}
               className="rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
             >
-              {isReprocessing ? '분석 중...' : '🔄 AI 재분석'}
+              {isReprocessing ? t.rd_analyzing : t.rd_reanalyze}
             </button>
           </div>
         </div>
@@ -490,14 +504,14 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  {tab === 'standard' ? '표준' : tab === 'short' ? '짧게' : '조심스럽게'}
+                  {tab === 'standard' ? t.rd_tab_standard : tab === 'short' ? t.rd_tab_short : t.rd_tab_careful}
                 </button>
               ))}
             </div>
 
             <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 mb-3">
               <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
-                {selectedDraftText ?? '해당 초안이 없습니다.'}
+                {selectedDraftText ?? t.rd_no_draft_variant}
               </p>
               {selectedDraftText && (
                 <div className="mt-3 flex justify-end">
@@ -508,7 +522,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                     }}
                     className="rounded bg-white border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                   >
-                    편집란에 적용
+                    {t.rd_apply_to_editor}
                   </button>
                 </div>
               )}
@@ -516,29 +530,21 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
             {draft.forbidden_check && (
               <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 mb-3">
-                <p className="text-xs font-medium text-gray-600 mb-2">금지 표현 검사</p>
+                <p className="text-xs font-medium text-gray-600 mb-2">{t.rd_forbidden_check}</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  {Object.entries(draft.forbidden_check).map(([key, val]) => {
-                    const labels: Record<string, string> = {
-                      refund_promise: '환불 약속',
-                      legal_admission: '법적 책임 인정',
-                      cctv_mention: 'CCTV 언급',
-                      staff_discipline: '직원 징계 약속',
-                    }
-                    return (
-                      <div key={key} className={`flex items-center gap-1.5 ${val ? 'text-red-700' : 'text-green-700'}`}>
-                        <span>{val ? '✗' : '✓'}</span>
-                        <span>{labels[key] ?? key}</span>
-                      </div>
-                    )
-                  })}
+                  {Object.entries(draft.forbidden_check).map(([key, val]) => (
+                    <div key={key} className={`flex items-center gap-1.5 ${val ? 'text-red-700' : 'text-green-700'}`}>
+                      <span>{val ? '✗' : '✓'}</span>
+                      <span>{tForbidden(t, key)}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
           </>
         ) : (
           <div className="rounded-lg bg-gray-50 border border-dashed border-gray-300 px-4 py-8 text-center">
-            <p className="text-sm text-gray-500">아직 AI 초안이 없습니다. 위 버튼을 눌러 생성하세요.</p>
+            <p className="text-sm text-gray-500">{t.rd_no_draft_yet}</p>
           </div>
         )}
       </div>
@@ -546,13 +552,13 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       {/* Human edit section */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900">최종 답변 편집</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t.rd_final_edit}</h3>
           {editedReply && (
             <button
               onClick={() => copyText(editedReply)}
               className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              답변 복사
+              {t.rd_copy_reply}
             </button>
           )}
         </div>
@@ -561,11 +567,11 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
           value={editedReply}
           onChange={(e) => setEditedReply(e.target.value)}
           rows={8}
-          placeholder="여기에 최종 답변을 작성하거나 붙여넣으세요. 외부 플랫폼에 직접 복사하여 게시하세요."
+          placeholder={t.rd_editor_placeholder}
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none resize-none"
         />
         <p className={`text-xs text-right mt-1 ${editedReply.length > 1000 ? 'text-amber-600' : 'text-gray-400'}`}>
-          {editedReply.length.toLocaleString()}자
+          {fmt(t.rd_chars, { n: editedReply.length.toLocaleString() })}
         </p>
 
         <div className="mt-2">
@@ -574,14 +580,14 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
               if (draft) {
                 startTransition(async () => {
                   await saveDraft(review.id, editedReply)
-                  setActionMessage('임시 저장되었습니다.')
+                  setActionMessage(t.rd_toast_temp_saved)
                 })
               }
             }}
             disabled={isPending || !draft}
             className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 transition-colors"
           >
-            임시 저장
+            {t.rd_temp_save}
           </button>
         </div>
       </div>
@@ -598,7 +604,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
       {/* director 전용: 고급 처리 옵션 */}
       {userRole === 'director' && (
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">고급 처리 옵션</h3>
+          <h3 className="text-sm font-semibold text-gray-900 mb-4">{t.rd_advanced}</h3>
 
           <div className="flex flex-wrap gap-3">
             {canApprove && (
@@ -606,13 +612,13 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                 onClick={() =>
                   handleAction(
                     () => approveReview(review.id, editedReply),
-                    '답변이 승인되었습니다.'
+                    t.rd_toast_approved
                   )
                 }
                 disabled={isPending || !editedReply.trim()}
                 className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
-                승인
+                {t.rd_approve}
               </button>
             )}
 
@@ -623,7 +629,7 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                 disabled={isPending || isGooglePosting || !editedReply.trim()}
                 className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
               >
-                {isGooglePosting ? '게시 중...' : '🔵 Google에 직접 게시'}
+                {isGooglePosting ? t.rd_posting : t.rd_google_post}
               </button>
             )}
 
@@ -634,43 +640,43 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                 disabled={isPending || !editedReply.trim()}
                 title={
                   getChannelAdminUrl(review.channel_code, review.review_url)
-                    ? `답변을 복사하고 ${review.channel_code} 관리자 페이지를 새 탭으로 엽니다`
-                    : '답변을 클립보드에 복사합니다'
+                    ? fmt(t.rd_copy_and_open_title, { channel: review.channel_code })
+                    : t.rd_copy_only_title
                 }
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                📋 답변 복사 + 관리자 이동
+                {t.rd_copy_and_open}
               </button>
             )}
 
             {/* 게시 완료 확인 버튼 — 모든 채널 (플랫폼에 실제 게시한 뒤 클릭) */}
             {canPublish && (
               <button
-                onClick={() => handleAction(() => markPublished(review.id), '게시 완료 처리되었습니다.')}
+                onClick={() => handleAction(() => markPublished(review.id), t.rd_toast_mark_published)}
                 disabled={isPending}
                 className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50 transition-colors"
               >
-                {review.channel_code === 'google' ? '수동 게시 완료 처리' : '✓ 게시 완료 처리'}
+                {review.channel_code === 'google' ? t.rd_mark_published_manual : t.rd_mark_published}
               </button>
             )}
 
             {review.status !== 'no_reply' && review.status !== 'manual_published' && (
               <button
-                onClick={() => handleAction(() => markNoReply(review.id), '답변 불필요 처리되었습니다.')}
+                onClick={() => handleAction(() => markNoReply(review.id), t.rd_toast_mark_no_reply)}
                 disabled={isPending}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
               >
-                답변 불필요
+                {t.rd_no_reply}
               </button>
             )}
 
             {review.status !== 'escalated' && (
               <button
-                onClick={() => handleAction(() => escalateReview(review.id), '에스컬레이션 처리되었습니다.')}
+                onClick={() => handleAction(() => escalateReview(review.id), t.rd_toast_escalated)}
                 disabled={isPending}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
-                에스컬레이션
+                {t.rd_escalate}
               </button>
             )}
 
@@ -680,13 +686,13 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                 onClick={() =>
                   handleAction(
                     () => resetReviewStatus(review.id, REVERT_STATUS[review.status]!),
-                    '상태가 되돌려졌습니다.'
+                    t.rd_toast_reverted
                   )
                 }
                 disabled={isPending}
                 className="rounded-lg border border-amber-300 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 transition-colors"
               >
-                ↩ {REVERT_LABEL[review.status]}
+                ↩ {tRevertLabel(t, review.status)}
               </button>
             )}
           </div>
@@ -708,20 +714,18 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
       {/* 리뷰 삭제 */}
       <div className="bg-white rounded-xl border border-red-100 p-5">
-        <h3 className="text-sm font-semibold text-gray-500 mb-3">위험 구역</h3>
+        <h3 className="text-sm font-semibold text-gray-500 mb-3">{t.rd_danger_zone}</h3>
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            리뷰 삭제
+            {t.rd_delete}
           </button>
         ) : (
           <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3">
-            <p className="text-sm font-semibold text-red-800 mb-1">정말 삭제하시겠습니까?</p>
-            <p className="text-xs text-red-600 mb-3">
-              이 리뷰와 관련된 모든 초안, 처리 이력이 영구 삭제됩니다. 되돌릴 수 없습니다.
-            </p>
+            <p className="text-sm font-semibold text-red-800 mb-1">{t.rd_delete_confirm_title}</p>
+            <p className="text-xs text-red-600 mb-3">{t.rd_delete_confirm_desc}</p>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -732,13 +736,13 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                 disabled={isPending}
                 className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
-                {isPending ? '삭제 중...' : '삭제 확인'}
+                {isPending ? t.rd_deleting : t.rd_delete_confirm_btn}
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
-                취소
+                {t.rd_cancel}
               </button>
             </div>
           </div>
@@ -747,9 +751,9 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
 
       {/* Activity log */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-900 mb-4">처리 이력</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-4">{t.rd_history}</h3>
         {logs.length === 0 ? (
-          <p className="text-sm text-gray-500">이력이 없습니다.</p>
+          <p className="text-sm text-gray-500">{t.rd_no_history}</p>
         ) : (
           <ol className="relative border-l border-gray-200 space-y-4 ml-3">
             {logs.map((log) => (
@@ -757,10 +761,10 @@ export default function ReviewDetailClient({ review: initialReview, draft: initi
                 <div className="absolute -left-1.5 mt-1.5 h-3 w-3 rounded-full border border-white bg-blue-400" />
                 <div className="flex items-baseline gap-2">
                   <span className="text-sm font-medium text-gray-900">
-                    {actionLabels[log.action] ?? log.action}
+                    {tActionLog(t, log.action)}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {new Date(log.created_at).toLocaleString('ko-KR')}
+                    {new Date(log.created_at).toLocaleString(locale)}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500">{log.actor_name}</p>

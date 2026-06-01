@@ -601,7 +601,9 @@ export default function ReviewsListClient({
                       </span>
                     )}
                   </td>
-                  <td className="px-1 py-3 font-mono text-xs text-gray-700 truncate">{review.branch_code}</td>
+                  <td className="px-1 py-3 truncate">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wide text-gray-900">{review.branch_code}</span>
+                  </td>
                   <td className="px-1 py-3 text-xs text-gray-700 truncate">{review.channel_code}</td>
                   <td className="px-1 py-3 text-gray-700 text-xs font-medium whitespace-nowrap">
                     {review.rating != null ? `${review.rating}★` : '—'}

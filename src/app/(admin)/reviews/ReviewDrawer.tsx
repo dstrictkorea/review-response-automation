@@ -22,6 +22,7 @@ import { useLanguage } from '@/context/LanguageContext'
 import { LANG_LOCALE } from '@/lib/i18n'
 import { statusClasses, riskClasses } from '@/lib/badges'
 import { intentLabel, intentBadgeClass, inferPipelineEngine } from '@/lib/intents'
+import { branchCity } from '@/lib/branches'
 import type { Review, ReplyDraft, ReviewStatus, RiskLevel } from '@/types/database'
 
 type DraftTab = 'short' | 'standard' | 'careful'
@@ -136,6 +137,7 @@ export default function ReviewDrawer({ review, onClose, onSaved }: Props) {
   const intentTxt  = intentLabel(intentCode, lang)
   const confidence = draft?.intent_confidence
   const displayDate = review.review_created_at ?? review.created_at
+  const cityName = branchCity(review.branch_code, lang)
 
   return (
     <div className="fixed inset-0 z-50">
@@ -156,9 +158,13 @@ export default function ReviewDrawer({ review, onClose, onSaved }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 shrink-0">
           <div className="min-w-0">
+            {/* 지점 코드를 시각적 중심으로 — 굵은 대문자 */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs text-gray-500 shrink-0">{review.branch_code}</span>
-              <span className="text-xs text-gray-400 shrink-0">·</span>
+              <span className="font-mono text-lg font-extrabold uppercase tracking-wider text-gray-900 shrink-0">
+                {review.branch_code}
+              </span>
+              {cityName && <span className="text-xs text-gray-500 shrink-0">{cityName}</span>}
+              <span className="text-xs text-gray-300 shrink-0">·</span>
               <span className="text-xs text-gray-500 shrink-0">{review.channel_code}</span>
               {review.rating != null && (
                 <span className="text-xs font-semibold text-yellow-500 shrink-0">{review.rating}★</span>

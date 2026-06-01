@@ -24,6 +24,15 @@ export default async function DashboardPage({
   // ── 현재 사용자 역할 조회 ─────────────────────────────────────────────────────
   const { data: { user } } = await supabase.auth.getUser()
 
+  // 상태별 정확한 카운트 헬퍼 (head:true — 행 미반환, count만). allReviews 인메모리
+  // 집계는 Supabase 기본 1000행 cap에 영향받으므로, 위젯 카운트는 exact count로 분리한다.
+  const statusCountQuery = (status: string) => {
+    let q = supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('status', status)
+    if (activeBranch)  q = q.eq('branch_code',  activeBranch)
+    if (activeChannel) q = q.eq('channel_code', activeChannel)
+    return q
+  }
+
   // ── 병렬 조회 ────────────────────────────────────────────────────────────────
   const [
     { data: allData },
@@ -31,6 +40,9 @@ export default async function DashboardPage({
     { data: branches },
     { data: channels },
     { data: profile },
+    { count: newCountExact },
+    { count: aiDoneCountExact },
+    { count: pendingApprovalCountExact },
   ] = await Promise.all([
     // 전체 데이터셋 (필터 적용) — DashboardStats용
     (() => {
@@ -69,6 +81,11 @@ export default async function DashboardPage({
     user
       ? supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
       : Promise.resolve({ data: null }),
+
+    // 상태별 정확한 카운트 (위젯-리스트 동기화용)
+    statusCountQuery('new'),
+    statusCountQuery('ai_done'),
+    statusCountQuery('pending_approval'),
   ])
 
   const pendingData       = pendingResult.data
@@ -118,10 +135,10 @@ export default async function DashboardPage({
     })
     .slice(0, 30)
 
-  // ── 상태별 카운터 ───────────────────────────────────────────────────────────────
-  const newCount             = allReviews.filter((r) => r.status === 'new').length
-  const aiDoneCount          = allReviews.filter((r) => r.status === 'ai_done').length
-  const pendingApprovalCount = allReviews.filter((r) => r.status === 'pending_approval').length
+  // ── 상태별 카운터 (exact count — 위젯 합계 = pendingTotal = 리스트 전체 건수) ──────
+  const newCount             = newCountExact ?? 0
+  const aiDoneCount          = aiDoneCountExact ?? 0
+  const pendingApprovalCount = pendingApprovalCountExact ?? 0
 
   // ── 최근 처리 완료 ──────────────────────────────────────────────────────────────
   const recentActivity = allReviews
