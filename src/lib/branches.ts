@@ -72,3 +72,56 @@ export function classifyBranch(code: string, countryCode?: string | null): Branc
 export function branchCity(code: string, lang: Language): string | null {
   return BRANCH_CITY[code.toUpperCase()]?.[lang] ?? null
 }
+
+// ── 지점 자동 감지 (CSV 컬럼 / 파일명) ───────────────────────────────────────────
+
+/** 공백·언더스코어·하이픈 제거 + 소문자 정규화 */
+function normForMatch(s: string): string {
+  return s.toLowerCase().replace(/[\s_\-.]+/g, '')
+}
+
+/** 코드별 매칭 별칭(정규화) — 도시명(4개국어) + 코드 + 수동 변형 */
+function buildDetectAliases(): Array<{ alias: string; code: string }> {
+  const out: Array<{ alias: string; code: string }> = []
+  const push = (alias: string, code: string) => {
+    const a = normForMatch(alias)
+    if (a.length >= 2) out.push({ alias: a, code })
+  }
+  for (const [code, names] of Object.entries(BRANCH_CITY)) {
+    push(code, code)
+    for (const v of Object.values(names)) push(v, code)
+  }
+  // 수동 변형/약칭
+  const EXTRA: Array<[string, string]> = [
+    ['vegas', 'AMLV'], ['라스베이거스', 'AMLV'], ['lasvegas', 'AMLV'],
+    ['newyork', 'AMNY'], ['nyc', 'AMNY'],
+    ['losangeles', 'AMLA'], ['los angeles', 'AMLA'],
+    ['kaohsiung', 'AMKH'], ['高雄', 'AMKH'],
+    ['jejukids', 'AKJJ'], ['제주키즈', 'AKJJ'], ['jejukid', 'AKJJ'],
+  ]
+  for (const [a, c] of EXTRA) push(a, c)
+  // 긴 별칭 우선 (예: jejukids > jeju) — 부분 문자열 오매칭 방지
+  return out.sort((x, y) => y.alias.length - x.alias.length)
+}
+
+const DETECT_ALIASES = buildDetectAliases()
+
+/**
+ * 문자열(파일명·CSV 셀 등)에서 지점 코드를 자동 감지한다.
+ * 코드(AMLV) 또는 도시명(las vegas / 라스베가스 / 名古屋 …)을 인식.
+ * @param text  파일명 또는 셀 값
+ * @param allowedCodes  존재하는 지점 코드로 결과를 제한 (옵션). 매칭이 이 집합에 없으면 무시.
+ * @returns 감지된 지점 코드 (대문자) 또는 null
+ */
+export function detectBranchCode(text: string | null | undefined, allowedCodes?: Set<string>): string | null {
+  if (!text) return null
+  const n = normForMatch(text)
+  if (!n) return null
+  for (const { alias, code } of DETECT_ALIASES) {
+    if (n.includes(alias)) {
+      if (allowedCodes && !allowedCodes.has(code)) continue
+      return code
+    }
+  }
+  return null
+}

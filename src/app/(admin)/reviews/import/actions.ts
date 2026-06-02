@@ -12,6 +12,8 @@ export interface ImportRowPayload {
   review_url: string | null
   external_review_id: string | null
   review_language: string | null
+  /** CSV에서 자동 감지된 지점 코드 (없으면 null → 배치 기본 지점) */
+  branch_code: string | null
   source: Record<string, string>
 }
 
@@ -121,8 +123,11 @@ export async function importReviewsAction(
     const authorIdentifier = (row.reviewer_name ?? row.external_review_id ?? '').trim().toLowerCase()
     const dateSlug         = row.review_date?.slice(0, 10) ?? ''
 
+    // 행별 지점: CSV 자동 감지값 우선, 없으면 배치 기본 지점
+    const effectiveBranch  = (row.branch_code ?? '').trim() || batchInfo.branchCode
+
     const normalized_hash = generateContextHash(
-      batchInfo.branchCode,
+      effectiveBranch,
       batchInfo.channelCode,
       authorIdentifier,
       dateSlug,
@@ -132,10 +137,10 @@ export async function importReviewsAction(
     // import_hash: 별점 포함 — 파일 내 세분화된 Row 레벨 추적용
     const import_hash = crypto
       .createHash('sha256')
-      .update(`${batchInfo.branchCode}|${batchInfo.channelCode}|${row.rating ?? ''}|${authorIdentifier}|${dateSlug}|${cleanText(row.review_text ?? '')}`)
+      .update(`${effectiveBranch}|${batchInfo.channelCode}|${row.rating ?? ''}|${authorIdentifier}|${dateSlug}|${cleanText(row.review_text ?? '')}`)
       .digest('hex')
 
-    return { ...row, authorIdentifier, dateSlug, normalized_hash, import_hash, originalIndex }
+    return { ...row, effectiveBranch, authorIdentifier, dateSlug, normalized_hash, import_hash, originalIndex }
   })
 
   // ── 3. 중복 확인: 개별 SELECT×N 대신 IN(…) 쿼리 3개 병렬 실행 ──────────
@@ -143,25 +148,24 @@ export async function importReviewsAction(
   const reviewUrls  = [...new Set(enriched.filter(r => r.review_url).map(r => r.review_url!))]
   const hashes      = [...new Set(enriched.map(r => r.normalized_hash))]
 
+  // 행별 지점이 혼재할 수 있으므로 branch_code 고정 필터 제거.
+  // 5차원 normalized_hash 가 이미 branch+channel 을 인코딩하여 전역 유일.
   const [{ data: existingByExtId }, { data: existingByUrl }, { data: existingByHash }] = await Promise.all([
     externalIds.length
       ? supabase
           .from('reviews')
           .select('source_review_id')
           .in('source_review_id', externalIds)
-          .eq('branch_code', batchInfo.branchCode)
           .eq('channel_code', batchInfo.channelCode)
       : Promise.resolve({ data: [] as Array<{ source_review_id: string | null }> }),
     reviewUrls.length
       ? supabase.from('reviews').select('review_url').in('review_url', reviewUrls)
       : Promise.resolve({ data: [] as Array<{ review_url: string | null }> }),
-    // ★ 5차원 해시 자체가 유니크 식별자 — reviewer_name 조합 불필요
+    // ★ 5차원 해시 자체가 유니크 식별자 (branch+channel 인코딩됨)
     hashes.length
       ? supabase
           .from('reviews')
           .select('normalized_hash')
-          .eq('branch_code', batchInfo.branchCode)
-          .eq('channel_code', batchInfo.channelCode)
           .in('normalized_hash', hashes)
       : Promise.resolve({ data: [] as Array<{ normalized_hash: string | null }> }),
   ])
@@ -175,9 +179,16 @@ export async function importReviewsAction(
   type Enriched = (typeof enriched)[0]
   const toInsert:    Enriched[]                           = []
   const duplicates:  { row: Enriched; reason: string }[] = []
+  const branchErrors: Enriched[]                         = []  // 지점 미확인 행
   const seenInBatch = new Set<string>() // 파일 내 중복 감지
 
   for (const row of enriched) {
+    // 지점이 자동 감지되지 않고 배치 기본 지점도 없으면 적재 불가
+    if (!row.effectiveBranch) {
+      branchErrors.push(row)
+      continue
+    }
+
     let dupeReason: string | null = null
 
     if (row.external_review_id && dupeExtIds.has(row.external_review_id))
@@ -212,7 +223,7 @@ export async function importReviewsAction(
       .from('reviews')
       .upsert(
         toInsert.map(row => ({
-          branch_code:            batchInfo.branchCode,
+          branch_code:            row.effectiveBranch,
           channel_code:           batchInfo.channelCode,
           rating:                 row.rating,
           review_text:            row.review_text,
@@ -282,7 +293,29 @@ export async function importReviewsAction(
       status:        'duplicate',
       error_message: reason,
     })),
+    ...branchErrors.map(row => ({
+      batch_id:       batch.id,
+      row_index:      row.originalIndex,
+      source_payload: row.source,
+      mapped_payload: {
+        rating:             row.rating,
+        review_text:        row.review_text,
+        review_date:        row.review_date,
+        reviewer_name:      row.reviewer_name,
+        review_url:         row.review_url,
+        external_review_id: row.external_review_id,
+        review_language:    row.review_language,
+      },
+      status:        'error',
+      error_message: '지점 미확인 (CSV/파일명 자동 감지 실패 + 기본 지점 미선택)',
+    })),
   ]
+
+  // 지점 미확인 행을 오류 집계에 반영
+  if (branchErrors.length > 0) {
+    errors += branchErrors.length
+    errorDetails.push(`지점 미확인 ${branchErrors.length}건 — CSV 지점 컬럼/파일명에서 감지 실패. 기본 지점을 선택하거나 지점 컬럼을 추가하세요.`)
+  }
 
   if (importRowsPayload.length > 0) {
     await supabase.from('review_import_rows').insert(importRowsPayload)

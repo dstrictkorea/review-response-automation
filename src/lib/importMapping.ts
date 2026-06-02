@@ -1,3 +1,5 @@
+import { detectBranchCode } from '@/lib/branches'
+
 export type ImportFormat = 'standard' | 'google' | 'naver' | 'tripadvisor' | 'ota' | 'custom'
 
 export type CanonicalField =
@@ -8,6 +10,7 @@ export type CanonicalField =
   | 'review_url'
   | 'external_review_id'
   | 'review_language'
+  | 'branch_code'
 
 export interface MappedReviewRow {
   rating: number | null
@@ -17,6 +20,8 @@ export interface MappedReviewRow {
   review_url: string | null
   external_review_id: string | null
   review_language: string | null
+  /** CSV의 지점 컬럼에서 자동 감지된 지점 코드 (없으면 null → 배치 기본 지점 사용) */
+  branch_code: string | null
 }
 
 export interface ParsedRow {
@@ -127,6 +132,13 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().trim().replace(/[\s\-]+/g, ' ')
 }
 
+// 지점 컬럼으로 인식할 헤더 별칭 (normalizeKey 기준)
+const BRANCH_COL_ALIASES = new Set<string>([
+  'branch', 'branch code', 'branchcode', 'branch_code',
+  'store', 'location', 'venue', 'site', 'museum',
+  '지점', '지점코드', '지점 코드', '매장', '점포', '관', '전시관',
+])
+
 function findCanonicalField(header: string, format: ImportFormat): CanonicalField | null {
   const aliases = FORMAT_ALIASES[format]
   const key = normalizeKey(header)
@@ -195,6 +207,9 @@ export function mapRows(
   const headerMap = buildHeaderMapping(headers, format)
   const dataRows = allRows.slice(1)
 
+  // 지점 컬럼 자동 감지 (포맷 무관) — branch/지점/매장/store/location 등
+  const branchHeader = headers.find(h => BRANCH_COL_ALIASES.has(normalizeKey(h)))
+
   return dataRows.map((cols, i) => {
     const source: Record<string, string> = {}
     headers.forEach((h, j) => {
@@ -212,6 +227,10 @@ export function mapRows(
     const errors: string[] = []
     if (!reviewTextRaw.trim()) errors.push('리뷰 내용 필수')
 
+    // CSV 셀에서 지점 자동 인식 (코드 또는 도시명 → 지점 코드)
+    const rawBranch = branchHeader ? (source[branchHeader] ?? '') : ''
+    const detectedBranch = detectBranchCode(rawBranch)
+
     const mapped: MappedReviewRow = {
       rating: parseRating(ratingRaw),
       review_text: reviewTextRaw.trim(),
@@ -220,6 +239,7 @@ export function mapRows(
       review_url: get('review_url').trim() || null,
       external_review_id: get('external_review_id').trim() || null,
       review_language: get('review_language').trim() || null,
+      branch_code: detectedBranch,
     }
 
     return { index: i, source, mapped, errors }

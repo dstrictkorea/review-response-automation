@@ -11,6 +11,7 @@ import {
   type ImportFormat,
   type ParsedRow,
 } from '@/lib/importMapping'
+import { detectBranchCode } from '@/lib/branches'
 import { importReviewsAction, type ImportResult } from './actions'
 
 interface Branch { code: string; name_ko: string }
@@ -30,6 +31,7 @@ export default function ImportReviewsPage() {
   const [channelCode, setChannelCode] = useState('')
   const [importFormat, setImportFormat] = useState<ImportFormat>('standard')
   const [fileName, setFileName] = useState('')
+  const [autoBranch, setAutoBranch] = useState<string | null>(null)  // 파일명에서 자동 감지된 지점
   const [rawText, setRawText] = useState('')
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
   const [parseError, setParseError] = useState('')
@@ -54,6 +56,17 @@ export default function ImportReviewsPage() {
       return
     }
     setFileName(file.name)
+
+    // 파일명에서 지점 자동 감지 (예: arte_museum_las_vegas_*.csv → AMLV)
+    const allowed = new Set(branches.map(b => b.code))
+    const detected = detectBranchCode(file.name, allowed.size ? allowed : undefined)
+    if (detected) {
+      setAutoBranch(detected)
+      setBranchCode(detected)   // 자동 채움 (수동 변경 가능)
+    } else {
+      setAutoBranch(null)
+    }
+
     const reader = new FileReader()
     reader.onload = (e) => {
       setRawText((e.target?.result as string) ?? '')
@@ -76,7 +89,7 @@ export default function ImportReviewsPage() {
 
   function handleParse() {
     setParseError('')
-    if (!branchCode) { setParseError('지점을 선택하세요.'); return }
+    // 지점은 더 이상 필수가 아님 — CSV/파일명 자동 감지 또는 기본 지점(fallback) 사용
     if (!channelCode) { setParseError('채널을 선택하세요.'); return }
     if (!rawText.trim()) { setParseError('CSV 데이터를 업로드하거나 붙여넣으세요.'); return }
 
@@ -91,6 +104,12 @@ export default function ImportReviewsPage() {
     }
 
     const rows = mapRows(allRows, importFormat)
+    // 기본 지점 미선택 + CSV 자동 감지 실패 행은 '지점 미확인' 오류 처리
+    if (!branchCode) {
+      rows.forEach(r => {
+        if (!r.mapped.branch_code) r.errors = [...r.errors, '지점 미확인']
+      })
+    }
     setParsedRows(rows)
     setPhase('preview')
   }
@@ -130,6 +149,7 @@ export default function ImportReviewsPage() {
     setPhase('setup')
     setRawText('')
     setFileName('')
+    setAutoBranch(null)
     setParsedRows([])
     setParseError('')
     setImportResult(null)
@@ -159,19 +179,27 @@ export default function ImportReviewsPage() {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
-                  지점 <span className="text-red-500">*</span>
+                  지점 <span className="text-gray-400 font-normal">(자동 감지 · 미감지 시 기본값)</span>
                 </label>
                 <select
                   value={branchCode}
-                  onChange={e => setBranchCode(e.target.value)}
+                  onChange={e => { setBranchCode(e.target.value); setAutoBranch(null) }}
                   disabled={phase === 'preview'}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none disabled:bg-gray-50"
                 >
-                  <option value="">지점 선택</option>
+                  <option value="">지점 자동 감지 (CSV·파일명)</option>
                   {branches.map(b => (
                     <option key={b.code} value={b.code}>{b.code} — {b.name_ko}</option>
                   ))}
                 </select>
+                {autoBranch && (
+                  <p className="mt-1 text-xs text-green-600 font-medium">
+                    ✓ 파일명에서 자동 감지: <span className="font-mono font-bold">{autoBranch}</span>
+                    {branches.find(b => b.code === autoBranch)
+                      ? ` (${branches.find(b => b.code === autoBranch)!.name_ko.replace('아르떼뮤지엄 ', '')})`
+                      : ''}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -323,6 +351,7 @@ export default function ImportReviewsPage() {
                     <tr className="bg-gray-50 border-b border-gray-200">
                       <th className="px-3 py-2 text-left text-gray-500 font-medium w-10">#</th>
                       <th className="px-3 py-2 text-left text-gray-500 font-medium">상태</th>
+                      <th className="px-3 py-2 text-left text-gray-500 font-medium">지점</th>
                       <th className="px-3 py-2 text-left text-gray-500 font-medium">별점</th>
                       <th className="px-3 py-2 text-left text-gray-500 font-medium">작성자</th>
                       <th className="px-3 py-2 text-left text-gray-500 font-medium">작성일</th>
@@ -344,6 +373,18 @@ export default function ImportReviewsPage() {
                           ) : (
                             <span className="text-green-600 font-medium">✓</span>
                           )}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {(() => {
+                            const eff = row.mapped.branch_code ?? (branchCode || null)
+                            if (!eff) return <span className="text-red-600 font-medium">미확인</span>
+                            const fromCsv = !!row.mapped.branch_code
+                            return (
+                              <span className={`font-mono font-bold ${fromCsv ? 'text-green-700' : 'text-gray-700'}`}>
+                                {eff}{fromCsv && <span className="ml-1 text-[10px] font-sans font-normal text-green-600">CSV</span>}
+                              </span>
+                            )
+                          })()}
                         </td>
                         <td className="px-3 py-2 text-gray-700">
                           {row.mapped.rating != null ? `${row.mapped.rating}★` : '—'}
@@ -477,9 +518,9 @@ export default function ImportReviewsPage() {
 
       {/* Info note */}
       {phase === 'setup' && (
-        <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-xs text-blue-800">
-          <strong>안내:</strong> 가져온 리뷰는 모두 &lsquo;신규&rsquo; 상태로 등록됩니다. AI 초안 생성 및 발행은 각 리뷰 상세 페이지에서 직접 진행하세요.
-          중복 리뷰(동일 ID·URL·내용)는 자동으로 건너뜁니다.
+        <div className="mt-4 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-xs text-blue-800 space-y-1">
+          <p><strong>지점 자동 인식:</strong> 파일명(예: <code>..._las_vegas_...csv</code> → AMLV) 또는 CSV의 지점 컬럼(branch/지점/store/location)에서 지점을 자동 감지·분류합니다. 감지가 안 되거나 다중 지점이 섞인 경우에만 위에서 기본 지점을 선택하세요.</p>
+          <p><strong>안내:</strong> 가져온 리뷰는 모두 &lsquo;신규&rsquo; 상태로 등록되며, 중복 리뷰(동일 ID·URL·내용)는 자동으로 건너뜁니다.</p>
         </div>
       )}
     </div>
