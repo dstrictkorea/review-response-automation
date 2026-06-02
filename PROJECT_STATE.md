@@ -70,7 +70,11 @@
 - **Gmail식 일괄 선택 + 필터 페이로드 일괄 Soft Delete**: `/api/review/bulk-delete`(mode ids|filter). filter 모드는 수천 ID 미전송, 필터 조건만 받아 단일 UPDATE. ReviewsListClient 전체행 선택 + Gmail 배너 + 2중 경고 모달
 - **아카이브 필터 통합**: ReviewsFilterPanel `archiveMode`(평점+보관사유 셀렉트) 재사용, archive 서버 필터 + deleted_at IS NULL
 - **RBAC UI/가드**: profiles.assigned_branches 컬럼 라이브 적용(additive). User Management 담당지점 체크박스 모달(국내/글로벌) + `updateAssignedBranchesAction`. `lib/auth/branchAccess.ts`(getBranchAccess/canAccessBranch) — bulk-delete 라우트에 staff 지점 범위 강제(fail-closed)
-- ⚠️ **009 RLS(STEP B) 여전히 게이트** — assigned_branches 백필 후 명시적 승인 시에만 라이브 적용 (lockout 방지)
+- ⚠️ **009 RLS(STEP B) 게이트 — 코드/DB 미배포 (절대 원칙)**:
+  - `009_multi_branch_rbac.sql` = **STEP A(profiles 컬럼)만** 포함 (자동 마이그레이션 안전).
+  - RLS DDL은 `supabase/gated/rbac_rls_step_b.sql` 로 분리 — `supabase/migrations/` 밖이라 `db push` 자동 적용 대상 아님 (사고 방지).
+  - **무결성 배포 파이프라인(필수 순서)**: ① STEP A 적용 → ② 관리자 UI로 전 staff `assigned_branches` 백필 100% → ③ admin role 격리 검증 → ④ 명시적 "RLS 락 해제" 승인 후에만 STEP B 적용. 백필 전 적용 시 전 지사 staff lockout.
+  - 비상 롤백 SQL은 gated 파일 하단에 포함.
 - tsc 0 · eslint 0 · build 0
 
 ### Wave 14 (005 라이브 가동 + Soft Delete + RBAC 파일)
