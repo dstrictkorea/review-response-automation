@@ -279,6 +279,17 @@ export interface I18nDict {
   rd_toast_reverted: string
   rd_toast_temp_saved: string
   rd_unknown_error: string
+
+  // ── Reviews list filter panel (Wave 13) ──────────────────────────────────────
+  rv_list_title: string
+  rv_total_word: string
+  rv_search_label: string
+  rv_search_ph: string
+  rv_date_from: string
+  rv_date_to: string
+  rv_apply: string
+  rv_import_csv: string
+  rv_register_one: string
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -516,6 +527,16 @@ export const DICT: Record<Language, I18nDict> = {
     rd_toast_reverted: '상태가 되돌려졌습니다.',
     rd_toast_temp_saved: '임시 저장되었습니다.',
     rd_unknown_error: '알 수 없는 오류',
+
+    rv_list_title: '리뷰 목록',
+    rv_total_word: '총',
+    rv_search_label: '리뷰 내용 / 작성자 검색',
+    rv_search_ph: '검색어 (리뷰 내용, 작성자명, 지점/채널 코드)',
+    rv_date_from: '리뷰 작성일 (시작)',
+    rv_date_to: '리뷰 작성일 (종료)',
+    rv_apply: '필터 적용',
+    rv_import_csv: 'CSV 가져오기',
+    rv_register_one: '+ 1건 등록',
   },
 
   en: {
@@ -752,6 +773,16 @@ export const DICT: Record<Language, I18nDict> = {
     rd_toast_reverted: 'Status reverted.',
     rd_toast_temp_saved: 'Draft saved.',
     rd_unknown_error: 'Unknown error',
+
+    rv_list_title: 'Reviews',
+    rv_total_word: 'Total',
+    rv_search_label: 'Search review text / author',
+    rv_search_ph: 'Search (review text, author, branch/channel code)',
+    rv_date_from: 'Review date (from)',
+    rv_date_to: 'Review date (to)',
+    rv_apply: 'Apply filters',
+    rv_import_csv: 'Import CSV',
+    rv_register_one: '+ Add one',
   },
 
   ja: {
@@ -988,6 +1019,16 @@ export const DICT: Record<Language, I18nDict> = {
     rd_toast_reverted: 'ステータスを戻しました。',
     rd_toast_temp_saved: '一時保存しました。',
     rd_unknown_error: '不明なエラー',
+
+    rv_list_title: 'レビュー一覧',
+    rv_total_word: '合計',
+    rv_search_label: 'レビュー内容 / 投稿者検索',
+    rv_search_ph: '検索ワード（レビュー内容、投稿者名、拠点/チャネルコード）',
+    rv_date_from: 'レビュー投稿日（開始）',
+    rv_date_to: 'レビュー投稿日（終了）',
+    rv_apply: 'フィルター適用',
+    rv_import_csv: 'CSV取込',
+    rv_register_one: '+ 1件登録',
   },
 
   zh: {
@@ -1224,5 +1265,15 @@ export const DICT: Record<Language, I18nDict> = {
     rd_toast_reverted: '状态已还原。',
     rd_toast_temp_saved: '已暂存。',
     rd_unknown_error: '未知错误',
+
+    rv_list_title: '评价列表',
+    rv_total_word: '共',
+    rv_search_label: '评价内容 / 评论者搜索',
+    rv_search_ph: '搜索词（评价内容、评论者、门店/渠道代码）',
+    rv_date_from: '评价日期（开始）',
+    rv_date_to: '评价日期（结束）',
+    rv_apply: '应用筛选',
+    rv_import_csv: '导入CSV',
+    rv_register_one: '+ 新增一条',
   },
 }

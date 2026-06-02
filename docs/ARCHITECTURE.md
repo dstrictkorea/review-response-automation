@@ -98,7 +98,10 @@ review-response-automation/
 │   │   ├── 001_initial.sql
 │   │   ├── 002_channel_api_enabled.sql
 │   │   ├── 003_import_tables.sql
-│   │   └── 004_global_optimization.sql  ← country_code, 초기값, 해시 인덱스
+│   │   ├── 004_global_optimization.sql  ← country_code, 초기값, 해시 인덱스 (라이브 미적용)
+│   │   ├── 005_algorithm_first_pipeline.sql ← pg_trgm/intents/templates (라이브 미적용)
+│   │   ├── 006_review_telemetry.sql     ← reply_drafts 텔레메트리 (✅ 라이브 적용)
+│   │   └── 007_branches_seed.sql        ← 11개 공식 지점 시드 (✅ 라이브 적용)
 │   └── seed.sql
 ├── PROJECT_STATE.md                  ← ★ 이 파일의 형제 — 프로젝트 상태 원본
 └── docs/

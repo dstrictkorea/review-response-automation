@@ -13,11 +13,14 @@
 
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/context/LanguageContext'
+import { classifyBranch, branchCity } from '@/lib/branches'
+import type { Language } from '@/lib/i18n'
 
 export interface Branch {
   code: string
   name_ko: string
   name_en: string
+  country_code?: string | null
 }
 
 export interface Channel {
@@ -32,10 +35,14 @@ interface Props {
   currentChannel: string  // '' = all
 }
 
-// Short location name extracted from the branch name
-function shortBranchName(b: Branch, lang: string): string {
-  if (lang === 'ko') return b.name_ko.replace('아르떼뮤지엄 ', '')
-  return b.name_en.replace('ARTE Museum ', '')
+// 도시명(현재 locale) — 공식 매핑 우선, 없으면 지점명에서 추출
+function branchCityName(b: Branch, lang: Language): string {
+  return (
+    branchCity(b.code, lang) ??
+    (lang === 'ko'
+      ? b.name_ko.replace('아르떼뮤지엄 ', '')
+      : b.name_en.replace('ARTE Museum ', ''))
+  )
 }
 
 export default function DashboardFilterBar({
@@ -80,40 +87,65 @@ export default function DashboardFilterBar({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 mb-4 space-y-2.5">
-      {/* ── Branch row ──────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-xs font-semibold text-gray-500 w-10 shrink-0">
-          {t.filter_branch_label}
-        </span>
+      {/* ── Branch — 국내/글로벌 2단 그룹 + 코드 최우선 ──────────────────────── */}
+      {(() => {
+        const domestic = branches.filter((b) => classifyBranch(b.code, b.country_code) === 'domestic')
+        const global   = branches.filter((b) => classifyBranch(b.code, b.country_code) === 'global')
 
-        {/* All */}
-        <button
-          onClick={() => setBranch('')}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
-            !currentBranch
-              ? 'bg-blue-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          {t.filter_all}
-        </button>
-
-        {/* Individual branches */}
-        {branches.map((b) => (
+        const branchBtn = (b: Branch) => (
           <button
             key={b.code}
             onClick={() => setBranch(b.code)}
             title={lang === 'ko' ? b.name_ko : b.name_en}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-all max-w-[140px] truncate ${
+            className={`rounded-full px-3 py-1 text-xs font-medium transition-all max-w-[160px] truncate ${
               currentBranch === b.code
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            {shortBranchName(b, lang)}
+            <span className="font-mono font-bold uppercase">{b.code}</span>
+            <span className="ml-1 font-normal opacity-80">({branchCityName(b, lang)})</span>
           </button>
-        ))}
-      </div>
+        )
+
+        return (
+          <div className="flex items-start gap-2">
+            <span className="text-xs font-semibold text-gray-500 w-10 shrink-0 pt-1.5">
+              {t.filter_branch_label}
+            </span>
+            <div className="flex-1 space-y-1.5">
+              {/* All + 국내 */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => setBranch('')}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+                    !currentBranch ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {t.filter_all}
+                </button>
+                {domestic.length > 0 && (
+                  <>
+                    <span className="ml-1 text-[10px] font-bold uppercase tracking-wide text-gray-400 shrink-0">
+                      🇰🇷 {t.rv_group_domestic}
+                    </span>
+                    {domestic.map(branchBtn)}
+                  </>
+                )}
+              </div>
+              {/* 글로벌 */}
+              {global.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-gray-400 shrink-0">
+                    🌐 {t.rv_group_global}
+                  </span>
+                  {global.map(branchBtn)}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Channel row ─────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -171,7 +203,7 @@ export default function DashboardFilterBar({
               {t.filter_branch_label}:{' '}
               {(() => {
                 const b = branches.find((x) => x.code === currentBranch)
-                return b ? shortBranchName(b, lang) : currentBranch
+                return b ? `${b.code} (${branchCityName(b, lang)})` : currentBranch
               })()}
               <button
                 onClick={() => router.push(buildUrl('', currentChannel))}

@@ -1,6 +1,14 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-05-29 · commit range: `86c1c2e` → `b702efd` (Wave 12)
+> 최종 갱신: 2026-06-01 · commit range: `86c1c2e` → (Wave 13)
+
+## ⚠️ 라이브 DB 스키마 드리프트 (중요)
+- 라이브 Supabase(`vmrvyqqlebviaczsgapn`)는 repo 마이그레이션과 **불일치** 상태였음.
+- **적용 완료(Wave 13)**: 006(reply_drafts 텔레메트리 컬럼), 007(branches 11개 시드+country_code).
+- **미적용(주의)**: 005(Algorithm-First — pg_trgm/review_intents/intent_keywords/reply_template_variants/detect_review_intent RPC).
+  → 현재 운영은 LLM 경로로 **graceful degradation** 중 (인텐트 템플릿 엔진 미가동). 활성화하려면 005 적용 필요.
+- **불필요**: 004의 단독 normalized_hash 인덱스 — CSV import onConflict를 기존 3컬럼 인덱스에 맞춰 코드로 해결.
+
 
 ---
 
@@ -58,6 +66,15 @@
 - **`settings/page.tsx`**: `channel_webhooks`, `rating_template_rules` 병렬 조회 추가
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
+
+### Wave 13 (지점 마스터 시드 + 필터 i18n + 지점 그룹 탭 + CSV 임포트 수복)
+- **007_branches_seed.sql** (신규) — 11개 공식 지점 멱등 upsert(ON CONFLICT code DO UPDATE) + country_code. **라이브 DB 적용·검증 완료** (국내 5/글로벌 6)
+- **006 텔레메트리 컬럼 라이브 적용** — reply_drafts.intent_code/intent_confidence/pipeline_engine 부재로 인한 초안 미리보기·수동생성 회귀 수복
+- **CSV 임포트 ON CONFLICT 수복** — onConflict `normalized_hash`(단독, 미존재 인덱스) → `branch_code,channel_code,normalized_hash`(라이브 기존 인덱스 일치). "no unique or exclusion constraint" 에러 청산
+- **ReviewsFilterPanel.tsx** (신규 클라이언트) — 리뷰 목록 헤더/검색폼/통계 카드 전량 i18n (서버폼 → 클라이언트 분리). 지점 select optgroup 국내/글로벌 + 코드 최우선 `AMDB (Dubai)`
+- **DashboardFilterBar 지점 탭 그룹화** — 평면 도시버튼 → 국내/글로벌 2단 + locale-aware 코드 최우선 `AMDB (두바이)`/`AMDB (Dubai)` (lib/branches 결합)
+- i18n 키 rv_list_title/rv_search_*/rv_date_*/rv_apply 등 추가 × 4개국어
+- tsc 0 · eslint 0 · build 0
 
 ### Wave 12 (카운트 동기화 + 지점 그룹화 + 풀 i18n)
 - **대시보드 카운트 동기화**: 위젯 상태별 카운트를 exact count 쿼리(head:true)로 분리 → Supabase 1000행 cap 무관, 신규+AI완료+AI격리 합 = pendingTotal = 리스트 전체 건수

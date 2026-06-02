@@ -74,7 +74,7 @@ export default async function DashboardPage({
     })(),
 
     // 필터 옵션 목록
-    supabase.from('branches').select('code, name_ko, name_en').eq('is_active', true).order('code'),
+    supabase.from('branches').select('code, name_ko, name_en, country_code').eq('is_active', true).order('code'),
     supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
 
     // 사용자 역할

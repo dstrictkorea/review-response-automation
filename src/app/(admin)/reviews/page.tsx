@@ -1,9 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
 import type { Review, ReviewTelemetry } from '@/types/database'
 import ReviewsListClient, { type ServerPaginationProps } from './ReviewsListClient'
-import DateInput from './DateInput'
-import { classifyBranch } from '@/lib/branches'
+import ReviewsFilterPanel from './ReviewsFilterPanel'
 
 interface BranchRow { code: string; name_ko: string; country_code: string | null }
 
@@ -129,125 +127,15 @@ export default async function ReviewsPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">리뷰 목록</h2>
-          <p className="text-sm text-gray-600 mt-1">총 {total}건</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/reviews/import"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            CSV 가져오기
-          </Link>
-          <Link href="/reviews/register"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
-            + 1건 등록
-          </Link>
-        </div>
-      </div>
-
-      {/* ── 서버사이드 필터 폼 (branch/channel/q/date) ── status/risk/rating은 퀵필터 칩 담당 ── */}
-      <form method="GET" className="bg-white rounded-xl border border-gray-200 p-4 mb-4">
-        <div className="mb-3">
-          <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 내용 / 작성자 검색</label>
-          <input type="text" name="q" defaultValue={params.q ?? ''}
-            placeholder="검색어 (리뷰 내용, 작성자명, 지점/채널 코드)"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none" />
-        </div>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 작성일 (시작)</label>
-            <DateInput name="date_from" defaultValue={params.date_from ?? ''} />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">리뷰 작성일 (종료)</label>
-            <DateInput name="date_to" defaultValue={params.date_to ?? ''} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">지점</label>
-            <select name="branch" defaultValue={params.branch ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none">
-              <option value="">전체</option>
-              {(() => {
-                const list = (branches ?? []) as BranchRow[]
-                const domestic = list.filter((b) => classifyBranch(b.code, b.country_code) === 'domestic')
-                const global   = list.filter((b) => classifyBranch(b.code, b.country_code) === 'global')
-                return (
-                  <>
-                    {domestic.length > 0 && (
-                      <optgroup label="🇰🇷 국내 지점">
-                        {domestic.map((b) => <option key={b.code} value={b.code}>{b.code} — {b.name_ko}</option>)}
-                      </optgroup>
-                    )}
-                    {global.length > 0 && (
-                      <optgroup label="🌐 글로벌 지점">
-                        {global.map((b) => <option key={b.code} value={b.code}>{b.code} — {b.name_ko}</option>)}
-                      </optgroup>
-                    )}
-                  </>
-                )
-              })()}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">채널</label>
-            <select name="channel" defaultValue={params.channel ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none">
-              <option value="">전체</option>
-              {(channels ?? []).map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
-            </select>
-          </div>
-        </div>
-        {/* 퀵필터(상태/위험도/별점)는 URL 보존 — 폼 제출 시 hidden 동반 전송 */}
-        {params.status && <input type="hidden" name="status" value={params.status} />}
-        {params.risk   && <input type="hidden" name="risk" value={params.risk} />}
-        {params.rating && <input type="hidden" name="rating" value={params.rating} />}
-        <div className="flex gap-2 mt-3">
-          <button type="submit"
-            className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-700 transition-colors">
-            필터 적용
-          </button>
-          <Link href="/reviews"
-            className="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            초기화
-          </Link>
-        </div>
-      </form>
-
-      {/* 통계 요약 (필터 전체 집합 기준) */}
-      {total > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 px-5 py-3 mb-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-          {(params.date_from || params.date_to) && (
-            <div className="flex items-center gap-1 text-xs text-gray-500 border-r border-gray-200 pr-6">
-              <span>📅</span><span>{params.date_from ?? '—'} ~ {params.date_to ?? '—'}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">총</span>
-            <span className="text-base font-bold text-gray-900">{total}건</span>
-          </div>
-          {avgRating !== null && (
-            <div className="flex items-center gap-2 border-l border-gray-200 pl-6">
-              <span className="text-xs text-gray-500">평균 별점</span>
-              <span className={`text-base font-bold ${avgRating >= 4.5 ? 'text-green-600' : avgRating >= 3.5 ? 'text-yellow-500' : 'text-red-500'}`}>★ {avgRating.toFixed(1)}</span>
-              <span className="text-xs text-gray-400">/ 5.0</span>
-            </div>
-          )}
-          {ratings.length > 0 && (
-            <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
-              {ratingDist.filter((d) => d.count > 0).map(({ star, count }) => (
-                <div key={star} className="flex items-center gap-1">
-                  <span className="text-xs text-yellow-500 font-medium">{star}★</span>
-                  <span className="text-xs font-semibold text-gray-700">{count}</span>
-                  <span className="text-xs text-gray-400">({Math.round((count / ratings.length) * 100)}%)</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <ReviewsFilterPanel
+        branches={(branches ?? []) as BranchRow[]}
+        channels={(channels ?? []) as { code: string; name: string }[]}
+        params={params}
+        total={total}
+        avgRating={avgRating}
+        ratingDist={ratingDist}
+        ratingsLen={ratings.length}
+      />
 
       <ReviewsListClient
         reviews={pageReviews}

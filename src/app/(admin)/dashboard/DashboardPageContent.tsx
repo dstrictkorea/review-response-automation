@@ -26,6 +26,7 @@ export interface Branch {
   code: string
   name_ko: string
   name_en: string
+  country_code?: string | null
 }
 
 export interface Channel {

@@ -227,9 +227,11 @@ export async function importReviewsAction(
           status:                 'new',
         })),
         {
-          // migration 004가 reviews_normalized_hash_unique 단독 인덱스를 생성하므로
-          // 단일 컬럼으로 충분. 5차원 해시가 branch+channel을 이미 인코딩함.
-          onConflict:       'normalized_hash',
+          // 라이브 DB의 기존 유니크 인덱스 reviews_branch_code_channel_code_normalized_hash_key
+          // (branch_code, channel_code, normalized_hash) 와 정확히 일치시킨다.
+          // 5차원 해시가 이미 branch+channel을 인코딩하므로 의미상 동일하며,
+          // 단독 normalized_hash 인덱스가 없는 환경에서도 ON CONFLICT가 정상 동작한다.
+          onConflict:       'branch_code,channel_code,normalized_hash',
           ignoreDuplicates: true,
         },
       )
