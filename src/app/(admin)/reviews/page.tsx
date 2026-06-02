@@ -16,10 +16,21 @@ interface SearchParams {
   date_to?: string
   page?: string
   limit?: string
+  sort?: string
+  dir?: string
 }
 
 const PAGE_SIZES = [10, 20, 50, 100]
 const DEFAULT_LIMIT = 20
+
+// 정렬 키 → 실제 DB 컬럼 (전체 DB 기준 서버사이드 정렬)
+const SORT_COLUMNS: Record<string, string> = {
+  date: 'review_created_at',
+  rating: 'rating',
+  risk: 'risk_level',
+  status: 'status',
+}
+type SortKey = 'date' | 'rating' | 'risk' | 'status'
 
 export default async function ReviewsPage({
   searchParams,
@@ -36,12 +47,17 @@ export default async function ReviewsPage({
 
   const qSafe = (params.q ?? '').replace(/[%,()]/g, ' ').trim()
 
+  // 정렬 (전체 DB 기준). 기본 작성일 내림차순.
+  const sortKey: SortKey = (params.sort && SORT_COLUMNS[params.sort] ? params.sort : 'date') as SortKey
+  const ascending = params.dir === 'asc'
+  const sortColumn = SORT_COLUMNS[sortKey]
+
   // ── rows 쿼리 (페이지네이션 + 정확한 total count) ───────────────────────────────
   let rowsQuery = supabase
     .from('reviews')
     .select('*', { count: 'exact' })
     .is('deleted_at', null)
-    .order('review_created_at', { ascending: false, nullsFirst: false })
+    .order(sortColumn, { ascending, nullsFirst: false })
   if (params.branch)    rowsQuery = rowsQuery.eq('branch_code', params.branch)
   if (params.channel)   rowsQuery = rowsQuery.eq('channel_code', params.channel)
   if (params.status)    rowsQuery = rowsQuery.eq('status', params.status)
@@ -122,6 +138,8 @@ export default async function ReviewsPage({
     activeStatus: params.status ?? '',
     activeRisk:   params.risk ?? '',
     activeRating: params.rating ?? '',
+    activeSort:   sortKey,
+    activeDir:    ascending ? 'asc' : 'desc',
     basePath: '/reviews',
     query: preservedQuery,
   }

@@ -37,6 +37,9 @@ export interface ServerPaginationProps {
   activeStatus: string
   activeRisk: string
   activeRating: string
+  /** 서버사이드 정렬 컬럼 (date|rating|risk|status) — 전체 DB 기준 정렬 */
+  activeSort: SortCol
+  activeDir: 'asc' | 'desc'
   basePath: string
   /** 페이지네이션 외 보존할 쿼리 파라미터 (branch, channel, q, date_*) */
   query: Record<string, string>
@@ -269,10 +272,13 @@ export default function ReviewsListClient({
       const params = new URLSearchParams()
       // 기존 보존 쿼리
       for (const [k, v] of Object.entries(server.query)) if (v) params.set(k, v)
-      // 현재 필터/페이지
+      // 현재 필터/정렬/페이지
       if (server.activeStatus) params.set('status', server.activeStatus)
       if (server.activeRisk)   params.set('risk', server.activeRisk)
       if (server.activeRating) params.set('rating', server.activeRating)
+      // 정렬 (기본 date/desc가 아닐 때만 URL에 명시)
+      if (server.activeSort !== 'date') params.set('sort', server.activeSort)
+      if (server.activeDir !== 'desc')  params.set('dir', server.activeDir)
       params.set('page', String(server.page))
       params.set('limit', String(server.limit))
       // 오버라이드 적용
@@ -291,21 +297,31 @@ export default function ReviewsListClient({
     router.push(buildServerUrl({ [key]: current === value ? null : value, page: 1 }))
   }
 
+  // 정렬 상태 (서버/클라이언트 통합)
+  const curSort: SortCol = isServer ? server!.activeSort : sortCol
+  const curDir: 'asc' | 'desc' = isServer ? server!.activeDir : sortDir
+
   function handleSort(col: SortCol) {
-    if (sortCol === col) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
-    else { setSortCol(col); setSortDir('desc') }
+    if (isServer) {
+      // 서버 모드: 전체 DB 기준 정렬 → URL 갱신, 1페이지로 이동
+      const nextDir = server!.activeSort === col && server!.activeDir === 'desc' ? 'asc' : 'desc'
+      router.push(buildServerUrl({ sort: col, dir: nextDir, page: 1 }))
+    } else {
+      if (sortCol === col) setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+      else { setSortCol(col); setSortDir('desc') }
+    }
   }
 
   // ── 표시 행 계산 ────────────────────────────────────────────────────────────────
   const displayed = useMemo(() => {
+    // 서버 모드: 서버에서 이미 필터·정렬됨 → 그대로 사용 (전체 DB 기준)
+    if (isServer) return reviews
+
+    // 클라이언트 모드(대시보드): 인메모리 필터 + 정렬
     let r = [...reviews]
-    // 클라이언트 모드에서만 인메모리 필터링 (서버 모드는 이미 서버에서 필터됨)
-    if (!isServer) {
-      if (filterStatus) r = r.filter((rev) => rev.status === filterStatus)
-      if (filterRating !== '') r = r.filter((rev) => rev.rating === filterRating)
-      if (filterRisk) r = r.filter((rev) => rev.risk_level === filterRisk)
-    }
-    // 정렬은 양 모드 모두 적용 (현재 페이지 내 정렬)
+    if (filterStatus) r = r.filter((rev) => rev.status === filterStatus)
+    if (filterRating !== '') r = r.filter((rev) => rev.rating === filterRating)
+    if (filterRisk) r = r.filter((rev) => rev.risk_level === filterRisk)
     r.sort((a, b) => {
       let va: string | number, vb: string | number
       switch (sortCol) {
@@ -474,8 +490,8 @@ export default function ReviewsListClient({
   }
 
   const sortIcon = (col: SortCol) =>
-    sortCol === col
-      ? <span className="ml-0.5 text-blue-500">{sortDir === 'desc' ? '↓' : '↑'}</span>
+    curSort === col
+      ? <span className="ml-0.5 text-blue-500">{curDir === 'desc' ? '↓' : '↑'}</span>
       : <span className="ml-0.5 text-gray-300">↕</span>
 
   // ── 페이지네이션 계산 (서버 모드) ──────────────────────────────────────────────
