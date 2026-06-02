@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { statusLabel, statusClasses, riskClasses, riskLabel } from '@/lib/badges'
 import type { Review, ReviewStatus, RiskLevel, Sentiment } from '@/types/database'
+import ReviewsFilterPanel from '../reviews/ReviewsFilterPanel'
 
 const sentimentLabel: Record<Sentiment, string> = {
   positive: '긍정',
@@ -10,45 +11,90 @@ const sentimentLabel: Record<Sentiment, string> = {
   negative: '부정',
 }
 
-export default async function ArchivePage() {
+const ARCHIVE_STATUSES = ['manual_published', 'no_reply', 'escalated']
+
+interface SearchParams {
+  branch?: string
+  channel?: string
+  status?: string   // 보관 사유 (archive sub-status)
+  rating?: string
+  q?: string
+  date_from?: string
+  date_to?: string
+}
+
+interface BranchRow { code: string; name_ko: string; country_code: string | null }
+
+export default async function ArchivePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
   const supabase = await createClient()
 
-  const { data: reviews } = await supabase
-    .from('reviews')
-    .select('*')
-    .in('status', ['manual_published', 'no_reply', 'escalated'])
-    .is('deleted_at', null)
-    .order('updated_at', { ascending: false })
+  const qSafe = (params.q ?? '').replace(/[%,()]/g, ' ').trim()
+  // 보관 사유 필터: 지정 시 해당 상태만, 미지정 시 아카이브 3종 전체
+  const statusFilter = ARCHIVE_STATUSES.includes(params.status ?? '')
+    ? [params.status as string]
+    : ARCHIVE_STATUSES
 
-  const archived: Review[] = reviews ?? []
+  // rows 쿼리 (필터 + count)
+  let rowsQuery = supabase.from('reviews').select('*', { count: 'exact' })
+    .in('status', statusFilter).is('deleted_at', null)
+  if (params.branch)    rowsQuery = rowsQuery.eq('branch_code', params.branch)
+  if (params.channel)   rowsQuery = rowsQuery.eq('channel_code', params.channel)
+  if (params.rating)    rowsQuery = rowsQuery.eq('rating', Number(params.rating))
+  if (params.date_from) rowsQuery = rowsQuery.gte('review_created_at', params.date_from)
+  if (params.date_to)   rowsQuery = rowsQuery.lte('review_created_at', params.date_to + 'T23:59:59')
+  if (qSafe) rowsQuery = rowsQuery.or(`review_text.ilike.%${qSafe}%,reviewer_name.ilike.%${qSafe}%,branch_code.ilike.%${qSafe}%,channel_code.ilike.%${qSafe}%`)
+  rowsQuery = rowsQuery.order('updated_at', { ascending: false }).range(0, 199)
 
-  const stats = {
-    total: archived.length,
-    published: archived.filter((r) => r.status === 'manual_published').length,
-    no_reply: archived.filter((r) => r.status === 'no_reply').length,
-    escalated: archived.filter((r) => r.status === 'escalated').length,
-  }
+  // stats 쿼리 (rating)
+  let statsQuery = supabase.from('reviews').select('rating')
+    .in('status', statusFilter).is('deleted_at', null)
+  if (params.branch)    statsQuery = statsQuery.eq('branch_code', params.branch)
+  if (params.channel)   statsQuery = statsQuery.eq('channel_code', params.channel)
+  if (params.rating)    statsQuery = statsQuery.eq('rating', Number(params.rating))
+  if (params.date_from) statsQuery = statsQuery.gte('review_created_at', params.date_from)
+  if (params.date_to)   statsQuery = statsQuery.lte('review_created_at', params.date_to + 'T23:59:59')
+  if (qSafe) statsQuery = statsQuery.or(`review_text.ilike.%${qSafe}%,reviewer_name.ilike.%${qSafe}%,branch_code.ilike.%${qSafe}%,channel_code.ilike.%${qSafe}%`)
+
+  const [
+    { data: rows, count },
+    { data: statsRows },
+    { data: branches },
+    { data: channels },
+  ] = await Promise.all([
+    rowsQuery,
+    statsQuery,
+    supabase.from('branches').select('code, name_ko, country_code').eq('is_active', true).order('code'),
+    supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
+  ])
+
+  const archived: Review[] = (rows ?? []) as unknown as Review[]
+  const total = count ?? 0
+
+  const ratings = (statsRows ?? [])
+    .map((r: { rating: number | null }) => r.rating)
+    .filter((x): x is number => x != null)
+  const avgRating = ratings.length > 0 ? ratings.reduce((s, x) => s + x, 0) / ratings.length : null
+  const ratingDist = ([5, 4, 3, 2, 1] as const).map((star) => ({
+    star, count: ratings.filter((x) => x === star).length,
+  }))
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">아카이브</h2>
-        <p className="text-sm text-gray-600 mt-1">처리가 완료된 리뷰 전체 이력</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-6 sm:grid-cols-4">
-        {[
-          { label: '전체 보관', value: stats.total, color: 'text-gray-900' },
-          { label: '게시완료', value: stats.published, color: 'text-teal-700' },
-          { label: '답변불필요', value: stats.no_reply, color: 'text-gray-600' },
-          { label: '에스컬레이션', value: stats.escalated, color: 'text-red-700' },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-200 px-4 py-4">
-            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
-      </div>
+      <ReviewsFilterPanel
+        branches={(branches ?? []) as BranchRow[]}
+        channels={(channels ?? []) as { code: string; name: string }[]}
+        params={params}
+        total={total}
+        avgRating={avgRating}
+        ratingDist={ratingDist}
+        ratingsLen={ratings.length}
+        archiveMode
+      />
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
         <table className="w-full text-sm">
@@ -69,7 +115,7 @@ export default async function ArchivePage() {
             {archived.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
-                  아직 보관된 리뷰가 없습니다.
+                  보관된 리뷰가 없습니다.
                 </td>
               </tr>
             )}
@@ -78,7 +124,7 @@ export default async function ArchivePage() {
                 <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
                   {new Date(review.updated_at).toLocaleDateString('ko-KR')}
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-700">{review.branch_code}</td>
+                <td className="px-4 py-3 font-mono text-xs font-bold uppercase text-gray-900">{review.branch_code}</td>
                 <td className="px-4 py-3 text-xs text-gray-700">{review.channel_code}</td>
                 <td className="px-4 py-3 text-gray-700 text-xs">
                   {review.rating != null ? `${review.rating}★` : '-'}

@@ -36,12 +36,24 @@ interface Props {
   avgRating: number | null
   ratingDist: { star: number; count: number }[]
   ratingsLen: number
+  /** 아카이브 모드: 평점 + 보관 사유(status) 셀렉트 활성화, 헤더/통계 조정 */
+  archiveMode?: boolean
 }
 
+// 아카이브 "보관 사유" = 처리 완료 상태 3종
+const ARCHIVE_STATUSES = ['manual_published', 'no_reply', 'escalated'] as const
+
 export default function ReviewsFilterPanel({
-  branches, channels, params, total, avgRating, ratingDist, ratingsLen,
+  branches, channels, params, total, avgRating, ratingDist, ratingsLen, archiveMode = false,
 }: Props) {
   const { lang, t } = useLanguage()
+
+  function statusLabelOf(code: string): string {
+    const m: Record<string, string> = {
+      manual_published: t.status_published, no_reply: t.status_no_reply, escalated: t.status_escalated,
+    }
+    return m[code] ?? code
+  }
 
   // 지점 옵션 표기: 코드 최우선 + 도시명(현재 locale)
   function branchOptionLabel(b: BranchRow): string {
@@ -57,19 +69,21 @@ export default function ReviewsFilterPanel({
       {/* ── 헤더 ─────────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{t.rv_list_title}</h2>
+          <h2 className="text-xl font-bold text-gray-900">{archiveMode ? t.nav_archive : t.rv_list_title}</h2>
           <p className="text-sm text-gray-600 mt-1">{t.rv_total_word} {total}{t.stat_unit}</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/reviews/import"
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            {t.rv_import_csv}
-          </Link>
-          <Link href="/reviews/register"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
-            {t.rv_register_one}
-          </Link>
-        </div>
+        {!archiveMode && (
+          <div className="flex gap-2">
+            <Link href="/reviews/import"
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+              {t.rv_import_csv}
+            </Link>
+            <Link href="/reviews/register"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+              {t.rv_register_one}
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* ── 서버사이드 필터 폼 (GET) ─────────────────────────────────────────── */}
@@ -117,16 +131,39 @@ export default function ReviewsFilterPanel({
             </select>
           </div>
         </div>
-        {/* 퀵필터(상태/위험도/별점)는 URL 보존 — 폼 제출 시 hidden 동반 전송 */}
-        {params.status && <input type="hidden" name="status" value={params.status} />}
+
+        {/* ── 아카이브 모드: 평점 + 보관 사유 셀렉트 ──────────────────────────── */}
+        {archiveMode && (
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">{t.rv_col_rating}</label>
+              <select name="rating" defaultValue={params.rating ?? ''}
+                className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none">
+                <option value="">{t.rv_group_all}</option>
+                {[5, 4, 3, 2, 1].map((r) => <option key={r} value={r}>{r}★</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">{t.rv_archive_reason}</label>
+              <select name="status" defaultValue={params.status ?? ''}
+                className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none">
+                <option value="">{t.rv_group_all}</option>
+                {ARCHIVE_STATUSES.map((s) => <option key={s} value={s}>{statusLabelOf(s)}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* 퀵필터(상태/위험도/별점)는 URL 보존 — 폼 제출 시 hidden 동반 전송 (아카이브 모드는 셀렉트가 담당) */}
+        {!archiveMode && params.status && <input type="hidden" name="status" value={params.status} />}
         {params.risk   && <input type="hidden" name="risk" value={params.risk} />}
-        {params.rating && <input type="hidden" name="rating" value={params.rating} />}
+        {!archiveMode && params.rating && <input type="hidden" name="rating" value={params.rating} />}
         <div className="flex gap-2 mt-3">
           <button type="submit"
             className="rounded-lg bg-gray-900 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-700 transition-colors">
             {t.rv_apply}
           </button>
-          <Link href="/reviews"
+          <Link href={archiveMode ? '/archive' : '/reviews'}
             className="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             {t.rv_filter_reset}
           </Link>
