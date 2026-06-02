@@ -5,8 +5,7 @@
 ## ⚠️ 라이브 DB 스키마 드리프트 (중요)
 - 라이브 Supabase(`vmrvyqqlebviaczsgapn`)는 repo 마이그레이션과 **불일치** 상태였음.
 - **적용 완료(Wave 13)**: 006(reply_drafts 텔레메트리 컬럼), 007(branches 11개 시드+country_code).
-- **미적용(주의)**: 005(Algorithm-First — pg_trgm/review_intents/intent_keywords/reply_template_variants/detect_review_intent RPC).
-  → 현재 운영은 LLM 경로로 **graceful degradation** 중 (인텐트 템플릿 엔진 미가동). 활성화하려면 005 적용 필요.
+- **✅ 적용 완료(Wave 14)**: 005(Algorithm-First) — pg_trgm + review_intents(20) + intent_keywords(226) + reply_template_variants(69) + detect_review_intent RPC. 라이브 검증: '정말 너무 좋아요' → positive_overall conf 1.00. 알고리즘 우선 엔진 가동 (LLM 토큰 90% 절감 목표 활성화).
 - **불필요**: 004의 단독 normalized_hash 인덱스 — CSV import onConflict를 기존 3컬럼 인덱스에 맞춰 코드로 해결.
 
 
