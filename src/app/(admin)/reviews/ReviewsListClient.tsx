@@ -56,6 +56,11 @@ function elapsedDays(review: Review): number | null {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
 }
 
+/** 템플릿 문자열 보간 — {key} → 값 */
+function fmt(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ''))
+}
+
 // ── i18n badge helpers ────────────────────────────────────────────────────────────
 function tStatus(t: I18nDict, status: ReviewStatus): string {
   const map: Record<ReviewStatus, string> = {
@@ -251,6 +256,12 @@ export default function ReviewsListClient({
   const [showModal, setShowModal] = useState(false)
   const abortRef = useRef(false)
 
+  // ── Gmail식 일괄 선택 / Soft Delete 상태 (Wave 15) ──────────────────────────────
+  const [selectAllMatching, setSelectAllMatching] = useState(false)  // 필터 조건 전체 선택
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteMsg, setDeleteMsg] = useState<string | null>(null)
+
   // ── 서버 모드 URL 네비게이션 ────────────────────────────────────────────────────
   const buildServerUrl = useCallback(
     (overrides: Record<string, string | number | null>): string => {
@@ -311,15 +322,68 @@ export default function ReviewsListClient({
     return r
   }, [reviews, filterStatus, filterRating, filterRisk, sortCol, sortDir, isServer])
 
+  // AI 배치는 'new' 상태만 대상 (삭제는 전체 행 대상)
   const batchCandidates = displayed.filter((r) => r.status === 'new')
   const selectedNew = [...selected].filter((id) => batchCandidates.some((r) => r.id === id))
 
+  // 헤더 체크박스: 현재 페이지(displayed)의 전체 행 선택/해제
+  const allDisplayedChecked = displayed.length > 0 && displayed.every((r) => selected.has(r.id))
+
   function toggleAll() {
-    if (batchCandidates.length > 0 && batchCandidates.every((r) => selected.has(r.id))) setSelected(new Set())
-    else setSelected(new Set(batchCandidates.map((r) => r.id)))
+    if (allDisplayedChecked) {
+      setSelected(new Set())
+      setSelectAllMatching(false)
+    } else {
+      setSelected(new Set(displayed.map((r) => r.id)))
+    }
   }
   function toggleOne(id: string) {
+    setSelectAllMatching(false) // 수동 선택 시 "전체 선택" 해제
     setSelected((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  }
+
+  function clearSelection() {
+    setSelected(new Set())
+    setSelectAllMatching(false)
+  }
+
+  // 선택 건수: 전체 선택 모드면 서버 total, 아니면 선택 Set 크기
+  const selectedCount = selectAllMatching ? (server?.total ?? selected.size) : selected.size
+
+  // ── 일괄 Soft Delete ────────────────────────────────────────────────────────────
+  async function runBulkDelete() {
+    setIsDeleting(true)
+    try {
+      const payload = selectAllMatching && server
+        ? {
+            mode: 'filter',
+            filter: {
+              ...server.query,
+              status: server.activeStatus || undefined,
+              risk:   server.activeRisk || undefined,
+              rating: server.activeRating || undefined,
+            },
+          }
+        : { mode: 'ids', ids: [...selected] }
+
+      const res = await fetch('/api/review/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDeleteMsg(data.error ?? 'error')
+      } else {
+        setDeleteMsg(fmt(t.rv_del_done, { n: data.count ?? 0 }))
+        clearSelection()
+        setShowDeleteModal(false)
+        router.refresh()
+      }
+    } catch {
+      setDeleteMsg(t.rd_toast_server_err)
+    }
+    setIsDeleting(false)
   }
 
   async function runAiBatch() {
@@ -380,8 +444,10 @@ export default function ReviewsListClient({
   }
 
   // ── UI helpers ───────────────────────────────────────────────────────────────
-  const allNewChecked = batchCandidates.length > 0 && batchCandidates.every((r) => selected.has(r.id))
   const someNewChecked = selectedNew.length > 0
+  const hasSelection   = selected.size > 0 || selectAllMatching
+  // Gmail식 배너: 페이지 전체 선택 && 서버 모드 && 추가 매칭 존재 && 아직 "전체선택" 아님
+  const showSelectAllBanner = allDisplayedChecked && isServer && !selectAllMatching && (server!.total > displayed.length)
 
   // 활성 필터 값 (서버/클라이언트 통합)
   const curStatus = isServer ? server!.activeStatus : filterStatus
@@ -473,27 +539,60 @@ export default function ReviewsListClient({
         </span>
       </div>
 
-      {/* ── 배치 처리 바 ─────────────────────────────────────────────────────── */}
-      {(someNewChecked || batchStatus === 'running') && (
+      {/* ── Gmail식 "필터 조건 전체 선택" 배너 ───────────────────────────────── */}
+      {(showSelectAllBanner || selectAllMatching) && (
+        <div className="mb-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 flex flex-wrap items-center justify-center gap-2 text-sm">
+          {selectAllMatching ? (
+            <>
+              <span className="text-amber-900 font-medium">
+                {fmt(t.rv_bulk_all_selected, { x: server?.total ?? 0 })}
+              </span>
+              <button onClick={clearSelection} className="text-blue-600 hover:underline font-medium">
+                {t.rv_bulk_clear}
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-amber-900">
+                {fmt(t.rv_bulk_page_selected, { n: displayed.length })}
+              </span>
+              <button onClick={() => setSelectAllMatching(true)} className="text-blue-600 hover:underline font-semibold">
+                {fmt(t.rv_bulk_select_all, { x: server?.total ?? 0 })}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── 선택/배치 액션 바 ─────────────────────────────────────────────────── */}
+      {(hasSelection || batchStatus === 'running') && (
         <div className="mb-3 rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
           {batchStatus === 'idle' && (
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium text-blue-800">{t.rv_batch_selected}: {selectedNew.length}{t.stat_unit}</span>
-              <div className="flex items-center gap-1.5 border-l border-blue-200 pl-3">
-                <span className="text-xs text-blue-600 font-medium whitespace-nowrap">{t.rv_draft_type}</span>
-                {(['standard', 'short', 'careful'] as DraftType[]).map((dt) => (
-                  <button key={dt} onClick={() => setBatchDraftType(dt)}
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${batchDraftType === dt ? 'bg-blue-700 text-white border-blue-700' : 'border-blue-300 text-blue-700 hover:bg-blue-100'}`}>
-                    {draftLabel[dt]}
-                  </button>
-                ))}
-              </div>
+              <span className="text-sm font-medium text-blue-800">{t.rv_batch_selected}: {selectedCount}{t.stat_unit}</span>
+              {someNewChecked && !selectAllMatching && (
+                <div className="flex items-center gap-1.5 border-l border-blue-200 pl-3">
+                  <span className="text-xs text-blue-600 font-medium whitespace-nowrap">{t.rv_draft_type}</span>
+                  {(['standard', 'short', 'careful'] as DraftType[]).map((dt) => (
+                    <button key={dt} onClick={() => setBatchDraftType(dt)}
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${batchDraftType === dt ? 'bg-blue-700 text-white border-blue-700' : 'border-blue-300 text-blue-700 hover:bg-blue-100'}`}>
+                      {draftLabel[dt]}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="flex items-center gap-2 ml-auto">
-                <button onClick={runAiBatch}
-                  className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
-                  {t.rv_generate} ({selectedNew.length})
+                {someNewChecked && !selectAllMatching && (
+                  <button onClick={runAiBatch}
+                    className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+                    {t.rv_generate} ({selectedNew.length})
+                  </button>
+                )}
+                <button onClick={() => setShowDeleteModal(true)}
+                  className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors">
+                  🗑 {fmt(t.rv_delete_selected, { n: selectedCount })}
                 </button>
-                <button onClick={() => setSelected(new Set())}
+                <button onClick={clearSelection}
                   className="rounded-lg border border-blue-300 px-3 py-1.5 text-sm text-blue-700 hover:bg-blue-100 transition-colors">
                   {t.rv_deselect}
                 </button>
@@ -533,8 +632,8 @@ export default function ReviewsListClient({
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-2 py-3">
-                <input type="checkbox" checked={allNewChecked} onChange={toggleAll}
-                  className="rounded border-gray-300" disabled={batchCandidates.length === 0} />
+                <input type="checkbox" checked={allDisplayedChecked} onChange={toggleAll}
+                  className="rounded border-gray-300" disabled={displayed.length === 0} />
               </th>
               <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 cursor-pointer hover:text-gray-900 select-none whitespace-nowrap"
                 onClick={() => handleSort('date')}>{t.rv_col_date} {sortIcon('date')}</th>
@@ -562,8 +661,7 @@ export default function ReviewsListClient({
               const isActive = ACTIVE_STATUSES.has(review.status)
               const isOverdue = isActive && elapsed !== null && elapsed >= 3
               const displayDate = review.review_created_at ?? review.created_at
-              const isNew = review.status === 'new'
-              const isChecked = selected.has(review.id)
+              const isChecked = selected.has(review.id) || selectAllMatching
               const isHighRisk = review.risk_level === 'critical' || review.risk_level === 'high'
               const draftSnippet = effectiveDraftMap[review.id]
 
@@ -587,9 +685,7 @@ export default function ReviewsListClient({
                   }`}
                 >
                   <td className="px-2 py-3 text-center" onClick={(e) => e.stopPropagation()}>
-                    {isNew ? (
-                      <input type="checkbox" checked={isChecked} onChange={() => toggleOne(review.id)} className="rounded border-gray-300" />
-                    ) : <span className="inline-block w-4" />}
+                    <input type="checkbox" checked={isChecked || selectAllMatching} onChange={() => toggleOne(review.id)} className="rounded border-gray-300" />
                   </td>
                   <td className="px-2 py-3 text-gray-600 whitespace-nowrap text-xs">
                     {displayDate ? new Date(displayDate).toLocaleDateString(locale) : '—'}
@@ -718,6 +814,42 @@ export default function ReviewsListClient({
       {/* ── 배치 결과 모달 ───────────────────────────────────────────────────── */}
       {showModal && batchResults.length > 0 && (
         <BatchSummaryModal results={batchResults} draftType={batchDraftType} onClose={handleModalClose} t={t} />
+      )}
+
+      {/* ── 일괄 삭제 2중 경고 모달 ─────────────────────────────────────────────── */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !isDeleting) setShowDeleteModal(false) }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-2xl">🗑️</span>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">
+                  {fmt(t.rv_del_confirm_title, { n: selectedCount })}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">{t.rv_del_confirm_desc}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <button onClick={() => setShowDeleteModal(false)} disabled={isDeleting}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                {t.rv_cancel}
+              </button>
+              <button onClick={runBulkDelete} disabled={isDeleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors">
+                {isDeleting ? t.rv_deleting : t.rv_del_confirm_btn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 삭제 결과 토스트 ───────────────────────────────────────────────────── */}
+      {deleteMsg && (
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 rounded-lg bg-gray-900 text-white text-sm px-4 py-2.5 shadow-lg flex items-center gap-3">
+          <span>{deleteMsg}</span>
+          <button onClick={() => setDeleteMsg(null)} className="text-gray-300 hover:text-white">×</button>
+        </div>
       )}
     </>
   )

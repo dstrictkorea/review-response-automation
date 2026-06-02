@@ -290,6 +290,19 @@ export interface I18nDict {
   rv_apply: string
   rv_import_csv: string
   rv_register_one: string
+
+  // ── Bulk selection / soft-delete (Wave 15) ───────────────────────────────────
+  rv_bulk_page_selected: string  // {n}
+  rv_bulk_select_all: string     // {x}
+  rv_bulk_all_selected: string   // {x}
+  rv_bulk_clear: string
+  rv_delete_selected: string     // {n}
+  rv_del_confirm_title: string   // {n}
+  rv_del_confirm_desc: string
+  rv_deleting: string
+  rv_del_done: string            // {n}
+  rv_del_confirm_btn: string
+  rv_archive_reason: string
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -537,6 +550,17 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: '필터 적용',
     rv_import_csv: 'CSV 가져오기',
     rv_register_one: '+ 1건 등록',
+    rv_bulk_page_selected: '이 페이지의 {n}개 리뷰가 선택되었습니다.',
+    rv_bulk_select_all: '필터 조건에 맞는 전체 {x}개 리뷰 선택',
+    rv_bulk_all_selected: '필터 조건에 맞는 전체 {x}개 리뷰가 선택되었습니다.',
+    rv_bulk_clear: '선택 해제',
+    rv_delete_selected: '삭제 ({n})',
+    rv_del_confirm_title: '리뷰 {n}건을 삭제하시겠습니까?',
+    rv_del_confirm_desc: '삭제된 리뷰는 목록·대시보드·아카이브에서 숨겨집니다. 감사 추적 이력은 보존됩니다.',
+    rv_deleting: '삭제 중...',
+    rv_del_done: '리뷰 {n}건이 삭제되었습니다.',
+    rv_del_confirm_btn: '삭제 확인',
+    rv_archive_reason: '보관 사유',
   },
 
   en: {
@@ -783,6 +807,17 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: 'Apply filters',
     rv_import_csv: 'Import CSV',
     rv_register_one: '+ Add one',
+    rv_bulk_page_selected: 'All {n} reviews on this page are selected.',
+    rv_bulk_select_all: 'Select all {x} reviews matching the filter',
+    rv_bulk_all_selected: 'All {x} reviews matching the filter are selected.',
+    rv_bulk_clear: 'Clear selection',
+    rv_delete_selected: 'Delete ({n})',
+    rv_del_confirm_title: 'Delete {n} review(s)?',
+    rv_del_confirm_desc: 'Deleted reviews are hidden from lists, dashboard and archive. The audit trail is preserved.',
+    rv_deleting: 'Deleting...',
+    rv_del_done: '{n} review(s) deleted.',
+    rv_del_confirm_btn: 'Confirm delete',
+    rv_archive_reason: 'Archive reason',
   },
 
   ja: {
@@ -1029,6 +1064,17 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: 'フィルター適用',
     rv_import_csv: 'CSV取込',
     rv_register_one: '+ 1件登録',
+    rv_bulk_page_selected: 'このページの{n}件のレビューが選択されました。',
+    rv_bulk_select_all: 'フィルター条件に一致する全{x}件を選択',
+    rv_bulk_all_selected: 'フィルター条件に一致する全{x}件が選択されました。',
+    rv_bulk_clear: '選択解除',
+    rv_delete_selected: '削除 ({n})',
+    rv_del_confirm_title: 'レビュー{n}件を削除しますか？',
+    rv_del_confirm_desc: '削除したレビューは一覧・ダッシュボード・アーカイブから非表示になります。監査履歴は保存されます。',
+    rv_deleting: '削除中...',
+    rv_del_done: 'レビュー{n}件を削除しました。',
+    rv_del_confirm_btn: '削除を確認',
+    rv_archive_reason: '保管理由',
   },
 
   zh: {
@@ -1275,5 +1321,16 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: '应用筛选',
     rv_import_csv: '导入CSV',
     rv_register_one: '+ 新增一条',
+    rv_bulk_page_selected: '本页 {n} 条评价已选中。',
+    rv_bulk_select_all: '选择符合筛选条件的全部 {x} 条评价',
+    rv_bulk_all_selected: '符合筛选条件的全部 {x} 条评价已选中。',
+    rv_bulk_clear: '取消选择',
+    rv_delete_selected: '删除 ({n})',
+    rv_del_confirm_title: '确定删除 {n} 条评价吗？',
+    rv_del_confirm_desc: '已删除的评价将从列表、仪表板和归档中隐藏。审计记录将被保留。',
+    rv_deleting: '删除中...',
+    rv_del_done: '已删除 {n} 条评价。',
+    rv_del_confirm_btn: '确认删除',
+    rv_archive_reason: '保管原因',
   },
 }
