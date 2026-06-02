@@ -66,6 +66,13 @@
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
 
+### Wave 15 (Gmail 일괄선택 + 아카이브 필터 + RBAC UI/가드)
+- **Gmail식 일괄 선택 + 필터 페이로드 일괄 Soft Delete**: `/api/review/bulk-delete`(mode ids|filter). filter 모드는 수천 ID 미전송, 필터 조건만 받아 단일 UPDATE. ReviewsListClient 전체행 선택 + Gmail 배너 + 2중 경고 모달
+- **아카이브 필터 통합**: ReviewsFilterPanel `archiveMode`(평점+보관사유 셀렉트) 재사용, archive 서버 필터 + deleted_at IS NULL
+- **RBAC UI/가드**: profiles.assigned_branches 컬럼 라이브 적용(additive). User Management 담당지점 체크박스 모달(국내/글로벌) + `updateAssignedBranchesAction`. `lib/auth/branchAccess.ts`(getBranchAccess/canAccessBranch) — bulk-delete 라우트에 staff 지점 범위 강제(fail-closed)
+- ⚠️ **009 RLS(STEP B) 여전히 게이트** — assigned_branches 백필 후 명시적 승인 시에만 라이브 적용 (lockout 방지)
+- tsc 0 · eslint 0 · build 0
+
 ### Wave 14 (005 라이브 가동 + Soft Delete + RBAC 파일)
 - **005 Algorithm-First 라이브 적용·검증** (pg_trgm/20 intents/226 keywords/69 templates/RPC). '정말 너무 좋아요'→positive_overall 1.00
 - **Soft Delete (migration 010, 라이브 적용)**: reviews.deleted_at 컬럼 + 부분 인덱스. `deleteReview` 하드삭제 → soft delete 전환 (감사 추적 보존). reviews/dashboard/archive 전 쿼리에 `deleted_at IS NULL` 필터

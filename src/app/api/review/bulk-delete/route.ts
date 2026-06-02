@@ -13,6 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getBranchAccess } from '@/lib/auth/branchAccess'
 
 interface ReviewFilter {
   branch?: string
@@ -29,8 +30,12 @@ const MAX_IDS = 500
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 })
+  const access = await getBranchAccess(supabase)
+  if (!access) return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 })
+
+  // staff는 담당 지점 밖 데이터를 일괄 삭제할 수 없다 (범위 강제).
+  // admin은 제한 없음. RLS(009) 미적용 환경에서도 앱 레이어에서 차단.
+  const branchGuard = !access.isAdmin
 
   let body: { mode?: string; ids?: string[]; filter?: ReviewFilter }
   try {
@@ -71,6 +76,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'mode는 ids 또는 filter여야 합니다.' }, { status: 400 })
   }
 
+  // 지점 권한 강제 (staff는 담당 지점만). 빈 배열이면 아무것도 매칭되지 않음(fail-closed).
+  if (branchGuard) q = q.in('branch_code', access.branches)
+
   // 업데이트된 행 ID 반환 → 처리 건수 집계
   const { data, error } = await q.select('id')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -79,7 +87,7 @@ export async function POST(req: NextRequest) {
 
   await supabase.from('activity_logs').insert({
     review_id:  null,
-    actor_name: user.email,
+    actor_name: access.email,
     action:     'bulk_soft_deleted',
     detail:     { ...scope, deleted_count: count },
   })

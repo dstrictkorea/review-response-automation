@@ -4,10 +4,12 @@ import { useState, useTransition } from 'react'
 import {
   createUserAction,
   updateUserRoleAction,
+  updateAssignedBranchesAction,
   toggleUserActiveAction,
   resetPasswordAction,
   deleteUserAction,
 } from './actions'
+import { classifyBranch } from '@/lib/branches'
 
 export interface UserRow {
   id: string
@@ -15,8 +17,11 @@ export interface UserRow {
   display_name: string | null
   role: 'admin' | 'staff'
   is_active: boolean
+  assigned_branches: string[]
   created_at: string
 }
+
+interface BranchRow { code: string; name_ko: string; country_code: string | null }
 
 const roleClasses: Record<string, string> = {
   admin: 'bg-blue-100 text-blue-700',
@@ -26,15 +31,39 @@ const roleClasses: Record<string, string> = {
 export default function UsersClient({
   users,
   currentUserId,
+  branches,
 }: {
   users: UserRow[]
   currentUserId: string
+  branches: BranchRow[]
 }) {
   const [showForm, setShowForm] = useState(false)
   const [resetTarget, setResetTarget] = useState<UserRow | null>(null)
+  const [branchTarget, setBranchTarget] = useState<UserRow | null>(null)
+  const [branchSel, setBranchSel] = useState<Set<string>>(new Set())
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isPending, startTransition] = useTransition()
+
+  const domesticBranches = branches.filter((b) => classifyBranch(b.code, b.country_code) === 'domestic')
+  const globalBranches   = branches.filter((b) => classifyBranch(b.code, b.country_code) === 'global')
+
+  function openBranchEditor(u: UserRow) {
+    setBranchSel(new Set(u.assigned_branches ?? []))
+    setBranchTarget(u)
+  }
+  function toggleBranch(code: string) {
+    setBranchSel((prev) => { const n = new Set(prev); if (n.has(code)) n.delete(code); else n.add(code); return n })
+  }
+  function handleSaveBranches() {
+    if (!branchTarget) return
+    startTransition(async () => {
+      const res = await updateAssignedBranchesAction(branchTarget.id, [...branchSel])
+      if (res.error) { flash(res.error, true); return }
+      flash('담당 지점이 저장되었습니다.')
+      setBranchTarget(null)
+    })
+  }
 
   // New user form state
   const [form, setForm] = useState({ email: '', password: '', displayName: '', role: 'staff' as 'admin' | 'staff' })
@@ -219,6 +248,60 @@ export default function UsersClient({
         </div>
       )}
 
+      {/* 담당 지점 할당 모달 */}
+      {branchTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !isPending) setBranchTarget(null) }}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto">
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">담당 지점 할당</h3>
+            <p className="text-xs text-gray-500 mb-4">{branchTarget.email} — 선택한 지점의 리뷰만 접근할 수 있습니다.</p>
+
+            <div className="space-y-3">
+              {domesticBranches.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1.5">🇰🇷 국내 지점</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {domesticBranches.map((b) => (
+                      <label key={b.code} className="flex items-center gap-2 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" checked={branchSel.has(b.code)} onChange={() => toggleBranch(b.code)} className="rounded border-gray-300" />
+                        <span className="font-mono font-bold">{b.code}</span>
+                        <span className="text-gray-500 truncate">{b.name_ko.replace('아르떼뮤지엄 ', '')}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {globalBranches.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-1.5">🌐 글로벌 지점</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {globalBranches.map((b) => (
+                      <label key={b.code} className="flex items-center gap-2 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs cursor-pointer hover:bg-gray-50">
+                        <input type="checkbox" checked={branchSel.has(b.code)} onChange={() => toggleBranch(b.code)} className="rounded border-gray-300" />
+                        <span className="font-mono font-bold">{b.code}</span>
+                        <span className="text-gray-500 truncate">{b.name_ko.replace('아르떼뮤지엄 ', '')}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-5">
+              <span className="text-xs text-gray-400">{branchSel.size}개 선택됨</span>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setBranchTarget(null)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">취소</button>
+                <button type="button" onClick={handleSaveBranches} disabled={isPending}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                  {isPending ? '저장 중...' : '저장'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Users table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
@@ -227,6 +310,7 @@ export default function UsersClient({
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">이메일</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">이름</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">역할</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">담당 지점</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">상태</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">생성일</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">작업</th>
@@ -235,7 +319,7 @@ export default function UsersClient({
           <tbody className="divide-y divide-gray-100">
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-gray-400 text-sm">
+                <td colSpan={7} className="px-4 py-10 text-center text-gray-400 text-sm">
                   등록된 계정이 없습니다.
                 </td>
               </tr>
@@ -259,6 +343,21 @@ export default function UsersClient({
                     <option value="admin">관리자</option>
                     <option value="staff">일반</option>
                   </select>
+                </td>
+                <td className="px-4 py-3">
+                  {u.role === 'admin' ? (
+                    <span className="text-xs text-gray-400">전체 지점</span>
+                  ) : (
+                    <button
+                      onClick={() => openBranchEditor(u)}
+                      disabled={isPending}
+                      className="text-xs rounded-full border border-gray-300 px-2.5 py-0.5 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      {(u.assigned_branches?.length ?? 0) > 0
+                        ? `${u.assigned_branches.length}개 지점 ✎`
+                        : '미할당 ✎'}
+                    </button>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

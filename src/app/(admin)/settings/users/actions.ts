@@ -85,6 +85,24 @@ export async function updateUserRoleAction(userId: string, role: 'admin' | 'staf
   return { success: true }
 }
 
+export async function updateAssignedBranchesAction(userId: string, branches: string[]) {
+  const { error: authErr } = await requireAdmin()
+  if (authErr) return { error: authErr }
+
+  const clean = [...new Set((branches ?? []).filter((b) => typeof b === 'string' && b.trim()))]
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('profiles')
+    .update({ assigned_branches: clean, updated_at: new Date().toISOString() })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/settings/users')
+  return { success: true }
+}
+
 export async function toggleUserActiveAction(userId: string, isActive: boolean) {
   const { error: authErr, user } = await requireAdmin()
   if (authErr) return { error: authErr }
