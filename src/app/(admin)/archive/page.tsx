@@ -17,6 +17,7 @@ export default async function ArchivePage() {
     .from('reviews')
     .select('*')
     .in('status', ['manual_published', 'no_reply', 'escalated'])
+    .is('deleted_at', null)
     .order('updated_at', { ascending: false })
 
   const archived: Review[] = reviews ?? []

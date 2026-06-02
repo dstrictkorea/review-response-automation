@@ -66,6 +66,13 @@
 - aiService `unterminated string literal` 버그 수정 (`'…"'` → 정상화)
 - tsc clean · build EXIT 0 (22/22 routes) · commit `535c285`
 
+### Wave 14 (005 라이브 가동 + Soft Delete + RBAC 파일)
+- **005 Algorithm-First 라이브 적용·검증** (pg_trgm/20 intents/226 keywords/69 templates/RPC). '정말 너무 좋아요'→positive_overall 1.00
+- **Soft Delete (migration 010, 라이브 적용)**: reviews.deleted_at 컬럼 + 부분 인덱스. `deleteReview` 하드삭제 → soft delete 전환 (감사 추적 보존). reviews/dashboard/archive 전 쿼리에 `deleted_at IS NULL` 필터
+- **RBAC (migration 009, 파일만 — 라이브 미적용·게이트)**: profiles.role/assigned_branches + is_admin()/can_access_branch() + reviews/reply_drafts RLS 교체. ⚠️ STEP B(RLS)는 assigned_branches 백필 후 명시적 승인 시에만 적용 (lockout 위험)
+- tsc 0 · eslint 0 · build 0
+- **남은 Phase X 다음 단계**: 아카이브 필터 패널 통합, User Management assigned_branches 체크박스 UI, 009 STEP B 라이브 적용(승인 필요)
+
 ### Wave 13 (지점 마스터 시드 + 필터 i18n + 지점 그룹 탭 + CSV 임포트 수복)
 - **007_branches_seed.sql** (신규) — 11개 공식 지점 멱등 upsert(ON CONFLICT code DO UPDATE) + country_code. **라이브 DB 적용·검증 완료** (국내 5/글로벌 6)
 - **006 텔레메트리 컬럼 라이브 적용** — reply_drafts.intent_code/intent_confidence/pipeline_engine 부재로 인한 초안 미리보기·수동생성 회귀 수복

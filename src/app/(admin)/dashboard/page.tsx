@@ -27,7 +27,8 @@ export default async function DashboardPage({
   // 상태별 정확한 카운트 헬퍼 (head:true — 행 미반환, count만). allReviews 인메모리
   // 집계는 Supabase 기본 1000행 cap에 영향받으므로, 위젯 카운트는 exact count로 분리한다.
   const statusCountQuery = (status: string) => {
-    let q = supabase.from('reviews').select('id', { count: 'exact', head: true }).eq('status', status)
+    let q = supabase.from('reviews').select('id', { count: 'exact', head: true })
+      .eq('status', status).is('deleted_at', null)
     if (activeBranch)  q = q.eq('branch_code',  activeBranch)
     if (activeChannel) q = q.eq('channel_code', activeChannel)
     return q
@@ -51,6 +52,7 @@ export default async function DashboardPage({
         .select(
           'id, branch_code, channel_code, rating, review_text, review_created_at, created_at, status, risk_level, sentiment',
         )
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
       if (activeBranch)  q = q.eq('branch_code',  activeBranch)
       if (activeChannel) q = q.eq('channel_code', activeChannel)
@@ -66,6 +68,7 @@ export default async function DashboardPage({
           { count: 'exact' },
         )
         .in('status', ['new', 'ai_done', 'pending_approval'])
+        .is('deleted_at', null)
         .order('review_created_at', { ascending: false })
         .range(offset, offset + PENDING_PAGE_SIZE - 1)
       if (activeBranch)  q = q.eq('branch_code',  activeBranch)

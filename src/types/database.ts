@@ -55,6 +55,7 @@ export interface Review {
   import_hash: string | null
   source_import_batch_id: string | null
   source_import_row_id: string | null
+  deleted_at: string | null
   created_at: string
   updated_at: string
 }

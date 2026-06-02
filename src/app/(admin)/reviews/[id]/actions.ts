@@ -132,19 +132,28 @@ export async function resetReviewStatus(reviewId: string, targetStatus: string) 
   return { success: true }
 }
 
-export async function deleteReview(reviewId: string) {
+/**
+ * Soft Delete — 물리 삭제 대신 deleted_at 타임스탬프를 기록한다.
+ * 감사/컴플레인 추적을 위해 reply_drafts·activity_logs는 보존된다.
+ * 목록/대시보드/아카이브 쿼리는 deleted_at IS NULL 만 노출하므로 즉시 숨겨진다.
+ */
+export async function deleteReview(reviewId: string, reason?: string) {
   const { supabase, user } = await getUser()
   if (!user) return { error: '인증 필요' }
 
-  // 연관 데이터 먼저 삭제
-  await supabase.from('reply_drafts').delete().eq('review_id', reviewId)
-  await supabase.from('activity_logs').delete().eq('review_id', reviewId)
-
-  const { error } = await supabase.from('reviews').delete().eq('id', reviewId)
+  const { error } = await supabase
+    .from('reviews')
+    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', reviewId)
   if (error) return { error: error.message }
+
+  await logActivity(supabase, reviewId, user.email ?? 'unknown', 'review_soft_deleted', {
+    reason: reason ?? null,
+  })
 
   revalidatePath('/reviews')
   revalidatePath('/dashboard')
+  revalidatePath('/archive')
 
   // 삭제 후 목록으로 redirect — 서버 액션에서는 throw 방식 사용
   redirect('/reviews')

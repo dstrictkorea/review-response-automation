@@ -40,6 +40,7 @@ export default async function ReviewsPage({
   let rowsQuery = supabase
     .from('reviews')
     .select('*', { count: 'exact' })
+    .is('deleted_at', null)
     .order('review_created_at', { ascending: false, nullsFirst: false })
   if (params.branch)    rowsQuery = rowsQuery.eq('branch_code', params.branch)
   if (params.channel)   rowsQuery = rowsQuery.eq('channel_code', params.channel)
@@ -52,7 +53,7 @@ export default async function ReviewsPage({
   rowsQuery = rowsQuery.range(from, to)
 
   // ── stats 쿼리 (필터 전체 집합, 경량 rating select) ───────────────────────────
-  let statsQuery = supabase.from('reviews').select('rating')
+  let statsQuery = supabase.from('reviews').select('rating').is('deleted_at', null)
   if (params.branch)    statsQuery = statsQuery.eq('branch_code', params.branch)
   if (params.channel)   statsQuery = statsQuery.eq('channel_code', params.channel)
   if (params.status)    statsQuery = statsQuery.eq('status', params.status)
