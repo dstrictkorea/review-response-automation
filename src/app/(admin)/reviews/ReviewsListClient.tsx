@@ -259,6 +259,11 @@ export default function ReviewsListClient({
   const [showModal, setShowModal] = useState(false)
   const abortRef = useRef(false)
 
+  // ── 일괄 자동 처리(triage 파이프라인) 상태 (Wave 16) ───────────────────────────
+  const [bulkProcRunning, setBulkProcRunning] = useState(false)
+  const [bulkProcDone, setBulkProcDone] = useState(0)
+  const [bulkProcRemaining, setBulkProcRemaining] = useState(0)
+
   // ── Gmail식 일괄 선택 / Soft Delete 상태 (Wave 15) ──────────────────────────────
   const [selectAllMatching, setSelectAllMatching] = useState(false)  // 필터 조건 전체 선택
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -400,6 +405,52 @@ export default function ReviewsListClient({
       setDeleteMsg(t.rd_toast_server_err)
     }
     setIsDeleting(false)
+  }
+
+  // ── 일괄 자동 처리 (Wave 16) — 청크 반복 호출로 대량 안전 처리 ──────────────────
+  // 듀얼 라우팅(저위험=알고리즘 템플릿 / 고위험=AI 초안+격리)은 백엔드 오케스트레이터가 수행.
+  async function runBulkProcess() {
+    if (bulkProcRunning) return
+    abortRef.current = false
+    setBulkProcRunning(true)
+    setBulkProcDone(0)
+    setBulkProcRemaining(selectedCount)
+
+    const basePayload = selectAllMatching && server
+      ? {
+          mode: 'filter' as const,
+          filter: {
+            ...server.query,
+            risk:   server.activeRisk || undefined,
+            rating: server.activeRating || undefined,
+          },
+        }
+      : { mode: 'ids' as const, ids: [...selected] }
+
+    let totalProcessed = 0
+    try {
+      // done=true 또는 진행 정지(처리 0건)까지 청크 반복
+      for (let guard = 0; guard < 1000; guard++) {
+        if (abortRef.current) break
+        const res = await fetch('/api/review/bulk-process', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(basePayload),
+        })
+        const data = await res.json()
+        if (!res.ok) { setDeleteMsg(data.error ?? 'error'); break }
+        totalProcessed += data.processed ?? 0
+        setBulkProcDone(totalProcessed)
+        setBulkProcRemaining(data.remaining ?? 0)
+        if (data.done || (data.processed ?? 0) === 0) break
+      }
+      setDeleteMsg(`✅ 일괄 처리 완료 — ${totalProcessed}건 처리됨`)
+      clearSelection()
+      router.refresh()
+    } catch {
+      setDeleteMsg(t.rd_toast_server_err)
+    }
+    setBulkProcRunning(false)
   }
 
   async function runAiBatch() {
@@ -598,14 +649,22 @@ export default function ReviewsListClient({
                 </div>
               )}
               <div className="flex items-center gap-2 ml-auto">
+                {/* 소량(현재 페이지 new) 편집형 AI 배치 — 인라인 모달 UX */}
                 {someNewChecked && !selectAllMatching && (
                   <button onClick={runAiBatch}
                     className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
                     {t.rv_generate} ({selectedNew.length})
                   </button>
                 )}
-                <button onClick={() => setShowDeleteModal(true)}
-                  className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors">
+                {/* 대량 자동 처리 — 전체선택 시에도 노출(uncap). 듀얼 라우팅 백엔드 청크 처리 */}
+                <button onClick={runBulkProcess} disabled={bulkProcRunning}
+                  className="rounded-lg bg-purple-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 transition-colors">
+                  {bulkProcRunning
+                    ? `⚙ 처리 중… ${bulkProcDone}건 완료 (남은 ${bulkProcRemaining})`
+                    : `⚡ 일괄 자동 처리 (${selectedCount})`}
+                </button>
+                <button onClick={() => setShowDeleteModal(true)} disabled={bulkProcRunning}
+                  className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors">
                   🗑 {fmt(t.rv_delete_selected, { n: selectedCount })}
                 </button>
                 <button onClick={clearSelection}

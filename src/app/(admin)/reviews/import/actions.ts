@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
+import { scanText } from '@/services/filterService'
 
 export interface ImportRowPayload {
   rating: number | null
@@ -257,8 +258,31 @@ export async function importReviewsAction(
     }
   }
 
-  // ── 6. import_rows 단일 bulk INSERT ───────────────────────────────────────
+  // ── 5b. 수집 시점(Ingestion) 1차 리스크 트리야지 ───────────────────────────
+  // LLM 없이 하드코딩 다국어 위험 키워드(환불/부상/고소/사고…)만 즉시 스캔하여
+  // critical/high 행을 즉시 격리(pending_approval) — 듀얼 파이프라인의 1차 라우팅.
+  // 본격 처리(알고리즘 템플릿/AI 초안)는 이후 일괄/오케스트레이터에서 수행.
   const hashToReviewId = new Map(insertedReviews.map(r => [r.import_hash, r.id]))
+
+  const triageCritical: string[] = []
+  const triageHigh: string[] = []
+  for (const row of toInsert) {
+    const reviewId = hashToReviewId.get(row.import_hash)
+    if (!reviewId) continue
+    const fr = scanText(row.review_text ?? '', [])
+    if (!fr.triggered) continue
+    if (fr.maxRiskLevel === 'critical') triageCritical.push(reviewId)
+    else if (fr.maxRiskLevel === 'high') triageHigh.push(reviewId)
+  }
+  const triageNow = new Date().toISOString()
+  await Promise.all([
+    triageCritical.length
+      ? supabase.from('reviews').update({ risk_level: 'critical', status: 'pending_approval', updated_at: triageNow }).in('id', triageCritical)
+      : Promise.resolve(null),
+    triageHigh.length
+      ? supabase.from('reviews').update({ risk_level: 'high', status: 'pending_approval', updated_at: triageNow }).in('id', triageHigh)
+      : Promise.resolve(null),
+  ])
 
   const importRowsPayload = [
     ...toInsert.map(row => ({
