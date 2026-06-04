@@ -103,7 +103,7 @@ const HARDCODED_RULES: HardcodedRule[] = [
     lang: 'en',
   },
   {
-    pattern: /injur(?:ed|y)|hurt\s+myself|hurt\s+(?:my\s+)?(?:child|kid|son|daughter)|accident\s+(?:happened|occurred)|broke\s+(?:my\s+)?(?:arm|leg|bone|wrist|ankle)|bleeding|hospital|ambulance|emergency\s+room|ER/i,
+    pattern: /injur(?:ed|y)|hurt\s+myself|hurt\s+(?:my\s+)?(?:child|kid|son|daughter)|accident\s+(?:happened|occurred)|broke\s+(?:my\s+)?(?:arm|leg|bone|wrist|ankle)|bleeding|hospital|ambulance|emergency\s+room|\bER\b/i,
     keyword: '[EN] injury_accident',
     riskLevel: 'critical',
     lang: 'en',

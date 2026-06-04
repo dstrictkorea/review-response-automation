@@ -8,6 +8,11 @@
 - **✅ 적용 완료(Wave 14)**: 005(Algorithm-First) — pg_trgm + review_intents(20) + intent_keywords(226) + reply_template_variants(69) + detect_review_intent RPC. 라이브 검증: '정말 너무 좋아요' → positive_overall conf 1.00. 알고리즘 우선 엔진 가동 (LLM 토큰 90% 절감 목표 활성화).
 - **불필요**: 004의 단독 normalized_hash 인덱스 — CSV import onConflict를 기존 3컬럼 인덱스에 맞춰 코드로 해결.
 
+## 🌊 결정론적 하이브리드 파이프라인 (진행 중)
+- **현재 문제점**: 단건/배치 답변 생성이 LLM 의존적이라 (1) 비결정적 환각, (2) 톤 파편화(short/careful 변형), (3) 토큰 비용 부담.
+- **Phase 1 완료**: 다국어(KO/EN) 폭포수 정규식 엔진 도입 준비 — 분류/템플릿/LLM 호출부(IntelligentOrchestrator·generate-reply·aiService) 및 타입(`Review.categories`=태그, `ReplyDraft.pipeline_engine`) 매핑 완료. `reviews`에 별도 tone/tags 컬럼 없음 → `categories` 재사용(마이그레이션 불필요).
+- **목표 구조**: Algorithm-First(인입 필터) → Algorithm-Second(안전 리뷰 = 정적 템플릿 자동 응답, **LLM 미사용**) → LLM(불만/모호/위험 전용 **격리 Fallback**, 태그 주입 + 승인 대기).
+
 
 ---
 

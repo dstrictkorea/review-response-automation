@@ -256,7 +256,7 @@ export default function ReviewsListClient({
 
   // ── 배치 상태 ─────────────────────────────────────────────────────────────────
   const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [batchDraftType, setBatchDraftType] = useState<DraftType>('standard')
+  const [batchDraftType] = useState<DraftType>('standard')  // 톤 단일화: STANDARD 고정
   const [batchStatus, setBatchStatus] = useState<'idle' | 'running' | 'done'>('idle')
   const [batchProgress, setBatchProgress] = useState({ done: 0, total: 0, current: '' })
   const [batchResults, setBatchResults] = useState<BatchResultItem[]>([])
@@ -546,10 +546,11 @@ export default function ReviewsListClient({
           const idx = i + j
           setBatchProgress({ done: completedCount, total: selectedNew.length, current: review?.reviewer_name ?? id.slice(0, 8) })
           try {
-            const res = await fetch('/api/ai/generate-reply', {
+            // 결정론적 게이트키퍼: SAFE=정적 템플릿(LLM 미사용) / 불만·모호=LLM Fallback / 긴급=수동 격리
+            const res = await fetch('/api/review/generate', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ review_id: id, draft_type: batchDraftType }),
+              body: JSON.stringify({ review_id: id }),
             })
             const data = await res.json()
             const draft = data.draft ?? {}
@@ -634,10 +635,6 @@ export default function ReviewsListClient({
           return acc
         }, [])
     : []
-
-  const draftLabel: Record<DraftType, string> = {
-    standard: t.rv_draft_standard, short: t.rv_draft_short, careful: t.rv_draft_careful,
-  }
 
   return (
     <>
@@ -740,17 +737,7 @@ export default function ReviewsListClient({
           {!archiveMode && batchStatus === 'idle' && (
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium text-blue-800">{t.rv_batch_selected}: {selectedCount}{t.stat_unit}</span>
-              {someNewChecked && !selectAllMatching && (
-                <div className="flex items-center gap-1.5 border-l border-blue-200 pl-3">
-                  <span className="text-xs text-blue-600 font-medium whitespace-nowrap">{t.rv_draft_type}</span>
-                  {(['standard', 'short', 'careful'] as DraftType[]).map((dt) => (
-                    <button key={dt} onClick={() => setBatchDraftType(dt)}
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors ${batchDraftType === dt ? 'bg-blue-700 text-white border-blue-700' : 'border-blue-300 text-blue-700 hover:bg-blue-100'}`}>
-                      {draftLabel[dt]}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* 톤 단일화(STANDARD): 표준/짧게/조심스럽게 선택기 제거 — 게이트키퍼가 톤·엔진 결정 */}
               <div className="flex items-center gap-2 ml-auto">
                 {/* 소량(현재 페이지 new) 편집형 AI 배치 — 인라인 모달 UX */}
                 {someNewChecked && !selectAllMatching && (

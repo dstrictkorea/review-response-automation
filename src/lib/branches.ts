@@ -73,6 +73,40 @@ export function branchCity(code: string, lang: Language): string | null {
   return BRANCH_CITY[code.toUpperCase()]?.[lang] ?? null
 }
 
+// ── ETERNAL NATURE 브랜드 메타데이터 (답변 템플릿용) ─────────────────────────────
+//
+// 내부 지점 코드(AMDB, AMLV 등) 노출을 차단하고 공식 지점명/시그니처 작품명으로 치환.
+// ※ 시그니처 작품명은 편집 가능한 브랜드 메타데이터입니다(마케팅팀 검수 대상).
+//    인간 승인 전 게시되지 않으므로 담당자가 최종 확인/수정합니다.
+
+/** 공식 지점명 = "ARTE MUSEUM " + 도시명 (4개국어). 도시명이 없으면 코드 노출 없이 "ARTE MUSEUM". */
+export function branchOfficialName(code: string, lang: Language): string {
+  const city = branchCity(code, lang)
+  return city ? `ARTE MUSEUM ${city}` : 'ARTE MUSEUM'
+}
+
+/** 지점별 시그니처 미디어아트 작품명 (4개국어). 미지정 지점은 null → 템플릿이 일반 문구로 대체. */
+export const BRANCH_SIGNATURE: Record<string, Record<Language, string>> = {
+  // 국내
+  AMGN: { ko: 'WAVE(파도)',       en: 'WAVE',       ja: 'WAVE（波）',       zh: 'WAVE（海浪）' },
+  AMYS: { ko: 'FLOWER(꽃)',       en: 'FLOWER',     ja: 'FLOWER（花）',     zh: 'FLOWER（花）' },
+  AMBS: { ko: 'BEACH(해변)',      en: 'BEACH',      ja: 'BEACH（ビーチ）',  zh: 'BEACH（海滩）' },
+  AMJJ: { ko: 'GARDEN(가든)',     en: 'GARDEN',     ja: 'GARDEN（庭園）',   zh: 'GARDEN（花园）' },
+  AKJJ: { ko: 'FOREST(숲)',       en: 'FOREST',     ja: 'FOREST（森）',     zh: 'FOREST（森林）' },
+  // 글로벌
+  AMNY: { ko: 'STAR(별)',         en: 'STAR',       ja: 'STAR（星）',       zh: 'STAR（星空）' },
+  AMLV: { ko: 'WATERFALL(폭포)',  en: 'WATERFALL',  ja: 'WATERFALL（滝）',  zh: 'WATERFALL（瀑布）' },
+  AMDB: { ko: 'FLOWER(꽃)',       en: 'FLOWER',     ja: 'FLOWER（花）',     zh: 'FLOWER（花）' },
+  AMNG: { ko: 'MOONLIGHT(달빛)',  en: 'MOONLIGHT',  ja: 'MOONLIGHT（月光）', zh: 'MOONLIGHT（月光）' },
+  AMLA: { ko: 'BEACH(해변)',      en: 'BEACH',      ja: 'BEACH（ビーチ）',  zh: 'BEACH（海滩）' },
+  AMKH: { ko: 'GARDEN(가든)',     en: 'GARDEN',     ja: 'GARDEN（庭園）',   zh: 'GARDEN（花园）' },
+}
+
+/** 지점 시그니처 작품명 (없으면 null) */
+export function branchSignatureWork(code: string, lang: Language): string | null {
+  return BRANCH_SIGNATURE[code.toUpperCase()]?.[lang] ?? null
+}
+
 // ── 지점 자동 감지 (CSV 컬럼 / 파일명) ───────────────────────────────────────────
 
 /** 공백·언더스코어·하이픈 제거 + 소문자 정규화 */
