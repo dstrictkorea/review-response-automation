@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { Review, ReviewTelemetry } from '@/types/database'
 import ReviewsListClient, { type ServerPaginationProps } from '../reviews/ReviewsListClient'
 import ArchiveFilterBar from './ArchiveFilterBar'
+import { getBranchAccess } from '@/lib/auth/branchAccess'
 
 /**
  * /archive — 보관함(아카이브) (Wave 17)
@@ -49,6 +50,7 @@ export default async function ArchivePage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
+  const access = await getBranchAccess(supabase)  // 관리자만 "전체 선택" 영구삭제 허용
 
   const page  = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
   const limit = PAGE_SIZES.includes(Number(params.limit)) ? Number(params.limit) : DEFAULT_LIMIT
@@ -143,6 +145,7 @@ export default async function ArchivePage({
         telemetryMap={telemetryMap}
         server={serverProps}
         archiveMode
+        isAdmin={access?.isAdmin ?? false}
       />
     </div>
   )

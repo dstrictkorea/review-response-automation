@@ -330,6 +330,7 @@ export interface I18nDict {
   arch_hard_confirm_btn: string
   arch_hard_cap_warn: string        // {max}
   arch_hard_no_selectall: string
+  arch_hard_all_warn: string        // {n} — 관리자 전체선택 영구삭제 경고
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -614,6 +615,7 @@ export const DICT: Record<Language, I18nDict> = {
     arch_hard_confirm_btn: '영구 삭제 확정',
     arch_hard_cap_warn: '영구 삭제는 한 번에 최대 {max}건까지 가능합니다. 선택을 줄여주세요.',
     arch_hard_no_selectall: '안전을 위해 "전체 선택" 상태에서는 영구 삭제할 수 없습니다. 개별 항목을 선택해주세요.',
+    arch_hard_all_warn: '필터 조건 전체 {n}건이 영구 삭제됩니다. 되돌릴 수 없습니다.',
   },
 
   en: {
@@ -897,6 +899,7 @@ export const DICT: Record<Language, I18nDict> = {
     arch_hard_confirm_btn: 'Confirm permanent delete',
     arch_hard_cap_warn: 'Permanent delete is limited to {max} items at a time. Please select fewer.',
     arch_hard_no_selectall: 'For safety, permanent delete is disabled while "select all" is active. Please select individual items.',
+    arch_hard_all_warn: 'All {n} matching reviews will be permanently deleted. This cannot be undone.',
   },
 
   ja: {
@@ -1180,6 +1183,7 @@ export const DICT: Record<Language, I18nDict> = {
     arch_hard_confirm_btn: '完全削除を確定',
     arch_hard_cap_warn: '完全削除は一度に最大{max}件までです。選択を減らしてください。',
     arch_hard_no_selectall: '安全のため「全選択」状態では完全削除できません。個別に選択してください。',
+    arch_hard_all_warn: 'フィルター条件に一致する全{n}件が完全削除されます。元に戻せません。',
   },
 
   zh: {
@@ -1463,5 +1467,6 @@ export const DICT: Record<Language, I18nDict> = {
     arch_hard_confirm_btn: '确认永久删除',
     arch_hard_cap_warn: '永久删除每次最多 {max} 条。请减少选择。',
     arch_hard_no_selectall: '为安全起见，"全选"状态下无法永久删除。请逐项选择。',
+    arch_hard_all_warn: '符合筛选条件的全部 {n} 条评价将被永久删除，且无法恢复。',
   },
 }

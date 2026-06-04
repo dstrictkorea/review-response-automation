@@ -226,6 +226,7 @@ export default function ReviewsListClient({
   defaultStatusFilter = '',
   server,
   archiveMode = false,
+  isAdmin = false,
 }: {
   reviews: Review[]
   draftMap?: Record<string, string>
@@ -234,6 +235,8 @@ export default function ReviewsListClient({
   server?: ServerPaginationProps
   /** 아카이브(보관함) 모드 — AI/배치 액션 숨김, 복구·영구삭제 액션만 노출 */
   archiveMode?: boolean
+  /** 관리자 여부 — true면 "필터 전체 선택" 상태에서도 영구 삭제 허용 */
+  isAdmin?: boolean
 }) {
   const router = useRouter()
   const { lang, t } = useLanguage()
@@ -458,13 +461,27 @@ export default function ReviewsListClient({
   // ── 아카이브: 일괄 영구 삭제 (비가역 — 개별 선택 ID만, 전체선택 차단) ─────────────
   function closeHard() { setHardStep(0); setHardAck(false) }
   async function runHardDelete() {
-    if (selectAllMatching) return  // 안전 잠금: 전체선택 상태에서는 영구 삭제 불가
+    // 안전 잠금: 비관리자는 전체선택 영구삭제 불가. 관리자는 필터 전체 삭제 허용.
+    if (selectAllMatching && !isAdmin) return
     setIsHardDeleting(true)
     try {
+      const payload = selectAllMatching && server
+        ? {
+            action: 'hard_delete',
+            mode: 'filter',
+            filter: {
+              ...server.query,
+              status: server.activeStatus || undefined,
+              risk:   server.activeRisk || undefined,
+              rating: server.activeRating || undefined,
+            },
+          }
+        : { action: 'hard_delete', mode: 'ids', ids: [...selected] }
+
       const res = await fetch('/api/review/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'hard_delete', mode: 'ids', ids: [...selected] }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -716,8 +733,8 @@ export default function ReviewsListClient({
                 </button>
                 <button
                   onClick={() => { setHardAck(false); setHardStep(1) }}
-                  disabled={selectAllMatching || selected.size === 0 || selected.size > MAX_HARD_DELETE}
-                  title={selectAllMatching ? t.arch_hard_no_selectall : selected.size > MAX_HARD_DELETE ? fmt(t.arch_hard_cap_warn, { max: MAX_HARD_DELETE }) : ''}
+                  disabled={selectAllMatching ? (!isAdmin || (server?.total ?? 0) === 0) : (selected.size === 0 || selected.size > MAX_HARD_DELETE)}
+                  title={selectAllMatching && !isAdmin ? t.arch_hard_no_selectall : (!selectAllMatching && selected.size > MAX_HARD_DELETE) ? fmt(t.arch_hard_cap_warn, { max: MAX_HARD_DELETE }) : ''}
                   className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                   🔥 {fmt(t.arch_harddelete_selected, { n: selectAllMatching ? selectedCount : selected.size })}
                 </button>
@@ -726,8 +743,11 @@ export default function ReviewsListClient({
                   {t.rv_deselect}
                 </button>
               </div>
-              {selectAllMatching && (
+              {selectAllMatching && !isAdmin && (
                 <p className="w-full text-xs text-amber-700 mt-0.5">⚠ {t.arch_hard_no_selectall}</p>
+              )}
+              {selectAllMatching && isAdmin && (
+                <p className="w-full text-xs text-red-700 font-medium mt-0.5">🔥 {fmt(t.arch_hard_all_warn, { n: selectedCount })}</p>
               )}
               {!selectAllMatching && selected.size > MAX_HARD_DELETE && (
                 <p className="w-full text-xs text-amber-700 mt-0.5">⚠ {fmt(t.arch_hard_cap_warn, { max: MAX_HARD_DELETE })}</p>
@@ -1054,7 +1074,7 @@ export default function ReviewsListClient({
                   <span className="text-2xl">🔥</span>
                   <div>
                     <h3 className="text-base font-bold text-red-700">
-                      {fmt(t.arch_hard_title1, { n: selected.size })}
+                      {fmt(t.arch_hard_title1, { n: selectAllMatching ? selectedCount : selected.size })}
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">{t.arch_hard_desc1}</p>
                   </div>
@@ -1076,7 +1096,7 @@ export default function ReviewsListClient({
                   <span className="text-2xl">⚠️</span>
                   <div>
                     <h3 className="text-base font-bold text-red-700">
-                      {fmt(t.arch_hard_title2, { n: selected.size })}
+                      {fmt(t.arch_hard_title2, { n: selectAllMatching ? selectedCount : selected.size })}
                     </h3>
                     <p className="text-sm text-gray-600 mt-1">{t.arch_hard_desc2}</p>
                   </div>

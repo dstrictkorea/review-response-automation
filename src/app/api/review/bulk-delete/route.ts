@@ -63,27 +63,53 @@ export async function POST(req: NextRequest) {
   //  HARD DELETE — 물리 삭제 (안전 잠금)
   // ════════════════════════════════════════════════════════════════════════
   if (action === 'hard_delete') {
-    if (body.mode !== 'ids') {
-      return NextResponse.json(
-        { error: '영구 삭제는 안전을 위해 개별 선택된 항목만 가능합니다. (필터·전체 선택으로는 영구 삭제할 수 없습니다.)' },
-        { status: 400 },
-      )
-    }
-    const ids = (body.ids ?? []).filter((x) => typeof x === 'string')
-    if (ids.length === 0) {
-      return NextResponse.json({ error: '선택된 항목이 없습니다.' }, { status: 400 })
-    }
-    if (ids.length > MAX_HARD_DELETE) {
-      return NextResponse.json({ error: `영구 삭제는 한 번에 최대 ${MAX_HARD_DELETE}건까지 가능합니다.` }, { status: 400 })
+    const isFilter = body.mode === 'filter'
+    if (!isFilter && body.mode !== 'ids') {
+      return NextResponse.json({ error: 'mode는 ids 또는 filter여야 합니다.' }, { status: 400 })
     }
 
-    // 대상 검증: 소프트 삭제됨(보관함) + (staff면) 담당 지점 범위. → 삭제 가능한 ID만 추린다.
-    let vq = supabase.from('reviews').select('id').in('id', ids).not('deleted_at', 'is', null)
-    if (branchGuard) vq = vq.in('branch_code', access.branches)
-    const { data: rows, error: vErr } = await vq
-    if (vErr) return NextResponse.json({ error: vErr.message }, { status: 500 })
+    let targetIds: string[]
+    let auditDetail: Record<string, unknown>
 
-    const targetIds = (rows ?? []).map((r) => r.id as string)
+    if (isFilter) {
+      // ── 필터 조건 전체 영구 삭제 (Gmail식 전체 선택) — 관리자 전용 ──────────────
+      if (!access.isAdmin) {
+        return NextResponse.json(
+          { error: '필터 조건 전체 영구 삭제는 관리자만 가능합니다. 개별 항목을 선택해 주세요.' },
+          { status: 403 },
+        )
+      }
+      const f = body.filter ?? {}
+      const qSafe = (f.q ?? '').replace(/[%,()]/g, ' ').trim()
+      // 보관함(deleted_at IS NOT NULL) 중 필터 일치 행만 대상. 관리자이므로 지점 제한 없음.
+      let sq = supabase.from('reviews').select('id').not('deleted_at', 'is', null)
+      if (f.branch)    sq = sq.eq('branch_code', f.branch)
+      if (f.channel)   sq = sq.eq('channel_code', f.channel)
+      if (f.status)    sq = sq.eq('status', f.status)
+      if (f.risk)      sq = sq.eq('risk_level', f.risk)
+      if (f.rating)    sq = sq.eq('rating', Number(f.rating))
+      if (f.date_from) sq = sq.gte('review_created_at', f.date_from)
+      if (f.date_to)   sq = sq.lte('review_created_at', f.date_to + 'T23:59:59')
+      if (qSafe) sq = sq.or(`review_text.ilike.%${qSafe}%,reviewer_name.ilike.%${qSafe}%,branch_code.ilike.%${qSafe}%,channel_code.ilike.%${qSafe}%`)
+      const { data: rows, error: sErr } = await sq
+      if (sErr) return NextResponse.json({ error: sErr.message }, { status: 500 })
+      targetIds = (rows ?? []).map((r) => r.id as string)
+      auditDetail = { mode: 'filter', filter: f, count_requested: targetIds.length }
+    } else {
+      const ids = (body.ids ?? []).filter((x) => typeof x === 'string')
+      if (ids.length === 0) return NextResponse.json({ error: '선택된 항목이 없습니다.' }, { status: 400 })
+      if (ids.length > MAX_HARD_DELETE) {
+        return NextResponse.json({ error: `영구 삭제는 한 번에 최대 ${MAX_HARD_DELETE}건까지 가능합니다.` }, { status: 400 })
+      }
+      // 대상 검증: 소프트 삭제됨(보관함) + (staff면) 담당 지점 범위.
+      let vq = supabase.from('reviews').select('id').in('id', ids).not('deleted_at', 'is', null)
+      if (branchGuard) vq = vq.in('branch_code', access.branches)
+      const { data: rows, error: vErr } = await vq
+      if (vErr) return NextResponse.json({ error: vErr.message }, { status: 500 })
+      targetIds = (rows ?? []).map((r) => r.id as string)
+      auditDetail = { mode: 'ids', count_requested: ids.length }
+    }
+
     if (targetIds.length === 0) {
       return NextResponse.json(
         { error: '영구 삭제할 수 있는 항목이 없습니다. (보관함에 있는 항목만 영구 삭제할 수 있습니다.)' },
@@ -96,14 +122,20 @@ export async function POST(req: NextRequest) {
       review_id:  null,
       actor_name: access.email,
       action:     'bulk_hard_deleted',
-      detail:     { ids: targetIds, count_requested: ids.length },
+      detail:     auditDetail,
     })
 
-    // 물리 삭제 (RPC: 트랜잭션 + deleted_at 재검증 + review_import_rows FK 정리)
-    const { data: delCount, error: dErr } = await supabase.rpc('hard_delete_reviews', { p_ids: targetIds })
-    if (dErr) return NextResponse.json({ error: dErr.message }, { status: 500 })
+    // 물리 삭제 (RPC: 트랜잭션 + deleted_at 재검증 + 순환 FK 정리). 대량 대비 청크 처리.
+    const CHUNK = 200
+    let deleted = 0
+    for (let i = 0; i < targetIds.length; i += CHUNK) {
+      const slice = targetIds.slice(i, i + CHUNK)
+      const { data: delCount, error: dErr } = await supabase.rpc('hard_delete_reviews', { p_ids: slice })
+      if (dErr) return NextResponse.json({ error: dErr.message, partial_deleted: deleted }, { status: 500 })
+      deleted += (delCount as number) ?? slice.length
+    }
 
-    return NextResponse.json({ success: true, action, count: (delCount as number) ?? targetIds.length })
+    return NextResponse.json({ success: true, action, count: deleted })
   }
 
   // ════════════════════════════════════════════════════════════════════════
