@@ -4,6 +4,25 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { scanText } from '@/services/filterService'
+import { processReview, type ProcessDecision } from '@/lib/reviewProcessor'
+
+type LangKey = 'ko' | 'en' | 'ja' | 'zh'
+const langKey = (l: string | null | undefined): LangKey => (['ko', 'en', 'ja', 'zh'].includes(l ?? '') ? (l as LangKey) : 'ko')
+
+// 인입 분류 위험도 매핑 — 키워드 SSOT(scanText) 합산으로 EMERGENCY의 critical 보존(floor-only)
+const RISK_RANK: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 }
+function emergencyRisk(text: string): string {
+  const fr = scanText(text)
+  return fr.triggered && (RISK_RANK[fr.maxRiskLevel] ?? 0) > RISK_RANK.high ? fr.maxRiskLevel : 'high'
+}
+function importStatusOf(d: ProcessDecision): string {
+  return d.route === 'static' ? 'ai_done' : 'pending_approval'
+}
+function importRiskOf(d: ProcessDecision, text: string): string {
+  if (d.classification.status === 'EMERGENCY') return emergencyRisk(text)
+  if (d.classification.status === 'COMPLAINT') return 'medium'
+  return 'low'
+}
 
 export interface ImportRowPayload {
   rating: number | null
@@ -209,6 +228,23 @@ export async function importReviewsAction(
     }
   }
 
+  // ── 4b. 인입 시점 결정론적 1차 분류 (LLM 미사용, 순수 함수) ────────────────
+  // WaterfallRegexEngine → 위험도/태그/라우팅을 UPSERT 이전에 확정한다.
+  //   SAFE → ai_done (정적 알고리즘 답변 자동 생성)
+  //   EMERGENCY/COMPLAINT/AMBIGUOUS → pending_approval (격리). EMERGENCY는 critical 보존.
+  const decisionByHash = new Map<string, ProcessDecision>()
+  for (const row of toInsert) {
+    decisionByHash.set(
+      row.import_hash,
+      processReview({
+        reviewText:   row.review_text ?? '',
+        branchCode:   row.effectiveBranch,
+        language:     langKey(row.review_language),
+        reviewerName: row.reviewer_name,
+      }),
+    )
+  }
+
   // ── 5. 신규 리뷰 bulk UPSERT (ON CONFLICT DO NOTHING) ────────────────────
   //
   // upsert + ignoreDuplicates: true → 경쟁 조건이나 재처리로 인한 충돌 시
@@ -223,21 +259,29 @@ export async function importReviewsAction(
     const { data, error: bulkError } = await supabase
       .from('reviews')
       .upsert(
-        toInsert.map(row => ({
-          branch_code:            row.effectiveBranch,
-          channel_code:           batchInfo.channelCode,
-          rating:                 row.rating,
-          review_text:            row.review_text,
-          review_created_at:      row.review_date || null,
-          review_url:             row.review_url,
-          reviewer_name:          row.reviewer_name,
-          review_language:        row.review_language,
-          source_review_id:       row.external_review_id,
-          normalized_hash:        row.normalized_hash,
-          import_hash:            row.import_hash,
-          source_import_batch_id: batch.id,
-          status:                 'new',
-        })),
+        toInsert.map(row => {
+          const d = decisionByHash.get(row.import_hash)!
+          return {
+            branch_code:            row.effectiveBranch,
+            channel_code:           batchInfo.channelCode,
+            rating:                 row.rating,
+            review_text:            row.review_text,
+            review_created_at:      row.review_date || null,
+            review_url:             row.review_url,
+            reviewer_name:          row.reviewer_name,
+            review_language:        row.review_language,
+            source_review_id:       row.external_review_id,
+            normalized_hash:        row.normalized_hash,
+            import_hash:            row.import_hash,
+            source_import_batch_id: batch.id,
+            // 인입 시점 1차 분류 결과를 즉시 인코딩 (분류 → 라우팅 → 답변 순서)
+            status:                 importStatusOf(d),
+            risk_level:             importRiskOf(d, row.review_text ?? ''),
+            categories:             d.classification.tags,
+            risk_reasons:           [d.classification.reason],
+            internal_note_ko:       d.classification.reason,
+          }
+        }),
         {
           // 라이브 DB의 기존 유니크 인덱스 reviews_branch_code_channel_code_normalized_hash_key
           // (branch_code, channel_code, normalized_hash) 와 정확히 일치시킨다.
@@ -258,31 +302,37 @@ export async function importReviewsAction(
     }
   }
 
-  // ── 5b. 수집 시점(Ingestion) 1차 리스크 트리야지 ───────────────────────────
-  // LLM 없이 하드코딩 다국어 위험 키워드(환불/부상/고소/사고…)만 즉시 스캔하여
-  // critical/high 행을 즉시 격리(pending_approval) — 듀얼 파이프라인의 1차 라우팅.
-  // 본격 처리(알고리즘 템플릿/AI 초안)는 이후 일괄/오케스트레이터에서 수행.
+  // ── 5b. 인입 분류 결과 → 정적 STANDARD 답변 자동 생성 (LLM 미사용) ──────────
+  // 위험도/상태/태그는 위 UPSERT에 이미 인코딩됨. 여기서는 정적 초안만 일괄 생성한다.
+  //   SAFE      → 감사/ETERNAL NATURE 자동 답변 (ai_done)
+  //   EMERGENCY → 건조 사과 홀딩 초안 (pending_approval 격리)
+  //   COMPLAINT/AMBIGUOUS → 격리만, LLM 답변은 이후 게이트키퍼(/api/review/generate)에서.
   const hashToReviewId = new Map(insertedReviews.map(r => [r.import_hash, r.id]))
 
-  const triageCritical: string[] = []
-  const triageHigh: string[] = []
-  for (const row of toInsert) {
-    const reviewId = hashToReviewId.get(row.import_hash)
-    if (!reviewId) continue
-    const fr = scanText(row.review_text ?? '', [])
-    if (!fr.triggered) continue
-    if (fr.maxRiskLevel === 'critical') triageCritical.push(reviewId)
-    else if (fr.maxRiskLevel === 'high') triageHigh.push(reviewId)
+  const classCounts: Record<string, number> = { SAFE: 0, EMERGENCY: 0, COMPLAINT: 0, AMBIGUOUS: 0 }
+  const draftRows = insertedReviews.flatMap(ir => {
+    const d = decisionByHash.get(ir.import_hash)
+    if (!d) return []
+    classCounts[d.classification.status] = (classCounts[d.classification.status] ?? 0) + 1
+    if ((d.route !== 'static' && d.route !== 'manual') || !d.staticReply) return []
+    return [{
+      review_id:           ir.id,
+      draft_short:         null,
+      draft_standard:      d.staticReply,
+      draft_careful:       null,
+      selected_draft_type: 'standard',
+      selected_reply:      d.staticReply,
+      forbidden_check:     { refund_promise: false, legal_admission: false, cctv_mention: false, staff_discipline: false },
+      prompt_version:      d.route === 'manual' ? 'algo-emergency-v1' : 'algo-v1',
+      model_name:          null,
+      pipeline_engine:     'template' as const,
+      intent_code:         d.classification.status,
+      intent_confidence:   1,
+    }]
+  })
+  if (draftRows.length > 0) {
+    await supabase.from('reply_drafts').insert(draftRows)
   }
-  const triageNow = new Date().toISOString()
-  await Promise.all([
-    triageCritical.length
-      ? supabase.from('reviews').update({ risk_level: 'critical', status: 'pending_approval', updated_at: triageNow }).in('id', triageCritical)
-      : Promise.resolve(null),
-    triageHigh.length
-      ? supabase.from('reviews').update({ risk_level: 'high', status: 'pending_approval', updated_at: triageNow }).in('id', triageHigh)
-      : Promise.resolve(null),
-  ])
 
   const importRowsPayload = [
     ...toInsert.map(row => ({
@@ -369,6 +419,7 @@ export async function importReviewsAction(
         imported,
         duplicates:    duplicates.length,
         errors,
+        classification: classCounts,  // 인입 1차 분류 집계 (SAFE/EMERGENCY/COMPLAINT/AMBIGUOUS)
       },
     }),
   ])
