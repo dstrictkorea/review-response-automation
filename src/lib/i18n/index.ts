@@ -303,6 +303,33 @@ export interface I18nDict {
   rv_del_done: string            // {n}
   rv_del_confirm_btn: string
   rv_archive_reason: string
+
+  // ── Archive view / restore / hard delete (Wave 17) ───────────────────────────
+  arch_title: string
+  arch_subtitle: string
+  arch_search_ph: string
+  arch_branch_all: string
+  arch_apply: string
+  arch_reset: string
+  arch_empty: string
+  arch_restore_selected: string     // {n}
+  arch_harddelete_selected: string  // {n}
+  arch_restoring: string
+  arch_deleting: string
+  arch_restore_done: string         // {n}
+  arch_harddelete_done: string      // {n}
+  arch_restore_confirm_title: string // {n}
+  arch_restore_confirm_desc: string
+  arch_restore_confirm_btn: string
+  arch_hard_title1: string          // {n}
+  arch_hard_desc1: string
+  arch_hard_next: string
+  arch_hard_title2: string          // {n}
+  arch_hard_desc2: string
+  arch_hard_ack: string
+  arch_hard_confirm_btn: string
+  arch_hard_cap_warn: string        // {max}
+  arch_hard_no_selectall: string
 }
 
 export const DICT: Record<Language, I18nDict> = {
@@ -556,11 +583,37 @@ export const DICT: Record<Language, I18nDict> = {
     rv_bulk_clear: '선택 해제',
     rv_delete_selected: '삭제 ({n})',
     rv_del_confirm_title: '리뷰 {n}건을 삭제하시겠습니까?',
-    rv_del_confirm_desc: '삭제된 리뷰는 목록·대시보드·아카이브에서 숨겨집니다. 감사 추적 이력은 보존됩니다.',
+    rv_del_confirm_desc: '삭제된 리뷰는 목록·대시보드에서 숨겨지고 아카이브(보관함)로 이동합니다. 감사 추적 이력은 보존됩니다.',
     rv_deleting: '삭제 중...',
     rv_del_done: '리뷰 {n}건이 삭제되었습니다.',
     rv_del_confirm_btn: '삭제 확인',
     rv_archive_reason: '보관 사유',
+
+    arch_title: '아카이브 (보관함)',
+    arch_subtitle: '삭제된 리뷰 보관 — 복구하거나 영구 삭제할 수 있습니다',
+    arch_search_ph: '검색어 (리뷰 내용, 작성자명, 지점/채널 코드)',
+    arch_branch_all: '전체 지점',
+    arch_apply: '검색',
+    arch_reset: '초기화',
+    arch_empty: '보관함이 비어 있습니다.',
+    arch_restore_selected: '복구 ({n})',
+    arch_harddelete_selected: '영구 삭제 ({n})',
+    arch_restoring: '복구 중...',
+    arch_deleting: '영구 삭제 중...',
+    arch_restore_done: '{n}건이 복구되었습니다.',
+    arch_harddelete_done: '{n}건이 영구 삭제되었습니다.',
+    arch_restore_confirm_title: '{n}건을 복구하시겠습니까?',
+    arch_restore_confirm_desc: '복구된 리뷰는 다시 리뷰 목록과 대시보드에 표시됩니다.',
+    arch_restore_confirm_btn: '복구',
+    arch_hard_title1: '{n}건을 영구 삭제하시겠습니까?',
+    arch_hard_desc1: '영구 삭제된 리뷰와 관련 답변 초안은 데이터베이스에서 완전히 제거되며 복구할 수 없습니다. 감사 로그 기록만 보존됩니다.',
+    arch_hard_next: '다음 단계',
+    arch_hard_title2: '정말로 {n}건을 영구 삭제합니까?',
+    arch_hard_desc2: '이 작업은 되돌릴 수 없습니다. 데이터가 영구적으로 사라집니다.',
+    arch_hard_ack: '되돌릴 수 없음을 이해했으며, 영구 삭제에 동의합니다.',
+    arch_hard_confirm_btn: '영구 삭제 확정',
+    arch_hard_cap_warn: '영구 삭제는 한 번에 최대 {max}건까지 가능합니다. 선택을 줄여주세요.',
+    arch_hard_no_selectall: '안전을 위해 "전체 선택" 상태에서는 영구 삭제할 수 없습니다. 개별 항목을 선택해주세요.',
   },
 
   en: {
@@ -813,11 +866,37 @@ export const DICT: Record<Language, I18nDict> = {
     rv_bulk_clear: 'Clear selection',
     rv_delete_selected: 'Delete ({n})',
     rv_del_confirm_title: 'Delete {n} review(s)?',
-    rv_del_confirm_desc: 'Deleted reviews are hidden from lists, dashboard and archive. The audit trail is preserved.',
+    rv_del_confirm_desc: 'Deleted reviews are hidden from lists and the dashboard and moved to the Archive. The audit trail is preserved.',
     rv_deleting: 'Deleting...',
     rv_del_done: '{n} review(s) deleted.',
     rv_del_confirm_btn: 'Confirm delete',
     rv_archive_reason: 'Archive reason',
+
+    arch_title: 'Archive',
+    arch_subtitle: 'Deleted reviews — restore them or delete permanently',
+    arch_search_ph: 'Search (review text, author, branch/channel code)',
+    arch_branch_all: 'All branches',
+    arch_apply: 'Search',
+    arch_reset: 'Reset',
+    arch_empty: 'The archive is empty.',
+    arch_restore_selected: 'Restore ({n})',
+    arch_harddelete_selected: 'Delete permanently ({n})',
+    arch_restoring: 'Restoring...',
+    arch_deleting: 'Deleting...',
+    arch_restore_done: '{n} review(s) restored.',
+    arch_harddelete_done: '{n} review(s) permanently deleted.',
+    arch_restore_confirm_title: 'Restore {n} review(s)?',
+    arch_restore_confirm_desc: 'Restored reviews reappear in the review list and dashboard.',
+    arch_restore_confirm_btn: 'Restore',
+    arch_hard_title1: 'Permanently delete {n} review(s)?',
+    arch_hard_desc1: 'Permanently deleted reviews and their reply drafts are removed from the database and cannot be recovered. Only the audit log entry is preserved.',
+    arch_hard_next: 'Next',
+    arch_hard_title2: 'Really permanently delete {n} review(s)?',
+    arch_hard_desc2: 'This action cannot be undone. The data will be gone forever.',
+    arch_hard_ack: 'I understand this cannot be undone and confirm permanent deletion.',
+    arch_hard_confirm_btn: 'Confirm permanent delete',
+    arch_hard_cap_warn: 'Permanent delete is limited to {max} items at a time. Please select fewer.',
+    arch_hard_no_selectall: 'For safety, permanent delete is disabled while "select all" is active. Please select individual items.',
   },
 
   ja: {
@@ -1070,11 +1149,37 @@ export const DICT: Record<Language, I18nDict> = {
     rv_bulk_clear: '選択解除',
     rv_delete_selected: '削除 ({n})',
     rv_del_confirm_title: 'レビュー{n}件を削除しますか？',
-    rv_del_confirm_desc: '削除したレビューは一覧・ダッシュボード・アーカイブから非表示になります。監査履歴は保存されます。',
+    rv_del_confirm_desc: '削除したレビューは一覧・ダッシュボードから非表示になり、アーカイブ（保管庫）へ移動します。監査履歴は保存されます。',
     rv_deleting: '削除中...',
     rv_del_done: 'レビュー{n}件を削除しました。',
     rv_del_confirm_btn: '削除を確認',
     rv_archive_reason: '保管理由',
+
+    arch_title: 'アーカイブ（保管庫）',
+    arch_subtitle: '削除されたレビュー — 復元または完全削除できます',
+    arch_search_ph: '検索ワード（レビュー内容、投稿者名、拠点/チャネルコード）',
+    arch_branch_all: '全拠点',
+    arch_apply: '検索',
+    arch_reset: 'リセット',
+    arch_empty: 'アーカイブは空です。',
+    arch_restore_selected: '復元 ({n})',
+    arch_harddelete_selected: '完全削除 ({n})',
+    arch_restoring: '復元中...',
+    arch_deleting: '完全削除中...',
+    arch_restore_done: '{n}件を復元しました。',
+    arch_harddelete_done: '{n}件を完全に削除しました。',
+    arch_restore_confirm_title: '{n}件を復元しますか？',
+    arch_restore_confirm_desc: '復元したレビューはレビュー一覧とダッシュボードに再表示されます。',
+    arch_restore_confirm_btn: '復元',
+    arch_hard_title1: '{n}件を完全に削除しますか？',
+    arch_hard_desc1: '完全削除されたレビューと関連する返信案はデータベースから完全に削除され、復元できません。監査ログの記録のみ保存されます。',
+    arch_hard_next: '次へ',
+    arch_hard_title2: '本当に{n}件を完全削除しますか？',
+    arch_hard_desc2: 'この操作は取り消せません。データは永久に失われます。',
+    arch_hard_ack: '取り消せないことを理解し、完全削除に同意します。',
+    arch_hard_confirm_btn: '完全削除を確定',
+    arch_hard_cap_warn: '完全削除は一度に最大{max}件までです。選択を減らしてください。',
+    arch_hard_no_selectall: '安全のため「全選択」状態では完全削除できません。個別に選択してください。',
   },
 
   zh: {
@@ -1327,10 +1432,36 @@ export const DICT: Record<Language, I18nDict> = {
     rv_bulk_clear: '取消选择',
     rv_delete_selected: '删除 ({n})',
     rv_del_confirm_title: '确定删除 {n} 条评价吗？',
-    rv_del_confirm_desc: '已删除的评价将从列表、仪表板和归档中隐藏。审计记录将被保留。',
+    rv_del_confirm_desc: '已删除的评价将从列表和仪表板隐藏并移至归档（保管库）。审计记录将被保留。',
     rv_deleting: '删除中...',
     rv_del_done: '已删除 {n} 条评价。',
     rv_del_confirm_btn: '确认删除',
     rv_archive_reason: '保管原因',
+
+    arch_title: '归档（保管库）',
+    arch_subtitle: '已删除的评价 — 可恢复或永久删除',
+    arch_search_ph: '搜索词（评价内容、评论者、门店/渠道代码）',
+    arch_branch_all: '全部门店',
+    arch_apply: '搜索',
+    arch_reset: '重置',
+    arch_empty: '归档为空。',
+    arch_restore_selected: '恢复 ({n})',
+    arch_harddelete_selected: '永久删除 ({n})',
+    arch_restoring: '恢复中...',
+    arch_deleting: '永久删除中...',
+    arch_restore_done: '已恢复 {n} 条评价。',
+    arch_harddelete_done: '已永久删除 {n} 条评价。',
+    arch_restore_confirm_title: '恢复 {n} 条评价吗？',
+    arch_restore_confirm_desc: '恢复后的评价将重新显示在评价列表和仪表板中。',
+    arch_restore_confirm_btn: '恢复',
+    arch_hard_title1: '永久删除 {n} 条评价吗？',
+    arch_hard_desc1: '永久删除的评价及其回复草稿将从数据库中彻底移除，无法恢复。仅保留审计日志记录。',
+    arch_hard_next: '下一步',
+    arch_hard_title2: '确定永久删除 {n} 条评价吗？',
+    arch_hard_desc2: '此操作无法撤销。数据将永久丢失。',
+    arch_hard_ack: '我了解此操作无法撤销，并确认永久删除。',
+    arch_hard_confirm_btn: '确认永久删除',
+    arch_hard_cap_warn: '永久删除每次最多 {max} 条。请减少选择。',
+    arch_hard_no_selectall: '为安全起见，"全选"状态下无法永久删除。请逐项选择。',
   },
 }

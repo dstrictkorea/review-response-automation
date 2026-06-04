@@ -52,6 +52,7 @@ const ALL_STATUSES: ReviewStatus[] = ['new', 'ai_done', 'pending_approval', 'app
 const ALL_RISKS: RiskLevel[] = ['critical', 'high', 'medium', 'low']
 const PAGE_SIZES = [10, 20, 50, 100]
 const CONCURRENCY = 4
+const MAX_HARD_DELETE = 100  // 영구 삭제 비가역 — 한 번에 처리 가능한 상한 (서버와 동일)
 
 function elapsedDays(review: Review): number | null {
   const dateStr = review.review_created_at ?? review.created_at
@@ -224,12 +225,15 @@ export default function ReviewsListClient({
   telemetryMap = {},
   defaultStatusFilter = '',
   server,
+  archiveMode = false,
 }: {
   reviews: Review[]
   draftMap?: Record<string, string>
   telemetryMap?: Record<string, ReviewTelemetry>
   defaultStatusFilter?: string
   server?: ServerPaginationProps
+  /** 아카이브(보관함) 모드 — AI/배치 액션 숨김, 복구·영구삭제 액션만 노출 */
+  archiveMode?: boolean
 }) {
   const router = useRouter()
   const { lang, t } = useLanguage()
@@ -269,6 +273,13 @@ export default function ReviewsListClient({
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteMsg, setDeleteMsg] = useState<string | null>(null)
+
+  // ── 아카이브 모드: 복구 / 영구 삭제(이중 확인) 상태 (Wave 17) ────────────────────
+  const [showRestoreModal, setShowRestoreModal] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const [hardStep, setHardStep] = useState<0 | 1 | 2>(0)  // 0=닫힘, 1=1차 경고, 2=최종 확인
+  const [hardAck, setHardAck] = useState(false)           // 최종 단계 "되돌릴 수 없음" 동의
+  const [isHardDeleting, setIsHardDeleting] = useState(false)
 
   // ── 서버 모드 URL 네비게이션 ────────────────────────────────────────────────────
   const buildServerUrl = useCallback(
@@ -405,6 +416,69 @@ export default function ReviewsListClient({
       setDeleteMsg(t.rd_toast_server_err)
     }
     setIsDeleting(false)
+  }
+
+  // ── 아카이브: 일괄 복구 (가역 — 전체선택 허용) ──────────────────────────────────
+  async function runRestore() {
+    setIsRestoring(true)
+    try {
+      const payload = selectAllMatching && server
+        ? {
+            action: 'restore',
+            mode: 'filter',
+            filter: {
+              ...server.query,
+              status: server.activeStatus || undefined,
+              risk:   server.activeRisk || undefined,
+              rating: server.activeRating || undefined,
+            },
+          }
+        : { action: 'restore', mode: 'ids', ids: [...selected] }
+
+      const res = await fetch('/api/review/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDeleteMsg(data.error ?? 'error')
+      } else {
+        setDeleteMsg(fmt(t.arch_restore_done, { n: data.count ?? 0 }))
+        clearSelection()
+        setShowRestoreModal(false)
+        router.refresh()
+      }
+    } catch {
+      setDeleteMsg(t.rd_toast_server_err)
+    }
+    setIsRestoring(false)
+  }
+
+  // ── 아카이브: 일괄 영구 삭제 (비가역 — 개별 선택 ID만, 전체선택 차단) ─────────────
+  function closeHard() { setHardStep(0); setHardAck(false) }
+  async function runHardDelete() {
+    if (selectAllMatching) return  // 안전 잠금: 전체선택 상태에서는 영구 삭제 불가
+    setIsHardDeleting(true)
+    try {
+      const res = await fetch('/api/review/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'hard_delete', mode: 'ids', ids: [...selected] }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDeleteMsg(data.error ?? 'error')
+      } else {
+        setDeleteMsg(fmt(t.arch_harddelete_done, { n: data.count ?? 0 }))
+        clearSelection()
+        closeHard()
+        router.refresh()
+      }
+    } catch {
+      setDeleteMsg(t.rd_toast_server_err)
+    }
+    setIsHardDeleting(false)
   }
 
   // ── 일괄 자동 처리 (Wave 16) — 청크 반복 호출로 대량 안전 처리 ──────────────────
@@ -633,8 +707,37 @@ export default function ReviewsListClient({
 
       {/* ── 선택/배치 액션 바 ─────────────────────────────────────────────────── */}
       {(hasSelection || batchStatus === 'running') && (
-        <div className="mb-3 rounded-xl bg-blue-50 border border-blue-200 px-4 py-3">
-          {batchStatus === 'idle' && (
+        <div className={`mb-3 rounded-xl px-4 py-3 border ${archiveMode ? 'bg-slate-50 border-slate-200' : 'bg-blue-50 border-blue-200'}`}>
+          {/* 아카이브 모드: 복구 + 영구 삭제만 노출 (AI/배치/소프트삭제 숨김) */}
+          {archiveMode && (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sm font-medium text-slate-800">{t.rv_batch_selected}: {selectedCount}{t.stat_unit}</span>
+              <div className="flex items-center gap-2 ml-auto">
+                <button onClick={() => setShowRestoreModal(true)} disabled={isRestoring || !hasSelection}
+                  className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                  ↩ {fmt(t.arch_restore_selected, { n: selectedCount })}
+                </button>
+                <button
+                  onClick={() => { setHardAck(false); setHardStep(1) }}
+                  disabled={selectAllMatching || selected.size === 0 || selected.size > MAX_HARD_DELETE}
+                  title={selectAllMatching ? t.arch_hard_no_selectall : selected.size > MAX_HARD_DELETE ? fmt(t.arch_hard_cap_warn, { max: MAX_HARD_DELETE }) : ''}
+                  className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                  🔥 {fmt(t.arch_harddelete_selected, { n: selectAllMatching ? selectedCount : selected.size })}
+                </button>
+                <button onClick={clearSelection}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors">
+                  {t.rv_deselect}
+                </button>
+              </div>
+              {selectAllMatching && (
+                <p className="w-full text-xs text-amber-700 mt-0.5">⚠ {t.arch_hard_no_selectall}</p>
+              )}
+              {!selectAllMatching && selected.size > MAX_HARD_DELETE && (
+                <p className="w-full text-xs text-amber-700 mt-0.5">⚠ {fmt(t.arch_hard_cap_warn, { max: MAX_HARD_DELETE })}</p>
+              )}
+            </div>
+          )}
+          {!archiveMode && batchStatus === 'idle' && (
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium text-blue-800">{t.rv_batch_selected}: {selectedCount}{t.stat_unit}</span>
               {someNewChecked && !selectAllMatching && (
@@ -674,7 +777,7 @@ export default function ReviewsListClient({
               </div>
             </div>
           )}
-          {batchStatus === 'running' && (
+          {!archiveMode && batchStatus === 'running' && (
             <div>
               <div className="flex items-center gap-3 mb-1.5">
                 <span className="text-sm font-medium text-blue-800">
@@ -752,8 +855,8 @@ export default function ReviewsListClient({
 
               return (
                 <tr key={review.id}
-                  onClick={() => setActiveReview(review)}
-                  className={`transition-colors cursor-pointer ${
+                  onClick={archiveMode ? undefined : () => setActiveReview(review)}
+                  className={`transition-colors ${archiveMode ? '' : 'cursor-pointer'} ${
                     isHighRisk ? 'bg-red-50 hover:bg-red-100'
                     : isChecked ? 'bg-blue-50 hover:bg-blue-100'
                     : 'hover:bg-gray-50'
@@ -821,9 +924,13 @@ export default function ReviewsListClient({
                     )}
                   </td>
                   <td className="px-2 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                    <Link href={`/reviews/${review.id}`} className="text-xs text-blue-600 hover:underline font-medium">
-                      {t.rv_view_detail}
-                    </Link>
+                    {archiveMode ? (
+                      <span className="text-xs text-gray-300">—</span>
+                    ) : (
+                      <Link href={`/reviews/${review.id}`} className="text-xs text-blue-600 hover:underline font-medium">
+                        {t.rv_view_detail}
+                      </Link>
+                    )}
                   </td>
                 </tr>
               )
@@ -879,12 +986,14 @@ export default function ReviewsListClient({
         </div>
       )}
 
-      {/* ── 슬라이드오버 드로어 ──────────────────────────────────────────────── */}
-      <ReviewDrawer
-        review={activeReview}
-        onClose={() => setActiveReview(null)}
-        onSaved={(id, reply) => setDraftOverrides((prev) => ({ ...prev, [id]: reply }))}
-      />
+      {/* ── 슬라이드오버 드로어 (아카이브 모드에서는 비활성) ──────────────────── */}
+      {!archiveMode && (
+        <ReviewDrawer
+          review={activeReview}
+          onClose={() => setActiveReview(null)}
+          onSaved={(id, reply) => setDraftOverrides((prev) => ({ ...prev, [id]: reply }))}
+        />
+      )}
 
       {/* ── 배치 결과 모달 ───────────────────────────────────────────────────── */}
       {showModal && batchResults.length > 0 && (
@@ -915,6 +1024,93 @@ export default function ReviewsListClient({
                 {isDeleting ? t.rv_deleting : t.rv_del_confirm_btn}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 아카이브: 복구 확인 모달 (가역, 1단계) ─────────────────────────────── */}
+      {showRestoreModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !isRestoring) setShowRestoreModal(false) }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-start gap-3 mb-3">
+              <span className="text-2xl">↩️</span>
+              <div>
+                <h3 className="text-base font-bold text-gray-900">
+                  {fmt(t.arch_restore_confirm_title, { n: selectedCount })}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">{t.arch_restore_confirm_desc}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 mt-5">
+              <button onClick={() => setShowRestoreModal(false)} disabled={isRestoring}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                {t.rv_cancel}
+              </button>
+              <button onClick={runRestore} disabled={isRestoring}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                {isRestoring ? t.arch_restoring : t.arch_restore_confirm_btn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 아카이브: 영구 삭제 이중 경고 모달 (비가역, 2단계 + 동의 체크) ────────── */}
+      {hardStep > 0 && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4"
+          onClick={(e) => { if (e.target === e.currentTarget && !isHardDeleting) closeHard() }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 border-2 border-red-200">
+            {hardStep === 1 ? (
+              <>
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-2xl">🔥</span>
+                  <div>
+                    <h3 className="text-base font-bold text-red-700">
+                      {fmt(t.arch_hard_title1, { n: selected.size })}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">{t.arch_hard_desc1}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 mt-5">
+                  <button onClick={closeHard}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    {t.rv_cancel}
+                  </button>
+                  <button onClick={() => setHardStep(2)}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 transition-colors">
+                    {t.arch_hard_next} →
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="text-2xl">⚠️</span>
+                  <div>
+                    <h3 className="text-base font-bold text-red-700">
+                      {fmt(t.arch_hard_title2, { n: selected.size })}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">{t.arch_hard_desc2}</p>
+                  </div>
+                </div>
+                <label className="flex items-start gap-2 mt-3 cursor-pointer rounded-lg bg-red-50 border border-red-200 px-3 py-2">
+                  <input type="checkbox" checked={hardAck} onChange={(e) => setHardAck(e.target.checked)}
+                    className="mt-0.5 rounded border-gray-300" />
+                  <span className="text-sm text-red-800 font-medium">{t.arch_hard_ack}</span>
+                </label>
+                <div className="flex items-center justify-end gap-2 mt-5">
+                  <button onClick={closeHard} disabled={isHardDeleting}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                    {t.rv_cancel}
+                  </button>
+                  <button onClick={runHardDelete} disabled={!hardAck || isHardDeleting}
+                    className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    {isHardDeleting ? t.arch_deleting : t.arch_hard_confirm_btn}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

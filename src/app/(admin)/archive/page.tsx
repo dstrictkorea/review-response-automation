@@ -1,29 +1,46 @@
 import { createClient } from '@/lib/supabase/server'
-import Link from 'next/link'
-import { statusLabel, statusClasses, riskClasses, riskLabel } from '@/lib/badges'
-import type { Review, ReviewStatus, RiskLevel, Sentiment } from '@/types/database'
-import ReviewsFilterPanel from '../reviews/ReviewsFilterPanel'
+import type { Review, ReviewTelemetry } from '@/types/database'
+import ReviewsListClient, { type ServerPaginationProps } from '../reviews/ReviewsListClient'
+import ArchiveFilterBar from './ArchiveFilterBar'
 
-const sentimentLabel: Record<Sentiment, string> = {
-  positive: '긍정',
-  neutral: '중립',
-  mixed: '복합',
-  negative: '부정',
-}
+/**
+ * /archive — 보관함(아카이브) (Wave 17)
+ *
+ * 소프트 삭제된 리뷰(deleted_at IS NOT NULL)만 노출하는 "휴지통/보관함".
+ * 서버사이드 URL 기반 페이지네이션(페이지당 20건 기본) + 전체 DB 정렬.
+ * ReviewsListClient 를 archiveMode 로 재사용 → 복구(Restore) / 영구 삭제(Hard Delete) 액션만 노출.
+ *
+ * (참고: 게시완료/답변불필요/에스컬레이션 등 "처리 완료" 리뷰는 /reviews 의 상태 필터로 조회한다.)
+ */
 
-const ARCHIVE_STATUSES = ['manual_published', 'no_reply', 'escalated']
+interface BranchRow { code: string; name_ko: string }
 
 interface SearchParams {
   branch?: string
   channel?: string
-  status?: string   // 보관 사유 (archive sub-status)
+  status?: string
+  risk?: string
   rating?: string
   q?: string
   date_from?: string
   date_to?: string
+  page?: string
+  limit?: string
+  sort?: string
+  dir?: string
 }
 
-interface BranchRow { code: string; name_ko: string; country_code: string | null }
+const PAGE_SIZES = [10, 20, 50, 100]
+const DEFAULT_LIMIT = 20
+
+// 정렬 키 → 실제 DB 컬럼 (전체 DB 기준 서버사이드 정렬)
+const SORT_COLUMNS: Record<string, string> = {
+  date: 'review_created_at',
+  rating: 'rating',
+  risk: 'risk_level',
+  status: 'status',
+}
+type SortKey = 'date' | 'rating' | 'risk' | 'status'
 
 export default async function ArchivePage({
   searchParams,
@@ -33,130 +50,100 @@ export default async function ArchivePage({
   const params = await searchParams
   const supabase = await createClient()
 
-  const qSafe = (params.q ?? '').replace(/[%,()]/g, ' ').trim()
-  // 보관 사유 필터: 지정 시 해당 상태만, 미지정 시 아카이브 3종 전체
-  const statusFilter = ARCHIVE_STATUSES.includes(params.status ?? '')
-    ? [params.status as string]
-    : ARCHIVE_STATUSES
+  const page  = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
+  const limit = PAGE_SIZES.includes(Number(params.limit)) ? Number(params.limit) : DEFAULT_LIMIT
+  const from  = (page - 1) * limit
+  const to    = from + limit - 1
 
-  // rows 쿼리 (필터 + count)
-  let rowsQuery = supabase.from('reviews').select('*', { count: 'exact' })
-    .in('status', statusFilter).is('deleted_at', null)
+  const qSafe = (params.q ?? '').replace(/[%,()]/g, ' ').trim()
+
+  const sortKey: SortKey = (params.sort && SORT_COLUMNS[params.sort] ? params.sort : 'date') as SortKey
+  const ascending = params.dir === 'asc'
+  const sortColumn = SORT_COLUMNS[sortKey]
+
+  // ── 보관함 행 쿼리 (deleted_at IS NOT NULL 만) ──────────────────────────────────
+  let rowsQuery = supabase
+    .from('reviews')
+    .select('*', { count: 'exact' })
+    .not('deleted_at', 'is', null)
+    .order(sortColumn, { ascending, nullsFirst: false })
   if (params.branch)    rowsQuery = rowsQuery.eq('branch_code', params.branch)
   if (params.channel)   rowsQuery = rowsQuery.eq('channel_code', params.channel)
+  if (params.status)    rowsQuery = rowsQuery.eq('status', params.status)
+  if (params.risk)      rowsQuery = rowsQuery.eq('risk_level', params.risk)
   if (params.rating)    rowsQuery = rowsQuery.eq('rating', Number(params.rating))
   if (params.date_from) rowsQuery = rowsQuery.gte('review_created_at', params.date_from)
   if (params.date_to)   rowsQuery = rowsQuery.lte('review_created_at', params.date_to + 'T23:59:59')
   if (qSafe) rowsQuery = rowsQuery.or(`review_text.ilike.%${qSafe}%,reviewer_name.ilike.%${qSafe}%,branch_code.ilike.%${qSafe}%,channel_code.ilike.%${qSafe}%`)
-  rowsQuery = rowsQuery.order('updated_at', { ascending: false }).range(0, 199)
-
-  // stats 쿼리 (rating)
-  let statsQuery = supabase.from('reviews').select('rating')
-    .in('status', statusFilter).is('deleted_at', null)
-  if (params.branch)    statsQuery = statsQuery.eq('branch_code', params.branch)
-  if (params.channel)   statsQuery = statsQuery.eq('channel_code', params.channel)
-  if (params.rating)    statsQuery = statsQuery.eq('rating', Number(params.rating))
-  if (params.date_from) statsQuery = statsQuery.gte('review_created_at', params.date_from)
-  if (params.date_to)   statsQuery = statsQuery.lte('review_created_at', params.date_to + 'T23:59:59')
-  if (qSafe) statsQuery = statsQuery.or(`review_text.ilike.%${qSafe}%,reviewer_name.ilike.%${qSafe}%,branch_code.ilike.%${qSafe}%,channel_code.ilike.%${qSafe}%`)
+  rowsQuery = rowsQuery.range(from, to)
 
   const [
     { data: rows, count },
-    { data: statsRows },
     { data: branches },
-    { data: channels },
   ] = await Promise.all([
     rowsQuery,
-    statsQuery,
-    supabase.from('branches').select('code, name_ko, country_code').eq('is_active', true).order('code'),
-    supabase.from('channels').select('code, name').eq('is_active', true).order('code'),
+    supabase.from('branches').select('code, name_ko').eq('is_active', true).order('code'),
   ])
 
-  const archived: Review[] = (rows ?? []) as unknown as Review[]
+  const pageReviews: Review[] = (rows ?? []) as unknown as Review[]
   const total = count ?? 0
 
-  const ratings = (statsRows ?? [])
-    .map((r: { rating: number | null }) => r.rating)
-    .filter((x): x is number => x != null)
-  const avgRating = ratings.length > 0 ? ratings.reduce((s, x) => s + x, 0) / ratings.length : null
-  const ratingDist = ([5, 4, 3, 2, 1] as const).map((star) => ({
-    star, count: ratings.filter((x) => x === star).length,
-  }))
+  // ── 답변 초안 + 텔레메트리 조인 (현재 페이지 행만, 미리보기용) ──────────────────
+  const reviewIds = pageReviews.map((r) => r.id)
+  const { data: drafts } = reviewIds.length
+    ? await supabase
+        .from('reply_drafts')
+        .select('review_id, selected_reply, intent_code, intent_confidence, pipeline_engine, model_name, prompt_version')
+        .in('review_id', reviewIds)
+    : { data: [] }
+
+  const draftMap: Record<string, string> = {}
+  const telemetryMap: Record<string, ReviewTelemetry> = {}
+  for (const d of drafts ?? []) {
+    if (d.selected_reply) draftMap[d.review_id] = d.selected_reply
+    telemetryMap[d.review_id] = {
+      intent_code:       d.intent_code ?? null,
+      intent_confidence: d.intent_confidence ?? null,
+      pipeline_engine:   d.pipeline_engine ?? null,
+      model_name:        d.model_name ?? null,
+      prompt_version:    d.prompt_version ?? null,
+    }
+  }
+
+  // ── 보존 쿼리 (정렬/필터 칩 네비게이션 시 유지) ────────────────────────────────
+  const preservedQuery: Record<string, string> = {}
+  if (params.branch)    preservedQuery.branch = params.branch
+  if (params.channel)   preservedQuery.channel = params.channel
+  if (params.q)         preservedQuery.q = params.q
+  if (params.date_from) preservedQuery.date_from = params.date_from
+  if (params.date_to)   preservedQuery.date_to = params.date_to
+
+  const serverProps: ServerPaginationProps = {
+    page, limit, total,
+    activeStatus: params.status ?? '',
+    activeRisk:   params.risk ?? '',
+    activeRating: params.rating ?? '',
+    activeSort:   sortKey,
+    activeDir:    ascending ? 'asc' : 'desc',
+    basePath: '/archive',
+    query: preservedQuery,
+  }
 
   return (
     <div>
-      <ReviewsFilterPanel
+      <ArchiveFilterBar
         branches={(branches ?? []) as BranchRow[]}
-        channels={(channels ?? []) as { code: string; name: string }[]}
         params={params}
         total={total}
-        avgRating={avgRating}
-        ratingDist={ratingDist}
-        ratingsLen={ratings.length}
-        archiveMode
       />
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">처리일</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">지점</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">채널</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">별점</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">상태</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">위험도</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">감성</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">리뷰 미리보기</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {archived.length === 0 && (
-              <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-gray-500">
-                  보관된 리뷰가 없습니다.
-                </td>
-              </tr>
-            )}
-            {archived.map((review) => (
-              <tr key={review.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
-                  {new Date(review.updated_at).toLocaleDateString('ko-KR')}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs font-bold uppercase text-gray-900">{review.branch_code}</td>
-                <td className="px-4 py-3 text-xs text-gray-700">{review.channel_code}</td>
-                <td className="px-4 py-3 text-gray-700 text-xs">
-                  {review.rating != null ? `${review.rating}★` : '-'}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusClasses(review.status as ReviewStatus)}`}>
-                    {statusLabel(review.status as ReviewStatus)}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {review.risk_level && (
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${riskClasses(review.risk_level as RiskLevel)}`}>
-                      {riskLabel(review.risk_level as RiskLevel)}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-600">
-                  {review.sentiment ? sentimentLabel[review.sentiment] : '-'}
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-600 max-w-xs truncate">
-                  {review.review_text?.slice(0, 60) ?? '-'}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Link href={`/reviews/${review.id}`} className="text-xs text-blue-600 hover:underline font-medium">
-                    상세보기
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ReviewsListClient
+        reviews={pageReviews}
+        draftMap={draftMap}
+        telemetryMap={telemetryMap}
+        server={serverProps}
+        archiveMode
+      />
     </div>
   )
 }
