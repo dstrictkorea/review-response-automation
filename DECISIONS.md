@@ -1,6 +1,6 @@
 # DECISIONS.md — Locked architectural decisions
 > Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-04.
-> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout
+> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency)
 
 ---
 ## 1. Algorithm-First (template before LLM)
@@ -92,3 +92,12 @@
 - **Why rejected:** (a) lockout risk the moment it deploys; (b) Service-Role paths bypass app-layer checks, so DB-level RLS is needed eventually.
 - **Consequences:** Two enforcement layers temporarily. Gated SQL must stay out of `migrations/` so `supabase db push` cannot apply it accidentally. An emergency-rollback SQL + backfill-verification query live alongside the gated file.
 - **Files:** `supabase/migrations/009_multi_branch_rbac.sql` (STEP A), `supabase/gated/rbac_rls_step_b.sql` (STEP B, gated), `src/lib/auth/branchAccess.ts`.
+
+## 11. DB-driven classification rules + immutable Emergency layer
+- **Status:** LOCKED (PHASE 1 shipped — schema + admin API; PHASE 2 engine-wiring pending)
+- **Decision:** Classification keywords/patterns + reply templates are externalized to DB (`automation_rules`, `response_templates`), loaded into an in-memory cache (`rulesCache`: TTL + invalidate-on-write) and compiled to `RegExp` at runtime (DynamicEngine). Staff edit rules via `/api/admin/rules` (admin-only) — **no code deploy**. **The EMERGENCY safety layer stays hardcoded & immutable in `waterfallRegexEngine.ts`; DB EMERGENCY rows are additive only and can never weaken or replace it.**
+- **Reason:** Operational agility (new branch/country/keyword = a DB row, not a deploy) + visibility (admin sees the "word → response" mapping). Safety must survive DB corruption/tampering, so the emergency net cannot depend on DB.
+- **Alternatives:** (a) keep all rules hardcoded; (b) move EVERYTHING incl. emergency to DB.
+- **Why rejected:** (a) every keyword tweak needs a deploy + a developer; (b) DB tampering (e.g. via the anon key) could silently disable the safety net — unacceptable.
+- **Consequences:** New tables have **RLS on** (authenticated read; writes via service-role) — safer than the older `intent_keywords`/`reply_template_variants` (RLS off — a known exposure to revisit). Overlap with legacy `app_settings.risk_keywords` + migration-005 `intent_keywords`/`reply_template_variants` → those are **legacy to converge**, not parallel SSOTs. Cache is per-serverless-instance + TTL ⇒ cross-instance propagation is eventual (≤60s).
+- **Files:** `supabase/migrations/013_automation_rules.sql`, `src/lib/rulesCache.ts`, `src/app/api/admin/rules/route.ts`, `src/lib/waterfallRegexEngine.ts` (immutable emergency).

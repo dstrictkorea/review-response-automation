@@ -17,7 +17,7 @@
 | 배포 | Vercel (Fluid Compute) | — |
 | 인증 | Supabase Auth + Google OAuth 2.0 | — |
 
-> **결정론적 하이브리드 파이프라인 (도입 중, Phase 1 준비 완료)**: `WaterfallRegexEngine`(KO/EN 다층 정규식, `/i`, Early-Return) → `reviewProcessor` 게이트키퍼. SAFE=정적 템플릿(LLM 미사용) · EMERGENCY=수동 검토 격리 · COMPLAINT/AMBIGUOUS=LLM Fallback(알고리즘 태그/근거 프롬프트 주입). 모든 게시 답변은 금칙어 필터 통과 강제(Double-Check).
+> **결정론적 하이브리드 파이프라인 (도입 중, Phase 1 준비 완료)**: `WaterfallRegexEngine`(KO/EN 다층 정규식, `/i`, Early-Return) → `reviewProcessor` 게이트키퍼. SAFE=정적 템플릿(LLM 미사용) · EMERGENCY=수동 검토 격리 · COMPLAINT/AMBIGUOUS=LLM Fallback(알고리즘 태그/근거 프롬프트 주입). 모든 게시 답변은 금칙어 필터 통과 강제(Double-Check). **DB 구동(migration 013)**: 규칙/템플릿은 `automation_rules`/`response_templates`에서 로드(인메모리 `rulesCache`), 관리자 `/api/admin/rules`로 CRUD. EMERGENCY Layer는 코드 하드코딩 불변(DB는 additive).
 
 ---
 

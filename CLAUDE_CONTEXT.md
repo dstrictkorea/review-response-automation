@@ -11,6 +11,7 @@ ARTE Museum **review-response automation** — internal admin tool for staff to 
 - NEVER mention **CCTV review**.
 - NEVER promise **staff punishment / discipline**.
 - High-risk reviews (legal threat, severe complaint) → **flag + require explicit human approval**.
+- **EMERGENCY classification layer is hardcoded & immutable** (`waterfallRegexEngine.ts`). DB rules (`automation_rules`) are **additive only** — they can never weaken the code safety net (DECISIONS #11).
 - **NO automatic public posting of any kind.** Human approves before anything is posted.
 - Log every important action (register/approve/publish/archive) with **timestamp + user**.
 - Out of scope (do NOT build): GBP/Naver/TripAdvisor auto-posting, RBAC beyond current, PDF reports, Slack/email automation.
@@ -22,7 +23,7 @@ ARTE Museum **review-response automation** — internal admin tool for staff to 
 - **LLM:** OpenAI SDK with swappable `baseURL`. Provider chosen by **which env key is set**, priority `GROQ_API_KEY ?? GEMINI_API_KEY ?? OPENAI_API_KEY` (first present wins — **NOT** failover-on-error). Models: Groq `llama-3.3-70b-versatile` / Gemini `gemini-2.0-flash-lite` / OpenAI `gpt-4o`. (`@anthropic-ai/sdk` is in deps but unused in LLM hot paths.)
 
 ## 4. 🔴 Live-DB ↔ repo migration state (the #1 rediscovery trap — keep current)
-Repo `supabase/migrations/`: `001 002 003 004 005 006 007 009 010` (**no 008** — intentional gap; the CSV ON-CONFLICT bug was fixed in code, not a migration).
+Repo `supabase/migrations/`: `001 002 003 004 005 006 007 009 010 011 012 013` (**no 008** — intentional gap; the CSV ON-CONFLICT bug was fixed in code, not a migration).
 | Migration | Live? | Notes |
 |---|---|---|
 | 001–003 initial/channels/import | ✅ applied | baseline |
@@ -33,22 +34,27 @@ Repo `supabase/migrations/`: `001 002 003 004 005 006 007 009 010` (**no 008** �
 | 009 multi_branch_rbac **STEP A** | ✅ applied | `profiles.role`, `profiles.assigned_branches` columns only |
 | 009 RBAC **STEP B** (RLS) | ⛔ **GATED — NOT applied** | lives in `supabase/gated/rbac_rls_step_b.sql`, deliberately OUTSIDE `migrations/`. **Do NOT apply** until backfill 100% + admin verified + explicit "RLS 락 해제". See DECISIONS. |
 | 010 reviews_soft_delete | ✅ applied | `deleted_at` + partial active index |
+| 011 hard_delete_rpc | ✅ applied | `hard_delete_reviews(uuid[])` RPC for archive permanent delete |
+| 012 hard_delete_rpc_fix | ✅ applied | fixes circular FK — NULLs `review_import_rows.review_id` instead of deleting |
+| 013 automation_rules | ✅ applied | `automation_rules` + `response_templates` (DB-driven engine config). **RLS ON** (authenticated read; writes via service-role). Seeded from current engine. EMERGENCY stays **code-immutable**. |
 
 ## 5. Architecture in one screen (Algorithm-First + LLM-Fallback)
 **Ingestion** (CSV import `reviews/import/actions.ts`, or Google sync) →
   • CSV: branch auto-detect (`detectBranchCode`, col/filename) + **5-dim SHA-256 hash** `branch|channel|author|YYYY-MM-DD|cleanedText`, upsert on 3-col index.
-  • **Ingestion-time keyword triage** (`scanText`, no LLM): critical/high keywords → `risk_level` + `status='pending_approval'` (isolated from auto-publish).
+  • **Ingestion-time deterministic classification** (`reviewProcessor`→`waterfallRegexEngine`, **no LLM**): EMERGENCY/COMPLAINT/low-rating(≤2) → `pending_approval` (isolated); SAFE → `ai_done` + static STANDARD template auto-reply; AMBIGUOUS → `new`. Writes risk_level + categories(tags) + reason. (DB-driven config: `automation_rules`/`response_templates` via `rulesCache`; **PHASE 2 wires the engine to load them**; EMERGENCY layer stays code-immutable.)
 **Processing** `IntelligentOrchestrator.processReview(id)` (dual routing):
   1. `scanText` (filterService) risk/safety scan → 2. `detect_review_intent` RPC (pg_trgm word_similarity) →
   3. confident single low-risk intent ⇒ **template fill (LLM cost 0)**; else ⇒ **LLM** (provider §3) →
   4. `floorRisk` (never lower risk) + `needsSecondaryReview` routing → 5. write `reply_drafts` + telemetry.
-**Manual single:** `POST /api/ai/generate-reply`. **Bulk:** `/api/review/bulk-process` (chunked, self-advancing), `/api/review/bulk-delete` (filter-payload soft delete).
+**Deterministic gatekeeper (primary):** `POST /api/review/generate` (`reviewProcessor`): SAFE→static template (LLM 0) · EMERGENCY→manual · COMPLAINT/AMBIGUOUS→LLM (algorithm tags injected, always `pending_approval`); all replies pass `scanForbidden` Double-Check. **Legacy LLM:** `/api/ai/generate-reply` + `IntelligentOrchestrator` (bulk-process). **Other:** `/api/review/{bulk-process,bulk-delete,export}`, `/api/admin/rules` (DB rule CRUD, admin-only).
 **Publish:** human approves → `/api/review/publish` (Google API/webhook optional; **manual paste is the norm**). Soft delete everywhere: queries filter `deleted_at IS NULL`.
 
 ## 6. Important file locations
 - **Brain:** `src/lib/automation/IntelligentOrchestrator.ts` (dual routing, provider select, floorRisk)
 - **LLM prompt + country tone:** `src/services/aiService.ts` (safety rules embedded per country)
 - **Risk/safety scan:** `src/services/filterService.ts` (`scanText`, keyword lists)
+- **Deterministic engine:** `src/lib/waterfallRegexEngine.ts` (KO/EN layers 0–3, EMERGENCY **immutable**, `scanForbidden`) + `src/lib/reviewProcessor.ts` (gatekeeper) + `src/lib/{staticTemplates,replyTemplates}.ts` (STANDARD blocks + kill-switch) + `src/lib/rulesCache.ts` (DB rule cache, TTL+invalidate)
+- **DB rule config:** `automation_rules`/`response_templates` tables · CRUD `src/app/api/admin/rules/route.ts` (admin) · validation script `scripts/validate-waterfall.ts`
 - **Template fill:** `src/services/templateEngineService.ts`
 - **Branch SSOT:** `src/lib/branches.ts` (DOMESTIC/GLOBAL codes, `detectBranchCode`, `classifyBranch`, `branchCity`)
 - **CSV mapping:** `src/lib/importMapping.ts` · **Import+triage:** `src/app/(admin)/reviews/import/actions.ts`

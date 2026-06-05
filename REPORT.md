@@ -1,6 +1,7 @@
 # REPORT.md — Repository & Context-Efficiency Audit
 > Generated 2026-06-04 · read-only analysis of actual code (not doc claims) · no code modified
 > Repo: `dstrictkorea/review-response-automation` · App: Next.js 16 App Router + Supabase + LLM
+> **Status 2026-06-05:** recommended doc architecture adopted (`CLAUDE_CONTEXT.md` = first read). Since the audit, shipped: deterministic `WaterfallRegexEngine` + hybrid pipeline, ingestion-time classification, archive/safe-hard-delete, reason display + rating-aware triage + CSV export. **In progress:** DB-driven dynamic rules engine — PHASE 1 (migration 013 `automation_rules`/`response_templates` + `/api/admin/rules`) done; PHASE 2–4 pending. See `CURRENT_TASK.md` / `DECISIONS.md #11`.
 
 ---
 

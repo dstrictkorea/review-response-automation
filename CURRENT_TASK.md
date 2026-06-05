@@ -2,17 +2,22 @@
 > Updated 2026-06-04. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**Stabilization + documentation hardening.** Core pipeline (ingest → triage → algorithm/LLM draft → human approve → manual publish → archive) is built and deployed. Focus is now reducing per-session context rediscovery and closing small correctness gaps — not new feature surface.
+**🚧 EPIC: DB-driven dynamic rules engine** — externalize the hardcoded `WaterfallRegexEngine` regexes to DB so CS staff edit rules without a deploy. **EMERGENCY layer stays hardcoded immutable** (DECISIONS #11).
+- **PHASE 1 ✅ shipped:** `automation_rules` + `response_templates` (migration 013, RLS on, seeded from current engine) + `rulesCache.ts` (in-memory cache: TTL 60s + `invalidateRulesCache()`) + `GET/POST/DELETE /api/admin/rules` (admin CRUD, regex validity check, cache invalidation, activity-logged).
+- **PHASE 2 ⬜ next:** wire `waterfallRegexEngine` to load via `rulesCache.ensureRulesLoaded()` and compile RegExp at runtime. Keep `analyzeReview` **sync** (callers `await ensureRulesLoaded()` once per request, e.g. import/generate). Validation script must still pass.
+- **PHASE 3 ⬜:** admin Settings UI — keyword/template CRUD + **simulation/preview** (run current reviews through edited rules before saving).
+- **PHASE 4 ⬜:** hot-reload verify (cache invalidation present) + E2E that edited rules reflect in the engine and TDD cases still pass.
 
 ## Just shipped (continuity only — not a log)
-- **결정론적 하이브리드 답변 파이프라인** (this change): `waterfallRegexEngine.ts`(KO/EN 다층 정규식 분류, `/i`, Early-Return) + `reviewProcessor.ts`(게이트키퍼) + `staticTemplates.ts`/`replyTemplates.ts`(정적 STANDARD + ETERNAL NATURE + Kill-Switch) + `POST /api/review/generate`. SAFE=정적(LLM 0) · EMERGENCY=수동격리 · COMPLAINT/AMBIGUOUS=LLM Fallback(태그/근거 주입 + 금칙어 Double-Check + 항상 `pending_approval`). 배치 "AI 초안 생성"이 이 게이트키퍼로 재배선됨. `scripts/validate-waterfall.ts` 34/34 통과.
-- **🐞 filterService 버그 수정**: 부상 규칙의 `|ER`(대소문자 무시·비앵커) → `\bER\b`. 기존엔 "Nev**er**/h**er**e/wat**er**" 등 'er' 포함 영어 리뷰가 전부 critical-부상으로 오격리되어 인입 자동응답을 막고 있었음(중대 버그). 이제 인입 정밀도 대폭 개선.
-- archive 탭/복구/안전형 하드삭제(`2f6c1ad`), 인입 트리아지+벌크매칭(`9e4f60e`), 전체DB 정렬(`2194747`), CSV 지점 자동감지(`0405927`).
+- `5a07869` classification **reason display** (list + drawer) · **rating-aware** triage (AMBIGUOUS→`new`, ≤2★→isolate+suppress praise) · `not worth it` fix · `/api/review/export` (CSV/Excel, filter-aware).
+- `426ad16` ingestion-time deterministic classification (import → classify → route; SAFE auto-answered, no LLM at ingest).
+- `641b91c` deterministic `waterfallRegexEngine` + `reviewProcessor` + static/`replyTemplates` + `POST /api/review/generate` (gatekeeper) + `scripts/validate-waterfall.ts`.
+- `b57e7e4` admin select-all hard delete + circular-FK fix (migration 012); `2f6c1ad` archive tab/restore/safe hard-delete.
 
-## ⏭️ 이번 변경의 후속(follow-up — 아직 안 함, 의도적 스코프 경계)
-- 상세페이지 `/reviews/[id]` 및 레거시 `/api/ai/generate-reply` · `IntelligentOrchestrator`는 여전히 short/careful 변형 + 무조건 LLM. → 게이트키퍼로 재배선 + 톤 STANDARD 단일화 필요(현재 배치 경로만 전환됨).
-- `ReviewDrawer`: 정적/LLM 신규 초안은 draft_short/careful=null → 짧게/조심스럽게 탭이 빈칸. 탭 단일화 + 생성·승인 버튼 연결 권장.
-- `bulk-process`(IntelligentOrchestrator)와 신규 `reviewProcessor` 두 엔진 공존 — 장기적으로 단일 엔진 수렴 검토.
+## ⏭️ Known follow-ups (intentional scope boundaries)
+- Detail page `/reviews/[id]` + legacy `/api/ai/generate-reply` + `IntelligentOrchestrator` still use short/careful variants + unconditional LLM → converge onto the deterministic gatekeeper + STANDARD tone.
+- Two engines coexist (`IntelligentOrchestrator` bulk-process vs `reviewProcessor`) — converge.
+- Legacy keyword/template stores (`app_settings.risk_keywords`, migration-005 `intent_keywords`/`reply_template_variants`, **RLS-off**) → converge onto `automation_rules`/`response_templates` + revisit their RLS exposure.
 
 ## 🔒 Active locks / blockers (read before any DB or auth work)
 - **RLS STEP B is GATED.** `supabase/gated/rbac_rls_step_b.sql` must **NOT** be applied to live DB, and must NOT be moved into `supabase/migrations/`, until ALL of:

@@ -16,6 +16,12 @@
 
 ---
 
+## 🧩 DB 구동형 동적 분류/답변 엔진 (Epic — PHASE 1 완료)
+- **PHASE 1 ✅**: `automation_rules`(분류 키워드/정규식) + `response_templates`(답변, i18n) 테이블 신설(migration 013, **RLS ON**, 현행 엔진 시드) + `rulesCache`(인메모리 TTL 60s + 무효화) + `/api/admin/rules`(관리자 CRUD, 정규식 유효성 검증, 캐시 무효화, activity_logs 기록).
+- **PHASE 2~4 (예정)**: 엔진이 DB 규칙을 로드·인메모리 컴파일 → 어드민 Settings UI(키워드/템플릿 CRUD + 시뮬레이션 프리뷰) → 핫리로드/E2E.
+- **🛡 안전 불변**: EMERGENCY Layer는 코드 하드코딩 유지(DB는 additive only). DB 오염/조작 시에도 긴급 안전망 작동 (DECISIONS #11).
+- **⚠ 레거시 수렴 대상**: `app_settings.risk_keywords`, 005의 `intent_keywords`/`reply_template_variants`(RLS off — 노출 위험)는 신규 테이블로 수렴 예정.
+
 ## 🎯 Project North Star (절대 목표)
 
 **전 세계 Arte Museum 글로벌 플랫폼(Google 등) 리뷰 자동 수집 → AI 자동 답변 생성 → 자동 게시 파이프라인 완공 및 무결성 확보.**
