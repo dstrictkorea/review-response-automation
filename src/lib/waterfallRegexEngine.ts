@@ -16,6 +16,8 @@
  */
 
 import { scanText } from '@/services/filterService'
+// 타입만 정적 import(런타임 erase) — 실제 DB 로더는 refreshEngineFromDB에서 동적 import (서버 전용 admin client 격리)
+import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -42,44 +44,119 @@ export interface WaterfallResult {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
-//  Layer 정규식 (KO/EN 동시 · 대소문자 무시 · 곡선따옴표 허용)
+//  하드코딩 DEFAULT 규칙 (불변 폴백) — DB 미로드/로드 실패 시 항상 이 베이스라인으로 동작
+//  ※ DEFAULT_EMERGENCY 는 안전 불변. DB EMERGENCY 행은 compileEmergency 에서 '추가'만 됨(약화 불가).
 // ════════════════════════════════════════════════════════════════════════════════
 
-// Layer 0 — 긴급 안전/CS/미국식 법적 리스크 (Kill-switch)
-const EMERGENCY_RE =
+const DEFAULT_EMERGENCY =
   /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불)|(hurt|injur|fell|trip|bleed|hospital|911|paramedic|dizzy|nausea|vomit|puke|seizure|epilepsy|lost|missing|stolen|police|cop|sue|lawyer|attorney|lawsuit|refund|compensat|chargeback)/i
 
-// Layer 1 — 운영 불만 / 미국식 서비스 컴플레인
-const COMPLAINT_RE =
+const DEFAULT_COMPLAINT =
   /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무)|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue)|not\s*worth|overrated)/i
 
-// Layer 2-A — 미래 거부(이탈 리스크)
-const CHURN_RE =
+const DEFAULT_CHURN =
   /(다시는|두번\s*다시는)\s*(안\s*올|안\s*갈)|(never\s*again|never\s*com|won[''’]?t\s*be\s*back|won[''’]?t\s*return|wouldn[''’]?t\s*recommend|not\s*recommend|do\s*not\s*go|skip\s*this|regret)/i
 
-// Layer 2-B — 과거 방문 입증(충성 고객)
-const REPEAT_RE =
+const DEFAULT_REPEAT =
   /(두\s*번째|2번째|3번째|다회차)\s*(방문|관람|왔)|(지난번|과거)\s*에\s*(이어|오고|좋아서)\s*(또|다시)|(갈|올|방문할)\s*때마다|(재방문\s*인데|다시\s*방문했)|(second\s*time|2nd\s*time|third\s*time|3rd\s*time|multiple\s*times|back\s*again|returned|every\s*time\s*(i|we)\s*(go|come|visit)|always|came\s*back|visit\s*again)/i
 
-// Layer 2-C — 단순 미래 희망 (재방문 입증 아님)
-const FUTURE_HOPE_RE =
+const DEFAULT_FUTURE_HOPE =
   /(나중에|다음에|기회\s*되면)\s*(꼭|무조건)?\s*(재방문|또\s*방문|다시\s*올)|(will\s*be\s*back|can[''’]?t\s*wait\s*to\s*return|next\s*time|definitely\s*return|will\s*(visit|come)\s*again|would\s*go\s*back)/i
 
-// Layer 3 — 이중부정/도치 (불만 오인 복구 → 긍정)
-// 주의: 'worth it'(긍정)은 POSITIVE_RE가 처리한다. 여기에 'worth it'을 두면 'not worth it'(부정)을
-// 이중부정으로 오인 복구하므로 제외한다. 'not worth'는 COMPLAINT_RE에서 불만으로 잡는다.
-const SARCASM_RE =
+// 주의: 'worth it'(긍정)은 DEFAULT_POSITIVE가 처리. 'not worth it'(부정) 오인복구 방지 위해 여기서 제외.
+const DEFAULT_SARCASM =
   /(안\s*아깝|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
-// 긍정 감성 / 질문 / 작품 키워드 (SAFE vs AMBIGUOUS 판정용)
-const POSITIVE_RE =
+const DEFAULT_POSITIVE =
   /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*it)/i
 
-const QUESTION_RE =
+const DEFAULT_QUESTION =
   /[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)/i
 
-const ARTWORK_RE =
+const DEFAULT_ARTWORK =
   /(작품|전시|몰입|미디어\s*아트|미디어아트|예술|아트)|(immersive|\bart(?:s|work)?\b|exhibition|installation|media\s*art)/i
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
+// ════════════════════════════════════════════════════════════════════════════════
+
+interface Compiled {
+  emergency: RegExp; complaint: RegExp; churn: RegExp; repeat: RegExp
+  futureHope: RegExp; sarcasm: RegExp; positive: RegExp; question: RegExp; artwork: RegExp
+}
+
+const DEFAULTS: Compiled = {
+  emergency:  DEFAULT_EMERGENCY,  complaint: DEFAULT_COMPLAINT, churn: DEFAULT_CHURN,
+  repeat:     DEFAULT_REPEAT,     futureHope: DEFAULT_FUTURE_HOPE, sarcasm: DEFAULT_SARCASM,
+  positive:   DEFAULT_POSITIVE,   question: DEFAULT_QUESTION, artwork: DEFAULT_ARTWORK,
+}
+
+let COMPILED: Compiled = { ...DEFAULTS }
+let appliedLoadedAt = -1  // 적용된 번들의 loadedAt. -1 = 하드코딩 DEFAULTS(=DB 미반영)
+
+function escapeReg(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+// 키워드 → 패턴: 특수문자 이스케이프 후 내부 공백을 \s* 로 (예: '돈 아깝' → '돈\s*아깝')
+function keywordToPattern(kw: string): string {
+  return escapeReg((kw ?? '').trim()).replace(/\s+/g, '\\s*')
+}
+function rulePatterns(rules: AutomationRule[]): string[] {
+  const parts: string[] = []
+  for (const r of rules) {
+    if (r.regex_pattern && r.regex_pattern.trim()) parts.push(`(?:${r.regex_pattern})`)
+    else if (r.keywords?.length) {
+      const kp = r.keywords.map(keywordToPattern).filter(Boolean).join('|')
+      if (kp) parts.push(kp)
+    }
+  }
+  return parts.filter(Boolean)
+}
+function compileCategory(rules: AutomationRule[], fallback: RegExp): RegExp {
+  const combined = rulePatterns(rules).join('|')
+  if (!combined) return fallback
+  try { return new RegExp(combined, 'i') } catch { return fallback }
+}
+// EMERGENCY: 하드코딩 베이스를 '항상' 포함(불변) + DB는 additive only
+function compileEmergency(dbRules: AutomationRule[]): RegExp {
+  const parts = [DEFAULT_EMERGENCY.source, ...rulePatterns(dbRules)]
+  try { return new RegExp(parts.join('|'), 'i') } catch { return DEFAULT_EMERGENCY }
+}
+
+/** DB 규칙 번들을 인메모리 컴파일하여 적용. 같은 로드(loadedAt)면 no-op. EMERGENCY는 불변 베이스 포함. */
+export function applyRulesBundle(bundle: RulesBundle | null): void {
+  if (!bundle) { COMPILED = { ...DEFAULTS }; appliedLoadedAt = -1; return }
+  if (bundle.loadedAt === appliedLoadedAt) return
+  const active = bundle.rules.filter((r) => r.is_active)
+  const byCat = (cat: string) => active.filter((r) => (r.category ?? '').toUpperCase() === cat)
+  COMPILED = {
+    emergency:  compileEmergency(byCat('EMERGENCY')),
+    complaint:  compileCategory(byCat('COMPLAINT'),   DEFAULT_COMPLAINT),
+    churn:      compileCategory(byCat('CHURN'),       DEFAULT_CHURN),
+    repeat:     compileCategory(byCat('REPEAT'),      DEFAULT_REPEAT),
+    futureHope: compileCategory(byCat('FUTURE_HOPE'), DEFAULT_FUTURE_HOPE),
+    sarcasm:    compileCategory(byCat('SARCASM'),     DEFAULT_SARCASM),
+    positive:   compileCategory(byCat('POSITIVE'),    DEFAULT_POSITIVE),
+    question:   compileCategory(byCat('QUESTION'),    DEFAULT_QUESTION),
+    artwork:    compileCategory(byCat('ARTWORK'),     DEFAULT_ARTWORK),
+  }
+  appliedLoadedAt = bundle.loadedAt
+}
+
+/** DB 규칙을 로드하여 엔진에 반영 (분류 직전 서버에서 호출). 실패 시 하드코딩 DEFAULTS 유지(안전). */
+export async function refreshEngineFromDB(force = false): Promise<void> {
+  try {
+    const { ensureRulesLoaded } = await import('@/lib/rulesCache')
+    applyRulesBundle(await ensureRulesLoaded(force))
+  } catch {
+    /* DB 접근 불가 → DEFAULTS 유지 */
+  }
+}
+
+/** 현재 엔진이 하드코딩 DEFAULTS로 동작 중인지(=DB 미반영) — 디버그/시뮬레이션용 */
+export function isUsingDefaults(): boolean {
+  return appliedLoadedAt === -1
+}
 
 function dedupe(arr: string[]): string[] {
   return [...new Set(arr.filter(Boolean))]
@@ -91,13 +168,14 @@ function dedupe(arr: string[]): string[] {
  */
 export function analyzeReview(rawText: string): WaterfallResult {
   const text = (rawText ?? '').replace(/\s+/g, ' ').trim()
+  const C = COMPILED  // 현재 적용된 컴파일 규칙 스냅샷(분석 도중 교체 방지)
 
   // ── Layer 0: Emergency (엔진 정규식 OR filterService high/critical 합집합) ──────
   const filter = scanText(rawText ?? '')
   const filterCritical =
     filter.triggered && (filter.maxRiskLevel === 'high' || filter.maxRiskLevel === 'critical')
 
-  if (EMERGENCY_RE.test(text) || filterCritical) {
+  if (C.emergency.test(text) || filterCritical) {
     return {
       status: 'EMERGENCY',
       requiresLLM: false, // 긴급 건은 LLM이 아니라 사람 수동 검토로 격리
@@ -121,36 +199,36 @@ export function analyzeReview(rawText: string): WaterfallResult {
   let isChurnRisk = false
 
   // ── Layer 1: 운영 불만 ──────────────────────────────────────────────────────────
-  if (COMPLAINT_RE.test(text)) {
+  if (C.complaint.test(text)) {
     isComplaint = true
     isArtworkFocused = false
     tags.push('운영불만')
   }
 
   // ── Layer 2: 재방문 / 이탈 (2-A → 2-B → 2-C 우선순위) ───────────────────────────
-  if (CHURN_RE.test(text)) {
+  if (C.churn.test(text)) {
     isRepeatVisitor = false
     isChurnRisk = true
     tags.push('이탈위험')
-  } else if (REPEAT_RE.test(text)) {
+  } else if (C.repeat.test(text)) {
     isRepeatVisitor = true
     tags.push('repeat visitor')
-  } else if (FUTURE_HOPE_RE.test(text)) {
+  } else if (C.futureHope.test(text)) {
     isRepeatVisitor = false
   }
 
   // ── Layer 3: 이중부정/도치 복구 (불만 오인 → 긍정) ──────────────────────────────
   let sarcasmPositive = false
-  if (SARCASM_RE.test(text)) {
+  if (C.sarcasm.test(text)) {
     isComplaint = false
     sarcasmPositive = true
     tags.push('이중부정(긍정)')
   }
 
   // ── 감성 신호 ──────────────────────────────────────────────────────────────────
-  const hasPositive = sarcasmPositive || POSITIVE_RE.test(text)
-  const isQuestion = QUESTION_RE.test(text)
-  if (!isComplaint && hasPositive && ARTWORK_RE.test(text)) {
+  const hasPositive = sarcasmPositive || C.positive.test(text)
+  const isQuestion = C.question.test(text)
+  if (!isComplaint && hasPositive && C.artwork.test(text)) {
     isArtworkFocused = true
     tags.push('작품감상')
   }

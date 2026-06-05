@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 import { processReview } from '@/lib/reviewProcessor'
-import { scanForbidden } from '@/lib/waterfallRegexEngine'
+import { scanForbidden, refreshEngineFromDB } from '@/lib/waterfallRegexEngine'
 import { buildStaticReply } from '@/lib/replyTemplates'
 import { branchOfficialName } from '@/lib/branches'
 import type { Language } from '@/lib/i18n'
@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
   if (!review) return NextResponse.json({ error: '리뷰를 찾을 수 없습니다.' }, { status: 404 })
 
   const lang = langKeyOf(review.review_language)
+
+  // PHASE 2: DB 규칙을 엔진에 로드 후 분류 (실패 시 하드코딩 DEFAULTS)
+  await refreshEngineFromDB()
 
   // ── Algorithm: 결정론적 분류 + 라우팅 ──────────────────────────────────────────
   const decision = processReview({

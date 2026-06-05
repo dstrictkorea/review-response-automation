@@ -6,7 +6,8 @@
  */
 
 import { processReview } from '@/lib/reviewProcessor'
-import { analyzeReview, scanForbidden } from '@/lib/waterfallRegexEngine'
+import { analyzeReview, scanForbidden, applyRulesBundle, isUsingDefaults } from '@/lib/waterfallRegexEngine'
+import type { AutomationRule } from '@/lib/rulesCache'
 import { buildStaticReply } from '@/lib/replyTemplates'
 
 let failures = 0
@@ -122,6 +123,33 @@ const ctxKO = { branchCode: 'AMGN', language: 'ko' as const, reviewerName: '민�
   check('C10 "not worth it" → COMPLAINT', neg.classification.status === 'COMPLAINT', neg.classification.status)
   const pos = processReview({ reviewText: 'Totally worth it!', ...ctxEN })
   check('C10 "worth it" → SAFE (회귀 방지)', pos.classification.status === 'SAFE', pos.classification.status)
+}
+
+// ── PHASE 2: 동적 컴파일 경로 검증 (인메모리 번들 — env/DB 불필요, 결정론적) ──────
+// DB에서 받은 것과 동일한 형태의 규칙으로 applyRulesBundle → analyzeReview가 DB 규칙으로 동작하는지.
+{
+  const seeded: AutomationRule[] = [
+    { id: 'e',  category: 'EMERGENCY',  language: 'ko',  keywords: ['넘어졌'],               regex_pattern: null, is_active: true, priority: 0 },
+    { id: 'c1', category: 'COMPLAINT',  language: 'en',  keywords: ['rude', 'zoo', 'not worth'], regex_pattern: null, is_active: true, priority: 100 },
+    { id: 'c2', category: 'COMPLAINT',  language: 'ko',  keywords: ['불친절', '최악'],          regex_pattern: null, is_active: true, priority: 100 },
+    { id: 's',  category: 'SARCASM',    language: 'any', keywords: [], regex_pattern: '(나쁘지\\s*않)|(not\\s*a\\s*waste|not\\s*too\\s*bad)', is_active: true, priority: 90 },
+    { id: 'p1', category: 'POSITIVE',   language: 'ko',  keywords: ['좋', '최고', '아름답'],    regex_pattern: null, is_active: true, priority: 100 },
+    { id: 'p2', category: 'POSITIVE',   language: 'en',  keywords: ['beautiful', 'worth it'],   regex_pattern: null, is_active: true, priority: 100 },
+    { id: 'q',  category: 'QUESTION',   language: 'any', keywords: [], regex_pattern: '[?？]|인가요', is_active: true, priority: 100 },
+    { id: 'a',  category: 'ARTWORK',    language: 'any', keywords: [], regex_pattern: '작품|예술|\\bart\\b', is_active: true, priority: 100 },
+    { id: 'r',  category: 'REPEAT',     language: 'any', keywords: [], regex_pattern: '3rd\\s*time|두\\s*번째', is_active: true, priority: 100 },
+    { id: 'ch', category: 'CHURN',      language: 'any', keywords: [], regex_pattern: 'never\\s*com|다시는\\s*안', is_active: true, priority: 100 },
+  ]
+  applyRulesBundle({ rules: seeded, templates: [], loadedAt: 1, version: 1 })
+  check('DB-compile applied (not DEFAULTS)', isUsingDefaults() === false)
+  check('compile COMPLAINT (rude)',       processReview({ reviewText: 'the staff was rude', ...ctxEN }).classification.status === 'COMPLAINT')
+  check('compile EMERGENCY additive (넘어졌)', processReview({ reviewText: '아이가 넘어졌어요', ...ctxKO }).classification.status === 'EMERGENCY')
+  check('compile EMERGENCY IMMUTABLE (sue via hardcoded base, not in DB)', processReview({ reviewText: 'I will sue you', ...ctxEN }).classification.status === 'EMERGENCY')
+  check('compile SAFE (좋아요)',          processReview({ reviewText: '좋아요', ...ctxKO }).classification.status === 'SAFE')
+  check('compile AMBIGUOUS (예술인가요?)', processReview({ reviewText: '이게 예술인가요?', ...ctxKO }).classification.status === 'AMBIGUOUS')
+  check('compile not-worth-it COMPLAINT', processReview({ reviewText: 'Honestly not worth it.', ...ctxEN }).classification.status === 'COMPLAINT')
+  applyRulesBundle(null) // DEFAULTS 복귀
+  check('reset to DEFAULTS', isUsingDefaults() === true)
 }
 
 console.log(`\n${failures === 0 ? '✅ ALL PASS' : `❌ ${failures} FAILURE(S)`}`)

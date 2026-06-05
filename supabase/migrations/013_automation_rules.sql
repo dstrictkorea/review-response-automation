@@ -59,7 +59,7 @@ insert into public.automation_rules (category, language, keywords, regex_pattern
   ('POSITIVE','ko', array['좋','최고','감동','멋지','멋있','예쁘','이쁘','훌륭','환상','만족','행복','즐거','추천','볼 만','아름답','인생 샷'], null, 100, null),
   ('POSITIVE','en', array['beautiful','amazing','great','love','wonderful','perfect','gorgeous','stunning','incredible','awesome','fantastic','enjoyed','recommend','worth it'], null, 100, null),
   ('QUESTION','any', '{}', '[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)', 100, '질문/모호'),
-  ('ARTWORK','any', array['작품','전시','몰입','미디어 아트','미디어아트','예술','아트','immersive','art','artwork','exhibition','installation','media art'], null, 100, '작품 감상');
+  ('ARTWORK','any', '{}', '(작품|전시|몰입|미디어\s*아트|미디어아트|예술|아트)|(immersive|\bart(?:s|work)?\b|exhibition|installation|media\s*art)', 100, '작품 감상(영문 art는 \b 경계로 start/part 오매칭 방지)');
 
 insert into public.response_templates (category, language, template_text) values
   ('greeting','ko','안녕하세요{{name_honorific}}. {{official}}을(를) 방문해 주셔서 진심으로 감사드립니다.'),

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import crypto from 'crypto'
 import { scanText } from '@/services/filterService'
 import { processReview, type ProcessDecision } from '@/lib/reviewProcessor'
+import { refreshEngineFromDB } from '@/lib/waterfallRegexEngine'
 
 type LangKey = 'ko' | 'en' | 'ja' | 'zh'
 const langKey = (l: string | null | undefined): LangKey => (['ko', 'en', 'ja', 'zh'].includes(l ?? '') ? (l as LangKey) : 'ko')
@@ -262,6 +263,9 @@ export async function importReviewsAction(
   // WaterfallRegexEngine → 위험도/태그/라우팅을 UPSERT 이전에 확정한다.
   //   SAFE → ai_done (정적 알고리즘 답변 자동 생성)
   //   EMERGENCY/COMPLAINT/AMBIGUOUS → pending_approval (격리). EMERGENCY는 critical 보존.
+  // PHASE 2: 분류 직전 DB 규칙을 엔진에 로드(인메모리 캐시, TTL). 실패 시 하드코딩 DEFAULTS.
+  await refreshEngineFromDB()
+
   const decisionByHash = new Map<string, ProcessDecision>()
   const ciByHash = new Map<string, ImportClass>()
   for (const row of toInsert) {
