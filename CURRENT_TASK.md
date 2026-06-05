@@ -2,11 +2,13 @@
 > Updated 2026-06-04. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**🚧 EPIC: DB-driven dynamic rules engine** — externalize the hardcoded `WaterfallRegexEngine` regexes to DB so CS staff edit rules without a deploy. **EMERGENCY layer stays hardcoded immutable** (DECISIONS #11).
-- **PHASE 1 ✅ shipped:** `automation_rules` + `response_templates` (migration 013, RLS on, seeded from current engine) + `rulesCache.ts` (in-memory cache: TTL 60s + `invalidateRulesCache()`) + `GET/POST/DELETE /api/admin/rules` (admin CRUD, regex validity check, cache invalidation, activity-logged).
-- **PHASE 2 ⬜ next:** wire `waterfallRegexEngine` to load via `rulesCache.ensureRulesLoaded()` and compile RegExp at runtime. Keep `analyzeReview` **sync** (callers `await ensureRulesLoaded()` once per request, e.g. import/generate). Validation script must still pass.
-- **PHASE 3 ⬜:** admin Settings UI — keyword/template CRUD + **simulation/preview** (run current reviews through edited rules before saving).
-- **PHASE 4 ⬜:** hot-reload verify (cache invalidation present) + E2E that edited rules reflect in the engine and TDD cases still pass.
+**✅ EPIC COMPLETE: DB-driven dynamic rules engine** — hardcoded regexes externalized to DB; CS staff edit rules with no deploy. **EMERGENCY layer stays hardcoded immutable** (DECISIONS #11).
+- **PHASE 1 ✅:** `automation_rules` + `response_templates` (migration 013, RLS on, seeded) + `rulesCache.ts` (TTL 60s + `invalidateRulesCache()`) + `GET/POST/DELETE /api/admin/rules` (admin CRUD, regex validity, cache invalidation, activity-logged).
+- **PHASE 2 ✅:** `waterfallRegexEngine` = DynamicEngine — `DEFAULT_*` immutable baseline + `applyRulesBundle()` compiles DB rules at runtime; `refreshEngineFromDB()` (dynamic import keeps admin client off the static graph) called once/request in import + generate; `analyzeReview` stays sync (snapshots COMPILED). EMERGENCY = base ∪ DB (additive, proven immutable). DB-compile validation passes.
+- **PHASE 3 ✅:** `/settings/rules` (admin) — rules + templates CRUD (inline) + **simulation** (`/api/admin/rules/simulate`: forces reload → real engine classify). Sidebar `nav_rules` (admin-only).
+- **PHASE 4 ✅:** cache invalidation on every write (same-instance immediate, cross-instance ≤60s); simulate endpoint + `validate-waterfall.ts` verify edited rules reflect in the engine + TDD cases pass.
+
+> Follow-ups: simulate UNSAVED edits (currently saved-then-simulate); converge legacy keyword stores (`app_settings.risk_keywords`, 005 `intent_keywords`) onto `automation_rules` + revisit their RLS-off exposure; RulesManager is Korean-first (admin tool) — i18n later if needed.
 
 ## Just shipped (continuity only — not a log)
 - `5a07869` classification **reason display** (list + drawer) · **rating-aware** triage (AMBIGUOUS→`new`, ≤2★→isolate+suppress praise) · `not worth it` fix · `/api/review/export` (CSV/Excel, filter-aware).

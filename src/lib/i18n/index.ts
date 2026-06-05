@@ -33,6 +33,7 @@ export interface I18nDict {
   nav_settings: string
   nav_google: string
   nav_users: string
+  nav_rules: string
   nav_admin_section: string
   nav_admin_badge: string
   nav_signout: string
@@ -345,6 +346,7 @@ export const DICT: Record<Language, I18nDict> = {
     nav_settings: '설정',
     nav_google: 'Google 연동',
     nav_users: '사용자 관리',
+    nav_rules: '규칙 엔진',
     nav_admin_section: '관리',
     nav_admin_badge: '관리자',
     nav_signout: '로그아웃',
@@ -631,6 +633,7 @@ export const DICT: Record<Language, I18nDict> = {
     nav_settings: 'Settings',
     nav_google: 'Google',
     nav_users: 'Users',
+    nav_rules: 'Rules Engine',
     nav_admin_section: 'Admin',
     nav_admin_badge: 'Admin',
     nav_signout: 'Sign Out',
@@ -917,6 +920,7 @@ export const DICT: Record<Language, I18nDict> = {
     nav_settings: '設定',
     nav_google: 'Google連携',
     nav_users: 'ユーザー管理',
+    nav_rules: 'ルールエンジン',
     nav_admin_section: '管理',
     nav_admin_badge: '管理者',
     nav_signout: 'ログアウト',
@@ -1203,6 +1207,7 @@ export const DICT: Record<Language, I18nDict> = {
     nav_settings: '设置',
     nav_google: 'Google连接',
     nav_users: '用户管理',
+    nav_rules: '规则引擎',
     nav_admin_section: '管理',
     nav_admin_badge: '管理员',
     nav_signout: '退出登录',

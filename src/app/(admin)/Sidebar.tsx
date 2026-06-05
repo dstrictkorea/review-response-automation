@@ -32,6 +32,7 @@ export default function Sidebar({
 
   const settingsNav = [
     { href: '/settings', label: t.nav_settings },
+    { href: '/settings/rules', label: t.nav_rules, adminOnly: true },
     { href: '/settings/google', label: t.nav_google },
     { href: '/settings/users', label: t.nav_users, adminOnly: true },
   ]
