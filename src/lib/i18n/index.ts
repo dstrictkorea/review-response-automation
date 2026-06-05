@@ -290,6 +290,8 @@ export interface I18nDict {
   rv_apply: string
   rv_import_csv: string
   rv_register_one: string
+  rv_export_excel: string
+  rv_class_reason: string
 
   // ── Bulk selection / soft-delete (Wave 15) ───────────────────────────────────
   rv_bulk_page_selected: string  // {n}
@@ -578,6 +580,8 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: '필터 적용',
     rv_import_csv: 'CSV 가져오기',
     rv_register_one: '+ 1건 등록',
+    rv_export_excel: 'Excel 다운로드',
+    rv_class_reason: '분류 사유',
     rv_bulk_page_selected: '이 페이지의 {n}개 리뷰가 선택되었습니다.',
     rv_bulk_select_all: '필터 조건에 맞는 전체 {x}개 리뷰 선택',
     rv_bulk_all_selected: '필터 조건에 맞는 전체 {x}개 리뷰가 선택되었습니다.',
@@ -862,6 +866,8 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: 'Apply filters',
     rv_import_csv: 'Import CSV',
     rv_register_one: '+ Add one',
+    rv_export_excel: 'Export Excel',
+    rv_class_reason: 'Classification reason',
     rv_bulk_page_selected: 'All {n} reviews on this page are selected.',
     rv_bulk_select_all: 'Select all {x} reviews matching the filter',
     rv_bulk_all_selected: 'All {x} reviews matching the filter are selected.',
@@ -1146,6 +1152,8 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: 'フィルター適用',
     rv_import_csv: 'CSV取込',
     rv_register_one: '+ 1件登録',
+    rv_export_excel: 'Excelダウンロード',
+    rv_class_reason: '分類理由',
     rv_bulk_page_selected: 'このページの{n}件のレビューが選択されました。',
     rv_bulk_select_all: 'フィルター条件に一致する全{x}件を選択',
     rv_bulk_all_selected: 'フィルター条件に一致する全{x}件が選択されました。',
@@ -1430,6 +1438,8 @@ export const DICT: Record<Language, I18nDict> = {
     rv_apply: '应用筛选',
     rv_import_csv: '导入CSV',
     rv_register_one: '+ 新增一条',
+    rv_export_excel: '导出Excel',
+    rv_class_reason: '分类理由',
     rv_bulk_page_selected: '本页 {n} 条评价已选中。',
     rv_bulk_select_all: '选择符合筛选条件的全部 {x} 条评价',
     rv_bulk_all_selected: '符合筛选条件的全部 {x} 条评价已选中。',

@@ -311,6 +311,18 @@ export default function ReviewsListClient({
     [server]
   )
 
+  // 현재 필터 기준 Excel(CSV) 내보내기 URL
+  function buildExportUrl(): string {
+    if (!server) return '/api/review/export'
+    const p = new URLSearchParams()
+    for (const [k, v] of Object.entries(server.query)) if (v) p.set(k, v)
+    if (server.activeStatus) p.set('status', server.activeStatus)
+    if (server.activeRisk)   p.set('risk', server.activeRisk)
+    if (server.activeRating) p.set('rating', server.activeRating)
+    const qs = p.toString()
+    return qs ? `/api/review/export?${qs}` : '/api/review/export'
+  }
+
   function toggleServerFilter(key: 'status' | 'risk' | 'rating', value: string) {
     const current = key === 'status' ? server!.activeStatus : key === 'risk' ? server!.activeRisk : server!.activeRating
     router.push(buildServerUrl({ [key]: current === value ? null : value, page: 1 }))
@@ -689,7 +701,13 @@ export default function ReviewsListClient({
             </button>
           </>
         )}
-        <span className="ml-auto text-xs text-gray-400 whitespace-nowrap shrink-0">
+        {isServer && (
+          <a href={buildExportUrl()} download
+            className="ml-auto shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium border border-green-300 text-green-700 hover:bg-green-50 transition-colors">
+            ⬇ {t.rv_export_excel}
+          </a>
+        )}
+        <span className={`${isServer ? 'ml-2' : 'ml-auto'} text-xs text-gray-400 whitespace-nowrap shrink-0`}>
           {isServer ? `${server!.total}${t.stat_unit}` : `${displayed.length} / ${reviews.length}${t.stat_unit}`}
         </span>
       </div>
@@ -928,6 +946,12 @@ export default function ReviewsListClient({
                     <p className="text-xs text-gray-700 line-clamp-2 break-words hover:line-clamp-none">{review.review_text ?? '—'}</p>
                     {draftSnippet && (
                       <p className="text-xs text-blue-600 mt-1 line-clamp-1 break-words hover:line-clamp-none">↳ {draftSnippet}</p>
+                    )}
+                    {(review.status === 'ai_done' || review.status === 'pending_approval') && (review.risk_reasons?.[0] || review.internal_note_ko) && (
+                      <p className="text-[11px] text-gray-400 mt-1 line-clamp-1 break-words hover:line-clamp-none"
+                        title={review.risk_reasons?.[0] ?? review.internal_note_ko ?? ''}>
+                        🏷 {review.risk_reasons?.[0] ?? review.internal_note_ko}
+                      </p>
                     )}
                   </td>
                   <td className="px-2 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>

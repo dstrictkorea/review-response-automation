@@ -218,6 +218,23 @@ export default function ReviewDrawer({ review, onClose, onSaved }: Props) {
             )}
           </div>
 
+          {/* 분류 사유 (왜 AI 완료/격리되었는지) */}
+          {(review.risk_reasons?.[0] || review.internal_note_ko) && (
+            <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2">
+              <p className="text-[11px] font-semibold text-amber-700 mb-0.5">🏷 {t.rv_class_reason}</p>
+              <p className="text-xs text-amber-900 whitespace-pre-wrap break-words">
+                {review.internal_note_ko ?? review.risk_reasons?.[0]}
+              </p>
+              {review.categories && review.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {review.categories.map((c, i) => (
+                    <span key={i} className="rounded-full bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5">{c}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Original review */}
           <div>
             <p className="text-xs font-semibold text-gray-400 mb-1">{t.rv_original_review}</p>

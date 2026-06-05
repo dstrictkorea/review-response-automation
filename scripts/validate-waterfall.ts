@@ -116,5 +116,13 @@ const ctxKO = { branchCode: 'AMGN', language: 'ko' as const, reviewerName: '민�
   })())
 }
 
+// ── Case 10: 'not worth it' 부정 처리 (이전 버그: 'worth it' 긍정 오인 복구) ──────
+{
+  const neg = processReview({ reviewText: 'Honestly not worth it.', ...ctxEN })
+  check('C10 "not worth it" → COMPLAINT', neg.classification.status === 'COMPLAINT', neg.classification.status)
+  const pos = processReview({ reviewText: 'Totally worth it!', ...ctxEN })
+  check('C10 "worth it" → SAFE (회귀 방지)', pos.classification.status === 'SAFE', pos.classification.status)
+}
+
 console.log(`\n${failures === 0 ? '✅ ALL PASS' : `❌ ${failures} FAILURE(S)`}`)
 process.exit(failures === 0 ? 0 : 1)

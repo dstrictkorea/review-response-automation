@@ -15,13 +15,43 @@ function emergencyRisk(text: string): string {
   const fr = scanText(text)
   return fr.triggered && (RISK_RANK[fr.maxRiskLevel] ?? 0) > RISK_RANK.high ? fr.maxRiskLevel : 'high'
 }
-function importStatusOf(d: ProcessDecision): string {
-  return d.route === 'static' ? 'ai_done' : 'pending_approval'
+const RANK_LEVEL = ['low', 'medium', 'high', 'critical'] as const
+function floorRisk(a: string, b: string): string {
+  return RANK_LEVEL[Math.max(RISK_RANK[a] ?? 0, RISK_RANK[b] ?? 0)] ?? 'low'
 }
-function importRiskOf(d: ProcessDecision, text: string): string {
-  if (d.classification.status === 'EMERGENCY') return emergencyRisk(text)
-  if (d.classification.status === 'COMPLAINT') return 'medium'
-  return 'low'
+
+// 별점 ≤ 이 값이면 텍스트가 안전/모호여도 사람 확인 격리(찬양 템플릿 억제). 운영 중 조정 가능.
+const LOW_RATING_ISOLATE = 2
+
+interface ImportClass { status: string; risk: string; reason: string; genStatic: boolean }
+
+/**
+ * 인입 시점 최종 분류 — 텍스트 분류(WaterfallRegexEngine) + 별점을 결합.
+ *   SAFE(고별점)      → ai_done (정적 알고리즘 답변)
+ *   EMERGENCY         → pending_approval (격리) + 건조 사과 초안
+ *   COMPLAINT         → pending_approval (격리), LLM 답변은 이후 게이트키퍼
+ *   AMBIGUOUS(고별점)  → new (격리 아님 — 정상 큐에서 후속 처리. 과격리 방지)
+ *   저별점(≤2)        → pending_approval (격리) + 찬양 억제 (과소격리 방지)
+ */
+function classifyImport(d: ProcessDecision, rating: number | null, text: string): ImportClass {
+  const cls = d.classification.status
+  const lowRating = rating != null && rating <= LOW_RATING_ISOLATE
+
+  let status: string
+  if (cls === 'EMERGENCY' || cls === 'COMPLAINT') status = 'pending_approval'
+  else if (lowRating) status = 'pending_approval'
+  else if (cls === 'SAFE') status = 'ai_done'
+  else status = 'new' // AMBIGUOUS(고별점) — 격리하지 않음
+
+  // 저별점 SAFE는 칭찬 답변이 부적절하므로 정적 초안 생성을 억제(EMERGENCY 건조사과는 유지)
+  const suppressPraise = lowRating && cls !== 'EMERGENCY'
+  const genStatic = d.route === 'manual' || (d.route === 'static' && !suppressPraise)
+
+  const base = cls === 'EMERGENCY' ? emergencyRisk(text) : cls === 'COMPLAINT' ? 'medium' : 'low'
+  const risk = lowRating ? floorRisk(base, 'medium') : base
+
+  const reason = d.classification.reason + (lowRating ? ` · 저별점(${rating}점) → 사람 확인 격리` : '')
+  return { status, risk, reason, genStatic }
 }
 
 export interface ImportRowPayload {
@@ -233,16 +263,16 @@ export async function importReviewsAction(
   //   SAFE → ai_done (정적 알고리즘 답변 자동 생성)
   //   EMERGENCY/COMPLAINT/AMBIGUOUS → pending_approval (격리). EMERGENCY는 critical 보존.
   const decisionByHash = new Map<string, ProcessDecision>()
+  const ciByHash = new Map<string, ImportClass>()
   for (const row of toInsert) {
-    decisionByHash.set(
-      row.import_hash,
-      processReview({
-        reviewText:   row.review_text ?? '',
-        branchCode:   row.effectiveBranch,
-        language:     langKey(row.review_language),
-        reviewerName: row.reviewer_name,
-      }),
-    )
+    const d = processReview({
+      reviewText:   row.review_text ?? '',
+      branchCode:   row.effectiveBranch,
+      language:     langKey(row.review_language),
+      reviewerName: row.reviewer_name,
+    })
+    decisionByHash.set(row.import_hash, d)
+    ciByHash.set(row.import_hash, classifyImport(d, row.rating, row.review_text ?? ''))
   }
 
   // ── 5. 신규 리뷰 bulk UPSERT (ON CONFLICT DO NOTHING) ────────────────────
@@ -261,6 +291,7 @@ export async function importReviewsAction(
       .upsert(
         toInsert.map(row => {
           const d = decisionByHash.get(row.import_hash)!
+          const ci = ciByHash.get(row.import_hash)!
           return {
             branch_code:            row.effectiveBranch,
             channel_code:           batchInfo.channelCode,
@@ -274,12 +305,12 @@ export async function importReviewsAction(
             normalized_hash:        row.normalized_hash,
             import_hash:            row.import_hash,
             source_import_batch_id: batch.id,
-            // 인입 시점 1차 분류 결과를 즉시 인코딩 (분류 → 라우팅 → 답변 순서)
-            status:                 importStatusOf(d),
-            risk_level:             importRiskOf(d, row.review_text ?? ''),
+            // 인입 시점 1차 분류(텍스트+별점) 결과를 즉시 인코딩 (분류 → 라우팅 → 답변 순서)
+            status:                 ci.status,
+            risk_level:             ci.risk,
             categories:             d.classification.tags,
-            risk_reasons:           [d.classification.reason],
-            internal_note_ko:       d.classification.reason,
+            risk_reasons:           [ci.reason],
+            internal_note_ko:       ci.reason,
           }
         }),
         {
@@ -312,9 +343,10 @@ export async function importReviewsAction(
   const classCounts: Record<string, number> = { SAFE: 0, EMERGENCY: 0, COMPLAINT: 0, AMBIGUOUS: 0 }
   const draftRows = insertedReviews.flatMap(ir => {
     const d = decisionByHash.get(ir.import_hash)
-    if (!d) return []
+    const ci = ciByHash.get(ir.import_hash)
+    if (!d || !ci) return []
     classCounts[d.classification.status] = (classCounts[d.classification.status] ?? 0) + 1
-    if ((d.route !== 'static' && d.route !== 'manual') || !d.staticReply) return []
+    if (!ci.genStatic || !d.staticReply) return []
     return [{
       review_id:           ir.id,
       draft_short:         null,

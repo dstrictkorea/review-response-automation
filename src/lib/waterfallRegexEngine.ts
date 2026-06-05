@@ -51,7 +51,7 @@ const EMERGENCY_RE =
 
 // Layer 1 — 운영 불만 / 미국식 서비스 컴플레인
 const COMPLAINT_RE =
-  /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무)|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue))/i
+  /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무)|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue)|not\s*worth|overrated)/i
 
 // Layer 2-A — 미래 거부(이탈 리스크)
 const CHURN_RE =
@@ -66,8 +66,10 @@ const FUTURE_HOPE_RE =
   /(나중에|다음에|기회\s*되면)\s*(꼭|무조건)?\s*(재방문|또\s*방문|다시\s*올)|(will\s*be\s*back|can[''’]?t\s*wait\s*to\s*return|next\s*time|definitely\s*return|will\s*(visit|come)\s*again|would\s*go\s*back)/i
 
 // Layer 3 — 이중부정/도치 (불만 오인 복구 → 긍정)
+// 주의: 'worth it'(긍정)은 POSITIVE_RE가 처리한다. 여기에 'worth it'을 두면 'not worth it'(부정)을
+// 이중부정으로 오인 복구하므로 제외한다. 'not worth'는 COMPLAINT_RE에서 불만으로 잡는다.
 const SARCASM_RE =
-  /(안\s*아깝|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint|worth\s*it)/i
+  /(안\s*아깝|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
 // 긍정 감성 / 질문 / 작품 키워드 (SAFE vs AMBIGUOUS 판정용)
 const POSITIVE_RE =
