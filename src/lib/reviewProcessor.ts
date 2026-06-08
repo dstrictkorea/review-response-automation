@@ -30,12 +30,14 @@ export function processReview(input: {
   language: Language
   reviewerName?: string | null
   rating?: number | null
+  reviewId?: string | null
 }): ProcessDecision {
   const classification = analyzeReview(input.reviewText ?? '', input.rating)
   const ctx = {
     branchCode: input.branchCode,
     language: input.language,
     reviewerName: input.reviewerName,
+    reviewId: input.reviewId,
   }
 
   if (classification.status === 'EMERGENCY') {

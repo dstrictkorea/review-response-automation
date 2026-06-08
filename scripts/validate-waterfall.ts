@@ -149,6 +149,43 @@ function pr(text: string, rating: number, lang: 'ko' | 'en') {
   check('P3-6 DISPLAY_ISSUE tag', c6.tags.includes('DISPLAY_ISSUE'), c6.tags.join(','))
 }
 
+// ── SLOT ENGINE TDD: 슬롯 기반 조립 + AMLV 룰셋 보강 검증 ─────────────────────────
+// Case S1: INTERACTIVE_COMPLAINT (Rating 3) → 태그 감지 + Slot B 피벗 포함
+{
+  const text = 'The music and visuals were relaxing but not very interactive.'
+  const d = processReview({ reviewText: text, branchCode: 'AMLV', language: 'en', reviewerName: 'Jane', rating: 3 })
+  check('S1 INTERACTIVE_COMPLAINT tag', d.classification.tags.includes('INTERACTIVE_COMPLAINT'), d.classification.tags.join(','))
+  check('S1 status=COMPLAINT', d.classification.status === 'COMPLAINT', d.classification.status)
+  check('S1 isComplaint=true', d.classification.isComplaint === true)
+  const reply = buildStaticReply(d.classification, { branchCode: 'AMLV', language: 'en', reviewerName: 'Jane', reviewId: 'test-s1' })
+  check('S1 Slot B: interactive/sensor keyword', /interact|sensor/i.test(reply), reply.slice(0, 80))
+}
+
+// Case S2: VALUE_COMPLAINT (Rating 2) → 태그 감지 + COMPLAINT 경로
+{
+  const text = 'Expected more for the ticket price.'
+  const d = processReview({ reviewText: text, branchCode: 'AMLV', language: 'en', reviewerName: null, rating: 2 })
+  check('S2 VALUE_COMPLAINT tag', d.classification.tags.includes('VALUE_COMPLAINT'), d.classification.tags.join(','))
+  check('S2 status=COMPLAINT', d.classification.status === 'COMPLAINT', d.classification.status)
+  const reply = buildStaticReply(d.classification, { branchCode: 'AMLV', language: 'en', reviewId: 'test-s2' })
+  check('S2 Slot B: price/content keyword', /price|value|ticket|content/i.test(reply), reply.slice(0, 80))
+}
+
+// Case S3: CROWD_COMPLAINT + Rating-1/2 노이즈 필터 (긍정 접미 무시)
+{
+  const text = 'The exhibit was overcrowded and difficult to enjoy. Definitely worth checking out.'
+  const d = processReview({ reviewText: text, branchCode: 'AMLV', language: 'en', reviewerName: null, rating: 1 })
+  check('S3 CROWD_COMPLAINT tag', d.classification.tags.includes('CROWD_COMPLAINT'), d.classification.tags.join(','))
+  check('S3 status=COMPLAINT (positive suffix ignored)', d.classification.status === 'COMPLAINT', d.classification.status)
+  check('S3 isComplaint=true', d.classification.isComplaint === true)
+  // Rating-1/2 노이즈 필터 명시 검증: 동일 텍스트 rating 4 → COMPLIMENT, rating 1 → AMBIGUOUS (complaint 없을 때)
+  const noiseOnly = 'Definitely worth checking out.'
+  const hiRating = processReview({ reviewText: noiseOnly, branchCode: 'AMLV', language: 'en', rating: 4 })
+  check('S3b noise pattern @ rating-4 → COMPLIMENT', hiRating.classification.status === 'COMPLIMENT', hiRating.classification.status)
+  const loRating = processReview({ reviewText: noiseOnly, branchCode: 'AMLV', language: 'en', rating: 1 })
+  check('S3b noise filter @ rating-1 → AMBIGUOUS', loRating.classification.status === 'AMBIGUOUS', loRating.classification.status)
+}
+
 // ── PHASE 2: 동적 컴파일 경로 검증 (인메모리 번들 — env/DB 불필요, 결정론적) ──────
 // DB에서 받은 것과 동일한 형태의 규칙으로 applyRulesBundle → analyzeReview가 DB 규칙으로 동작하는지.
 {

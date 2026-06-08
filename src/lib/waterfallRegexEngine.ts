@@ -41,6 +41,7 @@ export interface WaterfallResult {
   isArtworkFocused: boolean  // 순수 작품 감상(긍정)
   isRepeatVisitor: boolean   // 과거 방문 입증
   isChurnRisk: boolean       // 미래 이탈 위험
+  hasPeakHours: boolean      // 피크/혼잡 시간대 언급 여부 (Slot C 대체 클로징 트리거)
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -72,7 +73,7 @@ const DEFAULT_SARCASM =
   /(안\s*아깝|아깝지\s*않|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
 const DEFAULT_POSITIVE =
-  /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*it)/i
+  /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*(?:it|checking\s*out)|good\s*location)/i
 
 const DEFAULT_QUESTION =
   /[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)/i
@@ -91,6 +92,18 @@ const DEFAULT_DURATION =
 const DEFAULT_CROWD =
   /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡)|overcrowded|too\s*crowded|packed\s*with\s*people/i
 
+// AMLV 보강: 인터랙티브 부족 (센서/체험 불만) + 가격 불만
+const DEFAULT_INTERACTIVE =
+  /\bnot\s+(?:very\s+)?interactive\b|\bexpected\s+more\s+interaction\b|\black\s+of\s+interaction\b/i
+
+const DEFAULT_VALUE =
+  /\b(?:ticket\s+)?price\b|\bexpected\s+more\s+for\s+the\s+money\b|\btoo\s+expensive\b|\bnot\s+worth\s+(?:the\s+)?(?:money|price)\b/i
+
+// Rating 1-2 노이즈 필터: 저평점 리뷰에서 아이러니하게 붙는 긍정 접미 패턴 → 무시
+// (DEFAULT_POSITIVE에 포함되어 정상 맥락에선 긍정으로 처리되지만, rating ≤ 2인 경우 analyzeReview에서 텍스트에서 먼저 제거)
+const NOISE_POSITIVE =
+  /\bworth\s*checking\s*out\b|\bgood\s*location\b/i
+
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
 // ════════════════════════════════════════════════════════════════════════════════
@@ -99,6 +112,7 @@ interface Compiled {
   emergency: RegExp; complaint: RegExp; churn: RegExp; repeat: RegExp
   futureHope: RegExp; sarcasm: RegExp; positive: RegExp; question: RegExp; artwork: RegExp
   layout: RegExp; display: RegExp; duration: RegExp; crowd: RegExp
+  interactive: RegExp; value: RegExp  // AMLV 보강
 }
 
 const DEFAULTS: Compiled = {
@@ -106,6 +120,7 @@ const DEFAULTS: Compiled = {
   repeat:     DEFAULT_REPEAT,     futureHope: DEFAULT_FUTURE_HOPE, sarcasm: DEFAULT_SARCASM,
   positive:   DEFAULT_POSITIVE,   question: DEFAULT_QUESTION, artwork: DEFAULT_ARTWORK,
   layout:     DEFAULT_LAYOUT,     display: DEFAULT_DISPLAY, duration: DEFAULT_DURATION, crowd: DEFAULT_CROWD,
+  interactive: DEFAULT_INTERACTIVE, value: DEFAULT_VALUE,
 }
 
 let COMPILED: Compiled = { ...DEFAULTS }
@@ -156,10 +171,12 @@ export function applyRulesBundle(bundle: RulesBundle | null): void {
     positive:   compileCategory(byCat('POSITIVE'),    DEFAULT_POSITIVE),
     question:   compileCategory(byCat('QUESTION'),    DEFAULT_QUESTION),
     artwork:    compileCategory(byCat('ARTWORK'),     DEFAULT_ARTWORK),
-    layout:     compileCategory(byCat('LAYOUT_COMPLAINT'),   DEFAULT_LAYOUT),
-    display:    compileCategory(byCat('DISPLAY_ISSUE'),      DEFAULT_DISPLAY),
-    duration:   compileCategory(byCat('DURATION_COMPLAINT'), DEFAULT_DURATION),
-    crowd:      compileCategory(byCat('CROWD_COMPLAINT'),    DEFAULT_CROWD),
+    layout:      compileCategory(byCat('LAYOUT_COMPLAINT'),       DEFAULT_LAYOUT),
+    display:     compileCategory(byCat('DISPLAY_ISSUE'),           DEFAULT_DISPLAY),
+    duration:    compileCategory(byCat('DURATION_COMPLAINT'),      DEFAULT_DURATION),
+    crowd:       compileCategory(byCat('CROWD_COMPLAINT'),         DEFAULT_CROWD),
+    interactive: compileCategory(byCat('INTERACTIVE_COMPLAINT'),   DEFAULT_INTERACTIVE),
+    value:       compileCategory(byCat('VALUE_COMPLAINT'),         DEFAULT_VALUE),
   }
   appliedLoadedAt = bundle.loadedAt
 }
@@ -211,6 +228,7 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
       isArtworkFocused: false,
       isRepeatVisitor: false,
       isChurnRisk: false,
+      hasPeakHours: false,
     }
   }
 
@@ -225,7 +243,9 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
   if (C.layout.test(text))    { isComplaint = true; tags.push('LAYOUT_COMPLAINT') }
   if (C.display.test(text))   { isComplaint = true; tags.push('DISPLAY_ISSUE') }
   if (C.duration.test(text))  { isComplaint = true; tags.push('DURATION_COMPLAINT') }
-  if (C.crowd.test(text))     { isComplaint = true; tags.push('CROWD_COMPLAINT') }
+  if (C.crowd.test(text))      { isComplaint = true; tags.push('CROWD_COMPLAINT') }
+  if (C.interactive.test(text)) { isComplaint = true; tags.push('INTERACTIVE_COMPLAINT') }
+  if (C.value.test(text))       { isComplaint = true; tags.push('VALUE_COMPLAINT') }
   if (isComplaint) isArtworkFocused = false
 
   // ── Layer 2: 재방문 / 이탈 (2-A → 2-B → 2-C 우선순위) ───────────────────────────
@@ -249,7 +269,10 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
   }
 
   // ── 감성 신호 ──────────────────────────────────────────────────────────────────
-  const hasPositive = sarcasmPositive || C.positive.test(text)
+  // Rating 1-2 노이즈 필터: 저평점 리뷰에서 아이러니하게 붙는 긍정 접미 패턴(worth checking out, good location) 무시
+  const ratingLow = typeof rating === 'number' && rating <= 2
+  const textForPositive = ratingLow ? text.replace(NOISE_POSITIVE, '') : text
+  const hasPositive = sarcasmPositive || C.positive.test(textForPositive)
   const isQuestion = C.question.test(text)
   if (!isComplaint && hasPositive && C.artwork.test(text)) {
     isArtworkFocused = true
@@ -286,6 +309,8 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
     reason = '알고리즘 확신 불가(중립/질문/모호) → LLM 위임'
   }
 
+  const hasPeakHours = /\bpeak\s+hours\b|\bbusy\s+hours\b/i.test(text)
+
   return {
     status,
     requiresLLM,
@@ -297,6 +322,7 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
     isArtworkFocused,
     isRepeatVisitor,
     isChurnRisk,
+    hasPeakHours,
   }
 }
 
