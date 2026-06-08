@@ -18,6 +18,8 @@
 import { scanText } from '@/services/filterService'
 // 타입만 정적 import(런타임 erase) — 실제 DB 로더는 refreshEngineFromDB에서 동적 import (서버 전용 admin client 격리)
 import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
+// 순수 데이터 모듈 — 클라이언트 번들 안전
+import { getBranchTokens } from '@/lib/branchMetadata'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -104,6 +106,24 @@ const DEFAULT_VALUE =
 const NOISE_POSITIVE =
   /\bworth\s*checking\s*out\b|\bgood\s*location\b/i
 
+// ── PHASE 3: 4 Niche Complaint Tags ──────────────────────────────────────────────
+
+// ROOM_SPECIFIC_COMPLAINT: 특정 전시 구역/방 불만 (슬롯 C → highlight_room 언급 + 개선 약속)
+const DEFAULT_ROOM_SPECIFIC =
+  /(?<!안\s*)(특정\s*(?:공간|구역|방|존)[^.!?\n]{0,10}(?:불만|별로|좁|어둡|비좁|답답|불편))|(?:this\s+(?:room|area|space|section|zone)|(?:the\s+)?(?:first|second|last)\s+(?:room|section))[^.!?\n]{0,20}(?:was\s+(?:bad|terrible|disappointing|boring|small|dark|cramped)|felt\s+(?:cramped|empty|rushed))/i
+
+// SYSTEM_COMPLAINT: 키오스크·앱·예약·입장 시스템 오류 (슬롯 C → 기술팀 즉시 조치 약속)
+const DEFAULT_SYSTEM_COMPLAINT =
+  /(?<!안\s*)(키오스크[^.!?\n]{0,10}(?:오류|고장|안\s*됨|에러|먹통))|(?:예약|입장)\s*시스템[^.!?\n]{0,10}(?:오류|문제|실패|먹통)|kiosk[^.!?\n]{0,20}(?:broken|error|didn[''']?t\s*work|froze|crashed|failed)|(?:booking|ticket)[^.!?\n]{0,20}(?:system[^.!?\n]{0,10}failed|didn[''']?t\s*work)|app\s*(?:crashed|froze|didn[''']?t\s*work)/i
+
+// REVISIT_COMPLAINT: 재방문 실망 패턴 (단순 재방문 언급과 달리 부정 비교 맥락 포함)
+const DEFAULT_REVISIT_COMPLAINT =
+  /\b(?:second\s+visit|visited\s+before|used\s+to\s+be|disappointed\s+this\s+time)\b|(?<!안\s*)(재방문|두\s*번째|예전에는|과거에)/i
+
+// STAFF_COMPLAINT: 직원 태도/응대 불만 (위험도 medium 격상 — processReviewById의 COMPLAINT → medium이 자동 처리)
+const DEFAULT_STAFF_COMPLAINT =
+  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증))|(?:staff|employee|worker|guard|host|cashier)[^.!?\n]{0,20}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|had\s+(?:an?\s+)?attitude)/i
+
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
 // ════════════════════════════════════════════════════════════════════════════════
@@ -112,7 +132,9 @@ interface Compiled {
   emergency: RegExp; complaint: RegExp; churn: RegExp; repeat: RegExp
   futureHope: RegExp; sarcasm: RegExp; positive: RegExp; question: RegExp; artwork: RegExp
   layout: RegExp; display: RegExp; duration: RegExp; crowd: RegExp
-  interactive: RegExp; value: RegExp  // AMLV 보강
+  interactive: RegExp; value: RegExp    // AMLV 보강
+  // PHASE 3: niche complaint tags
+  roomSpecific: RegExp; systemComplaint: RegExp; revisitComplaint: RegExp; staffComplaint: RegExp
 }
 
 const DEFAULTS: Compiled = {
@@ -121,6 +143,8 @@ const DEFAULTS: Compiled = {
   positive:   DEFAULT_POSITIVE,   question: DEFAULT_QUESTION, artwork: DEFAULT_ARTWORK,
   layout:     DEFAULT_LAYOUT,     display: DEFAULT_DISPLAY, duration: DEFAULT_DURATION, crowd: DEFAULT_CROWD,
   interactive: DEFAULT_INTERACTIVE, value: DEFAULT_VALUE,
+  roomSpecific: DEFAULT_ROOM_SPECIFIC, systemComplaint: DEFAULT_SYSTEM_COMPLAINT,
+  revisitComplaint: DEFAULT_REVISIT_COMPLAINT, staffComplaint: DEFAULT_STAFF_COMPLAINT,
 }
 
 let COMPILED: Compiled = { ...DEFAULTS }
@@ -171,12 +195,16 @@ export function applyRulesBundle(bundle: RulesBundle | null): void {
     positive:   compileCategory(byCat('POSITIVE'),    DEFAULT_POSITIVE),
     question:   compileCategory(byCat('QUESTION'),    DEFAULT_QUESTION),
     artwork:    compileCategory(byCat('ARTWORK'),     DEFAULT_ARTWORK),
-    layout:      compileCategory(byCat('LAYOUT_COMPLAINT'),       DEFAULT_LAYOUT),
-    display:     compileCategory(byCat('DISPLAY_ISSUE'),           DEFAULT_DISPLAY),
-    duration:    compileCategory(byCat('DURATION_COMPLAINT'),      DEFAULT_DURATION),
-    crowd:       compileCategory(byCat('CROWD_COMPLAINT'),         DEFAULT_CROWD),
-    interactive: compileCategory(byCat('INTERACTIVE_COMPLAINT'),   DEFAULT_INTERACTIVE),
-    value:       compileCategory(byCat('VALUE_COMPLAINT'),         DEFAULT_VALUE),
+    layout:          compileCategory(byCat('LAYOUT_COMPLAINT'),       DEFAULT_LAYOUT),
+    display:         compileCategory(byCat('DISPLAY_ISSUE'),           DEFAULT_DISPLAY),
+    duration:        compileCategory(byCat('DURATION_COMPLAINT'),      DEFAULT_DURATION),
+    crowd:           compileCategory(byCat('CROWD_COMPLAINT'),         DEFAULT_CROWD),
+    interactive:     compileCategory(byCat('INTERACTIVE_COMPLAINT'),   DEFAULT_INTERACTIVE),
+    value:           compileCategory(byCat('VALUE_COMPLAINT'),         DEFAULT_VALUE),
+    roomSpecific:    compileCategory(byCat('ROOM_SPECIFIC_COMPLAINT'), DEFAULT_ROOM_SPECIFIC),
+    systemComplaint: compileCategory(byCat('SYSTEM_COMPLAINT'),        DEFAULT_SYSTEM_COMPLAINT),
+    revisitComplaint:compileCategory(byCat('REVISIT_COMPLAINT'),       DEFAULT_REVISIT_COMPLAINT),
+    staffComplaint:  compileCategory(byCat('STAFF_COMPLAINT'),         DEFAULT_STAFF_COMPLAINT),
   }
   appliedLoadedAt = bundle.loadedAt
 }
@@ -202,10 +230,15 @@ function dedupe(arr: string[]): string[] {
 
 /**
  * analyzeReview — 폭포수 분류 (순수 함수, 부작용 없음).
- * @param rawText 리뷰 원문
- * @param rating  별점(옵션). 4·5점이면 EMERGENCY가 아닌 한 COMPLAINT를 COMPLIMENT로 완화(Rating Override).
+ * @param rawText    리뷰 원문
+ * @param rating     별점(옵션). 4·5점이면 EMERGENCY가 아닌 한 COMPLAINT를 COMPLIMENT로 완화.
+ * @param branchCode 지점 코드(옵션). 랜드마크 오탐(FP) 방지 가드에 사용.
  */
-export function analyzeReview(rawText: string, rating?: number | null): WaterfallResult {
+export function analyzeReview(
+  rawText: string,
+  rating?: number | null,
+  branchCode?: string | null,
+): WaterfallResult {
   const text = (rawText ?? '').replace(/\s+/g, ' ').trim()
   const C = COMPILED  // 현재 적용된 컴파일 규칙 스냅샷(분석 도중 교체 방지)
 
@@ -215,21 +248,41 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
     filter.triggered && (filter.maxRiskLevel === 'high' || filter.maxRiskLevel === 'critical')
 
   if (C.emergency.test(text) || filterCritical) {
-    return {
-      status: 'EMERGENCY',
-      requiresLLM: false, // 긴급 건은 LLM이 아니라 사람 수동 검토로 격리
-      reason:
-        '긴급 안전/CS/법적 리스크 감지 — 즉시 격리' +
-        (filter.triggered ? ` (필터: ${filter.matchedKeywords.join(', ')})` : ''),
-      tags: dedupe(['CS 격리', '안전/이슈', ...filter.matchedKeywords]),
-      tone: 'STANDARD',
-      isEmergency: true,
-      isComplaint: false,
-      isArtworkFocused: false,
-      isRepeatVisitor: false,
-      isChurnRisk: false,
-      hasPeakHours: false,
+    // ── 랜드마크 FP 가드: 지점 랜드마크 이름이 EMERGENCY 패턴을 오트리거하는 경우 하향 허용 ──
+    // 예) 미래 지점 'ARTE MUSEUM HURT RIVER' → "HURT"가 DEFAULT_EMERGENCY \bhurt\b에 매칭
+    //     → 랜드마크 제거 후 재검사에서 매칭 사라지면 FP로 판단, 일반 분류로 낙하.
+    // filterCritical(키워드 DB) 기반 매칭은 제외(안전 우선).
+    let landmarkFP = false
+    if (branchCode && !filterCritical) {
+      const meta = getBranchTokens(branchCode)
+      const lm = (meta.landmark ?? '').trim()
+      if (lm && lm !== 'our location') {
+        const escapedLm = lm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const textWithoutLm = text.replace(new RegExp(escapedLm, 'ig'), ' ')
+        if (!C.emergency.test(textWithoutLm)) {
+          landmarkFP = true  // 랜드마크 없이는 EMERGENCY 매칭 안 됨 → 오탐
+        }
+      }
     }
+
+    if (!landmarkFP) {
+      return {
+        status: 'EMERGENCY',
+        requiresLLM: false, // 긴급 건은 LLM이 아니라 사람 수동 검토로 격리
+        reason:
+          '긴급 안전/CS/법적 리스크 감지 — 즉시 격리' +
+          (filter.triggered ? ` (필터: ${filter.matchedKeywords.join(', ')})` : ''),
+        tags: dedupe(['CS 격리', '안전/이슈', ...filter.matchedKeywords]),
+        tone: 'STANDARD',
+        isEmergency: true,
+        isComplaint: false,
+        isArtworkFocused: false,
+        isRepeatVisitor: false,
+        isChurnRisk: false,
+        hasPeakHours: false,
+      }
+    }
+    // landmarkFP=true → fall through to normal classification
   }
 
   const tags: string[] = []
@@ -239,13 +292,18 @@ export function analyzeReview(rawText: string, rating?: number | null): Waterfal
   let isChurnRisk = false
 
   // ── Layer 1: 운영 불만 (일반 + 현장 운영 세부) — 1개라도 매칭 시 COMPLAINT 확정(복합 희석 방지) ──
-  if (C.complaint.test(text)) { isComplaint = true; tags.push('운영불만') }
-  if (C.layout.test(text))    { isComplaint = true; tags.push('LAYOUT_COMPLAINT') }
-  if (C.display.test(text))   { isComplaint = true; tags.push('DISPLAY_ISSUE') }
-  if (C.duration.test(text))  { isComplaint = true; tags.push('DURATION_COMPLAINT') }
-  if (C.crowd.test(text))      { isComplaint = true; tags.push('CROWD_COMPLAINT') }
-  if (C.interactive.test(text)) { isComplaint = true; tags.push('INTERACTIVE_COMPLAINT') }
-  if (C.value.test(text))       { isComplaint = true; tags.push('VALUE_COMPLAINT') }
+  if (C.complaint.test(text))       { isComplaint = true; tags.push('운영불만') }
+  if (C.layout.test(text))          { isComplaint = true; tags.push('LAYOUT_COMPLAINT') }
+  if (C.display.test(text))         { isComplaint = true; tags.push('DISPLAY_ISSUE') }
+  if (C.duration.test(text))        { isComplaint = true; tags.push('DURATION_COMPLAINT') }
+  if (C.crowd.test(text))           { isComplaint = true; tags.push('CROWD_COMPLAINT') }
+  if (C.interactive.test(text))     { isComplaint = true; tags.push('INTERACTIVE_COMPLAINT') }
+  if (C.value.test(text))           { isComplaint = true; tags.push('VALUE_COMPLAINT') }
+  // PHASE 3: 4 niche tags
+  if (C.roomSpecific.test(text))    { isComplaint = true; tags.push('ROOM_SPECIFIC_COMPLAINT') }
+  if (C.systemComplaint.test(text)) { isComplaint = true; tags.push('SYSTEM_COMPLAINT') }
+  if (C.revisitComplaint.test(text)){ isComplaint = true; tags.push('REVISIT_COMPLAINT') }
+  if (C.staffComplaint.test(text))  { isComplaint = true; tags.push('STAFF_COMPLAINT') }
   if (isComplaint) isArtworkFocused = false
 
   // ── Layer 2: 재방문 / 이탈 (2-A → 2-B → 2-C 우선순위) ───────────────────────────

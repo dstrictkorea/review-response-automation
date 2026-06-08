@@ -32,12 +32,13 @@ export function processReview(input: {
   rating?: number | null
   reviewId?: string | null
 }): ProcessDecision {
-  const classification = analyzeReview(input.reviewText ?? '', input.rating)
+  const classification = analyzeReview(input.reviewText ?? '', input.rating, input.branchCode)
   const ctx = {
     branchCode: input.branchCode,
     language: input.language,
     reviewerName: input.reviewerName,
     reviewId: input.reviewId,
+    rating: input.rating,
   }
 
   if (classification.status === 'EMERGENCY') {

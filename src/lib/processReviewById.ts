@@ -130,7 +130,7 @@ export async function processReviewById(
   // ════════════ STATIC (SAFE / COMPLIMENT) / MANUAL (EMERGENCY) ════════════
   if (decision.route === 'static' || decision.route === 'manual') {
     const reply  = decision.staticReply
-      ?? buildStaticReply(cls, { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId })
+      ?? buildStaticReply(cls, { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId, rating: review.rating })
     const fb     = scanForbidden(reply)
     const status = decision.requiresApproval ? 'pending_approval' : 'ai_done'
 
@@ -180,7 +180,7 @@ export async function processReviewById(
   async function dryFallback(note: string): Promise<void> {
     const reply = buildStaticReply(
       { ...cls, isComplaint: true },
-      { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId },
+      { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId, rating: review.rating },
     )
     await upsertDraft(admin, reviewId, {
       review_id: reviewId, draft_short: null, draft_standard: reply, draft_careful: null,
