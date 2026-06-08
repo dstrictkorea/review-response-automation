@@ -1,10 +1,10 @@
 /**
  * POST /api/review/bulk-process  (Wave 16)
  *
- * 대량 자동 처리 — 청크(25건) 단위로 IntelligentOrchestrator 를 돌린다.
- * 오케스트레이터가 듀얼 라우팅을 수행:
- *   - 저위험: Algorithm-First 템플릿(LLM 비용 0)
- *   - 고위험/복합/critical: AI 초안 + pending_approval 격리 (자동 게시 원천 차단)
+ * 대량 자동 처리 — 청크(25건) 단위로 결정론적 게이트키퍼(processReviewById)를 돌린다.
+ * 엔진이 듀얼 라우팅을 수행:
+ *   - SAFE/COMPLIMENT: 정적 템플릿(LLM 비용 0) → ai_done
+ *   - EMERGENCY/COMPLAINT/AMBIGUOUS: AI 초안 + pending_approval 격리 (자동 게시 원천 차단)
  *
  * 페이로드:
  *   { mode: 'filter', filter: ReviewFilter }   "필터 조건 전체"(수천 건) — ID 미전송
@@ -19,7 +19,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getBranchAccess } from '@/lib/auth/branchAccess'
-import { IntelligentOrchestrator } from '@/lib/automation/IntelligentOrchestrator'
+import { processReviewById } from '@/lib/processReviewById'
 
 interface ReviewFilter {
   branch?: string
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     await Promise.all(
       batch.map(async (id) => {
         try {
-          await IntelligentOrchestrator.processReview(id)
+          await processReviewById(id, 'system:bulk-process', admin)
           processed++
         } catch (err) {
           failed++

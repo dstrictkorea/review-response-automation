@@ -1,17 +1,17 @@
 /**
  * POST /api/review/re-process
  *
- * Triggers IntelligentOrchestrator.processReview() for a single review.
- * Used by the "🔄 AI 재분석" button in ReviewDetailClient.
+ * 결정론적 게이트키퍼(processReviewById)로 단일 리뷰를 재처리한다.
+ * "🔄 AI 재분석" 버튼(ReviewDetailClient)에서 호출.
  *
- * Safety: only allows reprocessing reviews that are not in a final state
- * (manual_published or no_reply). Requires an authenticated user session.
+ * 안전: final 상태(manual_published, no_reply) 리뷰는 재분석 불가.
+ * 인증된 사용자 세션 필요.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { IntelligentOrchestrator } from '@/lib/automation/IntelligentOrchestrator'
+import { processReviewById } from '@/lib/processReviewById'
 
 const FINAL_STATUSES = new Set(['manual_published', 'no_reply'])
 
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const actorEmail = user.email ?? 'system:re-process'
 
   // ── Parse body ─────────────────────────────────────────────────────────────
   let review_id: string
@@ -53,12 +54,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
   }
 
-  // ── Run orchestrator ───────────────────────────────────────────────────────
+  // ── 결정론적 게이트키퍼로 재처리 ──────────────────────────────────────────
   try {
-    await IntelligentOrchestrator.processReview(review_id)
+    await processReviewById(review_id, actorEmail, admin)
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err)
-    console.error('[re-process] Orchestrator failed:', msg)
+    console.error('[re-process] processReviewById failed:', msg)
     return NextResponse.json({ error: msg || 'AI 재분석 중 오류가 발생했습니다.' }, { status: 500 })
   }
 

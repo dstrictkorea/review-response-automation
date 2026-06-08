@@ -1,8 +1,8 @@
 /**
- * intents.ts — Wave 10 인텐트 표시 메타데이터 (순수 데이터, 서버/클라이언트 공용)
+ * intents.ts — 인텐트 표시 메타데이터 (순수 데이터, 서버/클라이언트 공용)
  *
- * templateEngineService.ts 는 createAdminClient 를 import 하므로 클라이언트 번들에
- * 넣을 수 없습니다. UI 배지 렌더링용 라벨/색상은 이 순수 모듈에서 관리합니다.
+ * createAdminClient 의존성이 없는 순수 데이터 모듈 — 클라이언트 번들 안전.
+ * UI 배지 렌더링용 라벨/색상을 관리합니다.
  */
 
 import type { Language } from '@/lib/i18n'

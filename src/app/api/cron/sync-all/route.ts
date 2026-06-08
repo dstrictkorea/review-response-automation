@@ -15,7 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getValidAccessToken, listGoogleReviews } from '@/lib/google/api'
-import { IntelligentOrchestrator } from '@/lib/automation/IntelligentOrchestrator'
+import { processReviewById } from '@/lib/processReviewById'
 
 // ── Helpers (duplicated from /api/google/sync to avoid cross-route import) ──────
 
@@ -94,11 +94,21 @@ async function syncOneAccount(
     .update({ last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', googleAccountId)
 
-  // ── Kick off AI draft generation + risk routing for each new review ────────
+  // ── 신규 리뷰 결정론적 게이트키퍼 처리 (제한 동시성 = 3) ─────────────────
   let orchestrated = 0
-  if (newReviewIds.length > 0) {
-    const { processed } = await IntelligentOrchestrator.processBatch(newReviewIds)
-    orchestrated = processed
+  const CONCURRENCY = 3
+  for (let i = 0; i < newReviewIds.length; i += CONCURRENCY) {
+    const batch = newReviewIds.slice(i, i + CONCURRENCY)
+    const results = await Promise.allSettled(
+      batch.map((id) => processReviewById(id, 'system:cron', admin)),
+    )
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        orchestrated++
+      } else {
+        console.error('[cron/sync-all] processReviewById failed:', r.reason)
+      }
+    }
   }
 
   return { imported, orchestrated }

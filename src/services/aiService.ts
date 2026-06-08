@@ -14,8 +14,7 @@
  *   {{rating}}             별점
  *
  * 사용처:
- *   - IntelligentOrchestrator  (배치/자동 처리)
- *   - /api/ai/generate-reply   (수동 단건 생성)
+ *   - /api/ai/generate-reply   (수동 단건 생성 — 레거시 수동 라우트)
  */
 
 import type { RiskKeyword, ReplyTemplate } from '@/types/database'
@@ -282,7 +281,7 @@ export function resolveTemplateVars(
 /**
  * buildSystemPrompt — 단일 진실 공급원(SSOT) 시스템 프롬프트 생성기
  *
- * IntelligentOrchestrator와 /api/ai/generate-reply 모두 이 함수를 사용합니다.
+ * /api/ai/generate-reply 에서 사용합니다.
  * 문화 프로파일과 언어 매칭된 템플릿을 주입하여 글로벌 맞춤 응대를 구현합니다.
  */
 export function buildSystemPrompt(
@@ -419,7 +418,7 @@ export interface ReviewContext {
 
 /**
  * buildUserMessage — 리뷰 컨텍스트를 AI 유저 메시지로 변환합니다.
- * IntelligentOrchestrator와 /api/ai/generate-reply 모두 사용합니다.
+ * /api/ai/generate-reply 에서 사용합니다.
  */
 export function buildUserMessage(ctx: ReviewContext): string {
   const ratingLine = ctx.rating != null ? `${ctx.rating}/5` : 'N/A'
