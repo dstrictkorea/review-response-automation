@@ -41,7 +41,7 @@ function classifyImport(d: ProcessDecision, rating: number | null, text: string)
   let status: string
   if (cls === 'EMERGENCY' || cls === 'COMPLAINT') status = 'pending_approval'
   else if (lowRating) status = 'pending_approval'
-  else if (cls === 'SAFE') status = 'ai_done'
+  else if (cls === 'SAFE' || cls === 'COMPLIMENT') status = 'ai_done'  // COMPLIMENT=고평점 건설적 피드백(정적)
   else status = 'new' // AMBIGUOUS(고별점) — 격리하지 않음
 
   // 저별점 SAFE는 칭찬 답변이 부적절하므로 정적 초안 생성을 억제(EMERGENCY 건조사과는 유지)
@@ -274,6 +274,7 @@ export async function importReviewsAction(
       branchCode:   row.effectiveBranch,
       language:     langKey(row.review_language),
       reviewerName: row.reviewer_name,
+      rating:       row.rating,   // Rating Override: 고평점 건설적 피드백 → COMPLIMENT
     })
     decisionByHash.set(row.import_hash, d)
     ciByHash.set(row.import_hash, classifyImport(d, row.rating, row.review_text ?? ''))

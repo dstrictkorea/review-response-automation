@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getBranchAccess } from '@/lib/auth/branchAccess'
 import { processReview } from '@/lib/reviewProcessor'
+import { buildStaticReply } from '@/lib/replyTemplates'
 import { refreshEngineFromDB, isUsingDefaults } from '@/lib/waterfallRegexEngine'
 import type { Language } from '@/lib/i18n'
 
@@ -28,12 +29,20 @@ export async function POST(req: NextRequest) {
   await refreshEngineFromDB(true)
   const lang = (['ko', 'en', 'ja', 'zh'].includes(body.language ?? '') ? body.language : 'ko') as Language
 
+  const ratingNum = typeof body.rating === 'number' ? body.rating : null
   const decision = processReview({
     reviewText:   text,
     branchCode:   body.branch || 'AMGN',
     language:     lang,
     reviewerName: null,
+    rating:       ratingNum,
   })
+
+  // 최종 조합 답변 전문(Full Composed Preview) — LLM 경로여도 정적 템플릿이 어떻게 조립되는지 미리보기.
+  const composedPreview = buildStaticReply(
+    { ...decision.classification, isComplaint: false, isEmergency: false },
+    { branchCode: body.branch || 'AMGN', language: lang, reviewerName: null },
+  )
 
   return NextResponse.json({
     usingDefaults:    isUsingDefaults(),  // true면 DB 미반영(하드코딩 DEFAULTS)로 동작 중
@@ -41,6 +50,7 @@ export async function POST(req: NextRequest) {
     route:            decision.route,
     requiresApproval: decision.requiresApproval,
     staticReply:      decision.staticReply,
-    rating:           typeof body.rating === 'number' ? body.rating : null,
+    composedPreview,
+    rating:           ratingNum,
   })
 }

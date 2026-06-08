@@ -125,6 +125,30 @@ const ctxKO = { branchCode: 'AMGN', language: 'ko' as const, reviewerName: '민�
   check('C10 "worth it" → SAFE (회귀 방지)', pos.classification.status === 'SAFE', pos.classification.status)
 }
 
+// ── PHASE 3 (AMLV): 지리 오진단·복합 희석·Rating Override·하드웨어 결함 엣지 케이스 ──────
+function pr(text: string, rating: number, lang: 'ko' | 'en') {
+  return processReview({ reviewText: text, branchCode: 'AMLV', language: lang, reviewerName: null, rating }).classification
+}
+{
+  // Case 1 — 영어 지리 오류 예외 (Strip ≠ trip): EMERGENCY 금지, SAFE/COMPLIMENT
+  const c1 = pr('Perfect place to escape the heat and crowds on the Strip. Definitely worth checking out.', 5, 'en')
+  check('P3-1 Strip NOT EMERGENCY', c1.status !== 'EMERGENCY', c1.status)
+  check('P3-1 status SAFE|COMPLIMENT', c1.status === 'SAFE' || c1.status === 'COMPLIMENT', c1.status)
+  // Case 2 — 한국어 이중부정(돈 아깝지 않음) + 고평점 → COMPLIMENT
+  check('P3-2 COMPLIMENT', pr('입장료가 전혀 돈 아깝지 않음. 대만족.', 4, 'ko').status === 'COMPLIMENT')
+  // Case 3 — 영어 관용구(Not bad) + 고평점 → COMPLIMENT
+  check('P3-3 COMPLIMENT', pr('Not bad, highly immersive and cinematic rooms.', 4, 'en').status === 'COMPLIMENT')
+  // Case 4 — 고평점 혼합문(사람 많음) → Rating Override → COMPLIMENT
+  check('P3-4 COMPLIMENT (rating override)', pr('미쳤다 너무 예쁨. 약간 사람이 많긴 한데 공간 디자인 최고임.', 5, 'ko').status === 'COMPLIMENT')
+  // Case 5 — 복합형 컴플레인 사수(저평점): LAYOUT_COMPLAINT 태그 + COMPLAINT
+  const c5 = pr('동선이 조금 복잡해서 불편했어요. 커플 데이트로 추천합니다.', 2, 'ko')
+  check('P3-5 LAYOUT_COMPLAINT tag', c5.tags.includes('LAYOUT_COMPLAINT'), c5.tags.join(','))
+  check('P3-5 status COMPLAINT', c5.status === 'COMPLAINT', c5.status)
+  // Case 6 — 하드웨어 장애 탐지: DISPLAY_ISSUE 태그
+  const c6 = pr('Some projectors seemed blurry or out of sync.', 1, 'en')
+  check('P3-6 DISPLAY_ISSUE tag', c6.tags.includes('DISPLAY_ISSUE'), c6.tags.join(','))
+}
+
 // ── PHASE 2: 동적 컴파일 경로 검증 (인메모리 번들 — env/DB 불필요, 결정론적) ──────
 // DB에서 받은 것과 동일한 형태의 규칙으로 applyRulesBundle → analyzeReview가 DB 규칙으로 동작하는지.
 {

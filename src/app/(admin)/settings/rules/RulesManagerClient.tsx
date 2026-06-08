@@ -30,6 +30,7 @@ interface SimResult {
   route?: string
   requiresApproval?: boolean
   staticReply?: string | null
+  composedPreview?: string | null
   classification?: {
     status: string; reason: string; tags: string[]
     isEmergency: boolean; isComplaint: boolean; isArtworkFocused: boolean
@@ -45,6 +46,7 @@ const TPL_LANGS = ['ko', 'en', 'ja', 'zh']
 const STATUS_COLOR: Record<string, string> = {
   EMERGENCY: 'bg-red-100 text-red-700', COMPLAINT: 'bg-orange-100 text-orange-700',
   AMBIGUOUS: 'bg-amber-100 text-amber-700', SAFE: 'bg-green-100 text-green-700',
+  COMPLIMENT: 'bg-teal-100 text-teal-700',
 }
 
 export default function RulesManagerClient({
@@ -151,8 +153,14 @@ export default function RulesManagerClient({
                 <div className="flex flex-wrap gap-1">
                   {(simResult.classification?.tags ?? []).map((t, i) => <span key={i} className="rounded-full bg-blue-100 text-blue-700 text-[10px] px-1.5 py-0.5">{t}</span>)}
                 </div>
-                {simResult.staticReply && (
-                  <p className="text-xs text-gray-600 whitespace-pre-wrap bg-white border border-gray-100 rounded p-2 mt-1">↳ {simResult.staticReply}</p>
+                {simResult.composedPreview && (
+                  <div className="mt-1.5">
+                    <p className="text-[10px] font-semibold text-gray-500 mb-0.5">최종 조합 답변 전문 (Full Composed Preview)</p>
+                    <p className="text-xs text-gray-700 whitespace-pre-wrap bg-white border border-gray-100 rounded p-2">{simResult.composedPreview}</p>
+                    {simResult.route === 'llm' && (
+                      <p className="text-[10px] text-amber-600 mt-0.5">※ 실제 발송은 LLM 생성문(불만/모호 케이스) — 위는 정적 템플릿 조립 미리보기입니다.</p>
+                    )}
+                  </div>
                 )}
               </div>
             )}

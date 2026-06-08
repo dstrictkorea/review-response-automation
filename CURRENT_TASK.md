@@ -8,10 +8,11 @@
 - **PHASE 3 ✅:** `/settings/rules` (admin) — rules + templates CRUD (inline) + **simulation** (`/api/admin/rules/simulate`: forces reload → real engine classify). Sidebar `nav_rules` (admin-only).
 - **PHASE 4 ✅:** cache invalidation on every write (same-instance immediate, cross-instance ≤60s); simulate endpoint + `validate-waterfall.ts` verify edited rules reflect in the engine + TDD cases pass.
 
-> Follow-ups: simulate UNSAVED edits (currently saved-then-simulate); converge legacy keyword stores (`app_settings.risk_keywords`, 005 `intent_keywords`) onto `automation_rules` + revisit their RLS-off exposure; RulesManager is Korean-first (admin tool) — i18n later if needed.
+> 🔴 PENDING (승인됨 Option A, 미완): **레거시 테이블 청산** — `bulk-process`/`re-process`/`cron/sync-all`을 신규 게이트키퍼(`reviewProcessor`)로 재배선해 `IntelligentOrchestrator`+`templateEngineService`를 미사용화한 뒤 `intent_keywords`/`review_intents`/`reply_template_variants` DROP + RLS 강화. (현재 이 3개 테이블이 templateEngine의 `detect_review_intent` RPC 경유로 **실사용 중** → 선(先)리팩토링 필수. tsc/build는 untyped 클라이언트라 DROP 시 깨짐을 못 잡으니 주의.)
+> Follow-ups: simulate UNSAVED edits (currently saved-then-simulate); converge legacy keyword stores onto `automation_rules` + revisit their RLS-off exposure; RulesManager Korean-first (i18n later).
 
 ## Just shipped (continuity only — not a log)
-- `5a07869` classification **reason display** (list + drawer) · **rating-aware** triage (AMBIGUOUS→`new`, ≤2★→isolate+suppress praise) · `not worth it` fix · `/api/review/export` (CSV/Excel, filter-aware).
+- **엔진 정밀도 (this change)**: AMLV `Strip→trip` 오진단 수정(`\btrip` 경계; migration 014로 DB EMERGENCY en도 경계 regex 교체) · **Rating Override**(별점 4·5 → `COMPLIMENT`로 완화, EMERGENCY 제외) · 복합 리뷰 희석 방지(LAYOUT/DISPLAY/DURATION/CROWD 카테고리 — 1개라도 매칭 시 COMPLAINT 확정) · `not bad`/`아깝지 않` 이중부정 · 시뮬레이터 Full Composed Preview. `analyzeReview(text, rating)`. `validate-waterfall` P3-1~6 통과.
 - `426ad16` ingestion-time deterministic classification (import → classify → route; SAFE auto-answered, no LLM at ingest).
 - `641b91c` deterministic `waterfallRegexEngine` + `reviewProcessor` + static/`replyTemplates` + `POST /api/review/generate` (gatekeeper) + `scripts/validate-waterfall.ts`.
 - `b57e7e4` admin select-all hard delete + circular-FK fix (migration 012); `2f6c1ad` archive tab/restore/safe hard-delete.

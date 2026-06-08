@@ -29,8 +29,9 @@ export function processReview(input: {
   branchCode: string
   language: Language
   reviewerName?: string | null
+  rating?: number | null
 }): ProcessDecision {
-  const classification = analyzeReview(input.reviewText ?? '')
+  const classification = analyzeReview(input.reviewText ?? '', input.rating)
   const ctx = {
     branchCode: input.branchCode,
     language: input.language,
@@ -51,6 +52,16 @@ export function processReview(input: {
       classification,
       route: 'static',
       staticReply: buildStaticReply(classification, ctx),
+      requiresApproval: false,
+    }
+  }
+
+  // COMPLIMENT(고평점 건설적 피드백) → 정적 감사 응대. Kill-switch 회피 위해 불만/긴급 플래그 끈 사본으로 조립.
+  if (classification.status === 'COMPLIMENT') {
+    return {
+      classification,
+      route: 'static',
+      staticReply: buildStaticReply({ ...classification, isComplaint: false, isEmergency: false }, ctx),
       requiresApproval: false,
     }
   }

@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     branchCode:   review.branch_code,
     language:     lang,
     reviewerName: review.reviewer_name,
+    rating:       review.rating,
   })
   const cls = decision.classification
   const now = new Date().toISOString()

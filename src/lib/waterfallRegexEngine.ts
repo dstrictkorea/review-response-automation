@@ -22,7 +22,7 @@ import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
 
-export type ReviewClass = 'SAFE' | 'COMPLAINT' | 'EMERGENCY' | 'AMBIGUOUS'
+export type ReviewClass = 'SAFE' | 'COMPLAINT' | 'EMERGENCY' | 'AMBIGUOUS' | 'COMPLIMENT'
 
 export interface WaterfallResult {
   /** 결정론적 분류 결과 */
@@ -48,11 +48,15 @@ export interface WaterfallResult {
 //  ※ DEFAULT_EMERGENCY 는 안전 불변. DB EMERGENCY 행은 compileEmergency 에서 '추가'만 됨(약화 불가).
 // ════════════════════════════════════════════════════════════════════════════════
 
+// ★ AMLV 'Strip' 오진단 수정: 비앵커 'trip'이 "Strip"(S+trip)을 매칭하던 결함 → \btrip.
+//   'sue'(issue/tissue), 'fell'(fellow) 등 짧은 영문도 \b 경계로 묶어 부분일치 오탐 제거.
+//   한국어 그룹은 부분일치 문제 없음. 'cop'(copy)은 노이즈로 제거.
 const DEFAULT_EMERGENCY =
-  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불)|(hurt|injur|fell|trip|bleed|hospital|911|paramedic|dizzy|nausea|vomit|puke|seizure|epilepsy|lost|missing|stolen|police|cop|sue|lawyer|attorney|lawsuit|refund|compensat|chargeback)/i
+  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불)|\b(?:hurt|injur\w*|fell|bleed\w*|hospital|paramedic|dizzy|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|sue|sued|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback)\b|\b911\b|\btrip(?:ped|ping|s)?\b|\b(?:lost|missing)\b/i
 
+// 'bad'는 부정이지만 "not bad"(긍정 관용구)는 제외 (?<!not\s).
 const DEFAULT_COMPLAINT =
-  /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무)|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue)|not\s*worth|overrated)/i
+  /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무)|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue)|not\s*worth|overrated)|(?<!not\s)\bbad\b/i
 
 const DEFAULT_CHURN =
   /(다시는|두번\s*다시는)\s*(안\s*올|안\s*갈)|(never\s*again|never\s*com|won[''’]?t\s*be\s*back|won[''’]?t\s*return|wouldn[''’]?t\s*recommend|not\s*recommend|do\s*not\s*go|skip\s*this|regret)/i
@@ -65,7 +69,7 @@ const DEFAULT_FUTURE_HOPE =
 
 // 주의: 'worth it'(긍정)은 DEFAULT_POSITIVE가 처리. 'not worth it'(부정) 오인복구 방지 위해 여기서 제외.
 const DEFAULT_SARCASM =
-  /(안\s*아깝|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
+  /(안\s*아깝|아깝지\s*않|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
 const DEFAULT_POSITIVE =
   /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*it)/i
@@ -76,6 +80,17 @@ const DEFAULT_QUESTION =
 const DEFAULT_ARTWORK =
   /(작품|전시|몰입|미디어\s*아트|미디어아트|예술|아트)|(immersive|\bart(?:s|work)?\b|exhibition|installation|media\s*art)/i
 
+// ── 현장 운영 중심 컴플레인 (복합 리뷰 의미 희석 방지: 1개라도 매칭 시 COMPLAINT 확정) ──
+// (?<!안\s) — "동선이 안 복잡"(부정) 등 회피. [^.!?\n]{0,N} — 문장 범위 내 근접 매칭.
+const DEFAULT_LAYOUT =
+  /(?<!안\s)동선[^.!?\n]{0,12}(복잡|불편|엉망|얽|헷갈)|hard\s*to\s*navigate|confusing\s*(layout|flow|path)|maze[-\s]?like/i
+const DEFAULT_DISPLAY =
+  /(?<!안\s)(영상[^.!?\n]{0,8}(흐릿|흐림|깨)|화질[^.!?\n]{0,6}(별로|구림|나쁨|저하|문제)|디스플레이[^.!?\n]{0,6}(고장|문제))|blurry|out\s*of\s*sync|low\s*resolution|projector[^.!?\n]{0,14}(blurry|broken|off|sync|issue)/i
+const DEFAULT_DURATION =
+  /(?<!안\s)(규모[^.!?\n]{0,6}작|금방\s*끝|너무\s*짧|관람\s*시간[^.!?\n]{0,8}짧)|shorter\s*than\s*advertised|too\s*short/i
+const DEFAULT_CROWD =
+  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡)|overcrowded|too\s*crowded|packed\s*with\s*people/i
+
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
 // ════════════════════════════════════════════════════════════════════════════════
@@ -83,12 +98,14 @@ const DEFAULT_ARTWORK =
 interface Compiled {
   emergency: RegExp; complaint: RegExp; churn: RegExp; repeat: RegExp
   futureHope: RegExp; sarcasm: RegExp; positive: RegExp; question: RegExp; artwork: RegExp
+  layout: RegExp; display: RegExp; duration: RegExp; crowd: RegExp
 }
 
 const DEFAULTS: Compiled = {
   emergency:  DEFAULT_EMERGENCY,  complaint: DEFAULT_COMPLAINT, churn: DEFAULT_CHURN,
   repeat:     DEFAULT_REPEAT,     futureHope: DEFAULT_FUTURE_HOPE, sarcasm: DEFAULT_SARCASM,
   positive:   DEFAULT_POSITIVE,   question: DEFAULT_QUESTION, artwork: DEFAULT_ARTWORK,
+  layout:     DEFAULT_LAYOUT,     display: DEFAULT_DISPLAY, duration: DEFAULT_DURATION, crowd: DEFAULT_CROWD,
 }
 
 let COMPILED: Compiled = { ...DEFAULTS }
@@ -139,6 +156,10 @@ export function applyRulesBundle(bundle: RulesBundle | null): void {
     positive:   compileCategory(byCat('POSITIVE'),    DEFAULT_POSITIVE),
     question:   compileCategory(byCat('QUESTION'),    DEFAULT_QUESTION),
     artwork:    compileCategory(byCat('ARTWORK'),     DEFAULT_ARTWORK),
+    layout:     compileCategory(byCat('LAYOUT_COMPLAINT'),   DEFAULT_LAYOUT),
+    display:    compileCategory(byCat('DISPLAY_ISSUE'),      DEFAULT_DISPLAY),
+    duration:   compileCategory(byCat('DURATION_COMPLAINT'), DEFAULT_DURATION),
+    crowd:      compileCategory(byCat('CROWD_COMPLAINT'),    DEFAULT_CROWD),
   }
   appliedLoadedAt = bundle.loadedAt
 }
@@ -165,8 +186,9 @@ function dedupe(arr: string[]): string[] {
 /**
  * analyzeReview — 폭포수 분류 (순수 함수, 부작용 없음).
  * @param rawText 리뷰 원문
+ * @param rating  별점(옵션). 4·5점이면 EMERGENCY가 아닌 한 COMPLAINT를 COMPLIMENT로 완화(Rating Override).
  */
-export function analyzeReview(rawText: string): WaterfallResult {
+export function analyzeReview(rawText: string, rating?: number | null): WaterfallResult {
   const text = (rawText ?? '').replace(/\s+/g, ' ').trim()
   const C = COMPILED  // 현재 적용된 컴파일 규칙 스냅샷(분석 도중 교체 방지)
 
@@ -198,12 +220,13 @@ export function analyzeReview(rawText: string): WaterfallResult {
   let isRepeatVisitor = false
   let isChurnRisk = false
 
-  // ── Layer 1: 운영 불만 ──────────────────────────────────────────────────────────
-  if (C.complaint.test(text)) {
-    isComplaint = true
-    isArtworkFocused = false
-    tags.push('운영불만')
-  }
+  // ── Layer 1: 운영 불만 (일반 + 현장 운영 세부) — 1개라도 매칭 시 COMPLAINT 확정(복합 희석 방지) ──
+  if (C.complaint.test(text)) { isComplaint = true; tags.push('운영불만') }
+  if (C.layout.test(text))    { isComplaint = true; tags.push('LAYOUT_COMPLAINT') }
+  if (C.display.test(text))   { isComplaint = true; tags.push('DISPLAY_ISSUE') }
+  if (C.duration.test(text))  { isComplaint = true; tags.push('DURATION_COMPLAINT') }
+  if (C.crowd.test(text))     { isComplaint = true; tags.push('CROWD_COMPLAINT') }
+  if (isComplaint) isArtworkFocused = false
 
   // ── Layer 2: 재방문 / 이탈 (2-A → 2-B → 2-C 우선순위) ───────────────────────────
   if (C.churn.test(text)) {
@@ -238,16 +261,25 @@ export function analyzeReview(rawText: string): WaterfallResult {
   let requiresLLM: boolean
   let reason: string
 
+  // ── Rating Override — 고평점(4·5점)은 EMERGENCY가 아닌 한 건설적 피드백(COMPLIMENT)으로 완화 ──
+  const ratingHigh = typeof rating === 'number' && rating >= 4
+
   if (isComplaint) {
-    status = 'COMPLAINT'
-    requiresLLM = true
-    reason = '운영/서비스 불만 감지 → LLM 공감 사과문(STANDARD)'
+    if (ratingHigh) {
+      status = 'COMPLIMENT'
+      requiresLLM = false
+      reason = '고평점(4·5점) 건설적 피드백 — Rating Override로 완화(정적 응대)'
+    } else {
+      status = 'COMPLAINT'
+      requiresLLM = true
+      reason = '운영/서비스 불만 감지 → LLM 공감 사과문(STANDARD)'
+    }
   } else if (hasPositive && !isQuestion) {
-    status = 'SAFE'
+    status = ratingHigh ? 'COMPLIMENT' : 'SAFE'
     requiresLLM = false
     reason = isArtworkFocused
       ? '작품 중심 긍정 리뷰 → 정적 템플릿(ETERNAL NATURE)'
-      : '일반 긍정 리뷰 → 정적 감사 템플릿'
+      : ratingHigh ? '고평점 긍정 리뷰 → COMPLIMENT(정적 감사)' : '일반 긍정 리뷰 → 정적 감사 템플릿'
   } else {
     status = 'AMBIGUOUS'
     requiresLLM = true
