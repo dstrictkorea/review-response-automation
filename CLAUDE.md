@@ -36,6 +36,7 @@ Humans approve every reply before it goes public.
 - Never promise staff punishment
 - High-risk reviews (legal threats, severe complaints) must be flagged and require explicit human approval
 - Every important action (registration, approval, publish, archive) must be logged with timestamp and user
+- **RLS STEP B GATED**: do NOT apply `supabase/gated/rbac_rls_step_b.sql` until explicit "RLS 락 해제" approval
 
 ## Design
 
@@ -44,3 +45,34 @@ Humans approve every reply before it goes public.
 - High contrast text — no pale gray on light backgrounds
 - Desktop-first layout, must also be usable on mobile
 - Admin-facing only — no public-facing pages
+
+---
+
+## Compact Instructions
+
+When compacting, preserve:
+- Current task objective and exact completion status (which phase/step is done)
+- File paths and function/export names touched this session
+- Error messages and their root-cause fixes
+- All Safety Rules above verbatim
+- RLS gate status and any pending migration blockers
+- Staged/committed git state (what was pushed, what is pending)
+
+Discard: exploratory reasoning chains, superseded code attempts, raw tool output logs, re-read file contents.
+
+## Session Management
+
+- Run `/compact` after **each completed phase** — do not wait for auto-compaction
+- Run `/compact` when context hits **~50%** (check with `/usage`)
+- Run `/clear` when switching to a completely unrelated task; use `/rename` first so session is resumable via `/resume`
+- Run `/usage` before starting any large multi-file operation to baseline token burn
+- Between unrelated tasks: `/clear` > stacking context on dead history
+
+## Model & Prompt Discipline
+
+- **Default model: Sonnet.** Switch to Opus only for architecture decisions or cross-file reasoning requiring deep multi-step inference.
+- **Always specify exact paths**: `src/lib/waterfallRegexEngine.ts:analyzeReview()` not "the analysis function"
+- **Use plan mode** (Shift+Tab) before any multi-file refactor — prevents expensive wrong-direction runs
+- **Press Escape immediately** if output is going the wrong direction; use `/rewind` to checkpoint-restore
+- Keep prompts ≤ 3 sentences; include a verification target (test name, expected output, build status)
+- Never ask to "review the whole codebase" — scope to specific files or exports
