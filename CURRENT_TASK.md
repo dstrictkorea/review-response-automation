@@ -1,26 +1,26 @@
 # CURRENT_TASK.md — Active execution context
-> Updated 2026-06-04. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
+> Updated 2026-06-08. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: DB-driven dynamic rules engine** — hardcoded regexes externalized to DB; CS staff edit rules with no deploy. **EMERGENCY layer stays hardcoded immutable** (DECISIONS #11).
-- **PHASE 1 ✅:** `automation_rules` + `response_templates` (migration 013, RLS on, seeded) + `rulesCache.ts` (TTL 60s + `invalidateRulesCache()`) + `GET/POST/DELETE /api/admin/rules` (admin CRUD, regex validity, cache invalidation, activity-logged).
-- **PHASE 2 ✅:** `waterfallRegexEngine` = DynamicEngine — `DEFAULT_*` immutable baseline + `applyRulesBundle()` compiles DB rules at runtime; `refreshEngineFromDB()` (dynamic import keeps admin client off the static graph) called once/request in import + generate; `analyzeReview` stays sync (snapshots COMPILED). EMERGENCY = base ∪ DB (additive, proven immutable). DB-compile validation passes.
-- **PHASE 3 ✅:** `/settings/rules` (admin) — rules + templates CRUD (inline) + **simulation** (`/api/admin/rules/simulate`: forces reload → real engine classify). Sidebar `nav_rules` (admin-only).
-- **PHASE 4 ✅:** cache invalidation on every write (same-instance immediate, cross-instance ≤60s); simulate endpoint + `validate-waterfall.ts` verify edited rules reflect in the engine + TDD cases pass.
+**✅ EPIC COMPLETE: 레거시 청산 + 단일 결정론적 파이프라인** — `IntelligentOrchestrator` + `templateEngineService` 완전 제거, 레거시 3개 테이블 DROP, 신규 `processReviewById` 공통 헬퍼로 전 배치 파이프라인 통합.
+- **PHASE 1 ✅:** `src/lib/processReviewById.ts` 신규 — admin-context 단일 리뷰 처리. `reviewProcessor` + `WaterfallRegexEngine` 기반 결정론적 게이트키퍼. `bulk-process` / `re-process` / `cron/sync-all` 재배선 완료. `rating` 전달 → Rating Override 정상 작동.
+- **PHASE 2 ✅:** 의존성 0% 검증 완료. `IntelligentOrchestrator.ts` + `templateEngineService.ts` 삭제. `i18n/index.ts` 레거시 이름 4개국어 정리. JSDoc 위생 처리.
+- **PHASE 3 ✅:** `migration 015_legacy_purge.sql` — `reply_template_variants` / `intent_keywords` / `detect_review_intent()` / `review_intents` DROP. `automation_rules` + `response_templates` RLS authenticated-SELECT-only 재확인. 라이브 DB 적용 완료.
+- `tsc 0 에러` · `Next.js build 전 라우트 정상` · `git 9019334` · Vercel 자동 배포 진행 중.
 
-> 🔴 PENDING (승인됨 Option A, 미완): **레거시 테이블 청산** — `bulk-process`/`re-process`/`cron/sync-all`을 신규 게이트키퍼(`reviewProcessor`)로 재배선해 `IntelligentOrchestrator`+`templateEngineService`를 미사용화한 뒤 `intent_keywords`/`review_intents`/`reply_template_variants` DROP + RLS 강화. (현재 이 3개 테이블이 templateEngine의 `detect_review_intent` RPC 경유로 **실사용 중** → 선(先)리팩토링 필수. tsc/build는 untyped 클라이언트라 DROP 시 깨짐을 못 잡으니 주의.)
-> Follow-ups: simulate UNSAVED edits (currently saved-then-simulate); converge legacy keyword stores onto `automation_rules` + revisit their RLS-off exposure; RulesManager Korean-first (i18n later).
+> 이전 DB-driven dynamic engine EPIC (migration 013–014, `rulesCache`, `/api/admin/rules` CRUD, `/settings/rules`, 시뮬레이터, AMLV 오진단 수정, Rating Override, LAYOUT/DISPLAY/DURATION/CROWD 카테고리, `validate-waterfall` 44+ 케이스) 모두 ✅.
 
 ## Just shipped (continuity only — not a log)
-- **엔진 정밀도 (this change)**: AMLV `Strip→trip` 오진단 수정(`\btrip` 경계; migration 014로 DB EMERGENCY en도 경계 regex 교체) · **Rating Override**(별점 4·5 → `COMPLIMENT`로 완화, EMERGENCY 제외) · 복합 리뷰 희석 방지(LAYOUT/DISPLAY/DURATION/CROWD 카테고리 — 1개라도 매칭 시 COMPLAINT 확정) · `not bad`/`아깝지 않` 이중부정 · 시뮬레이터 Full Composed Preview. `analyzeReview(text, rating)`. `validate-waterfall` P3-1~6 통과.
-- `426ad16` ingestion-time deterministic classification (import → classify → route; SAFE auto-answered, no LLM at ingest).
-- `641b91c` deterministic `waterfallRegexEngine` + `reviewProcessor` + static/`replyTemplates` + `POST /api/review/generate` (gatekeeper) + `scripts/validate-waterfall.ts`.
-- `b57e7e4` admin select-all hard delete + circular-FK fix (migration 012); `2f6c1ad` archive tab/restore/safe hard-delete.
+- `9019334` **레거시 청산**: `processReviewById.ts` 신규 · bulk/re-process/cron 재배선 · `IntelligentOrchestrator`+`templateEngineService` 삭제 · migration 015 DROP 3 tables · RLS 재확인.
+- `f5842a0` 엔진 정밀도: AMLV Strip→trip 수정 · Rating Override · LAYOUT/DISPLAY/DURATION/CROWD · `validate-waterfall` P3-1~6 · 시뮬레이터 Full Composed Preview.
+- `426ad16` ingestion-time 분류 (import → classify → route; SAFE 자동 응답, LLM 미사용).
+- `641b91c` deterministic `waterfallRegexEngine` + `reviewProcessor` + `POST /api/review/generate`.
+- `b57e7e4` admin select-all hard delete + circular-FK fix (migration 012); `2f6c1ad` archive tab/restore.
 
 ## ⏭️ Known follow-ups (intentional scope boundaries)
-- Detail page `/reviews/[id]` + legacy `/api/ai/generate-reply` + `IntelligentOrchestrator` still use short/careful variants + unconditional LLM → converge onto the deterministic gatekeeper + STANDARD tone.
-- Two engines coexist (`IntelligentOrchestrator` bulk-process vs `reviewProcessor`) — converge.
-- Legacy keyword/template stores (`app_settings.risk_keywords`, migration-005 `intent_keywords`/`reply_template_variants`, **RLS-off**) → converge onto `automation_rules`/`response_templates` + revisit their RLS exposure.
+- Detail page `/reviews/[id]` + legacy `/api/ai/generate-reply`: 여전히 short/careful 변형 + 무조건 LLM 사용 → 결정론적 게이트키퍼로 수렴 필요(별도 태스크).
+- `app_settings.risk_keywords` (RLS-off 레거시 키워드 설정): `automation_rules`로 수렴 권장.
+- `risk_level` 정렬이 텍스트 순(lexical) — severity 순이 아님(Med 잠재 버그): DB ordinal 또는 computed rank 필요.
 
 ## 🔒 Active locks / blockers (read before any DB or auth work)
 - **RLS STEP B is GATED.** `supabase/gated/rbac_rls_step_b.sql` must **NOT** be applied to live DB, and must NOT be moved into `supabase/migrations/`, until ALL of:
@@ -31,12 +31,13 @@
 - App-layer branch scoping (`lib/auth/branchAccess.ts`) is the **current** enforcement; it is fail-closed (empty branches ⇒ no access) and must remain until RLS is live.
 
 ## Next candidate tasks (priority order — none started)
-1. **Doc sync (High):** add the 3 shipped features to `docs/ARCHITECTURE.md` (route list + ingestion/triage + sort). Slim `PROJECT_STATE.md` to North Star + 1-line CHANGELOG + open-issues table (move verbose wave prose to git history).
-2. **Archive the planning tree (High):** mark/relocate `00_`–`12_` (102 files) as `archive/` or add `.aiignore` so scans/globs skip them. Biggest single token-waste source.
-3. **`risk_level` sort is lexical, not severity-ranked (Med — latent bug):** `reviews/page.tsx` orders `risk_level` as text → `critical, high, low, normal` instead of severity order. Needs a CASE/severity map (DB ordinal column or `order` on a computed rank). Same class as the date-sort bug already fixed. Do NOT fix during this audit.
-4. **`assigned_branches` backfill (High — unblocks RLS):** populate `profiles.assigned_branches` for all staff, verify admin role. Precondition for unlocking RLS STEP B.
-5. **Dashboard widget (Med, architect suggestion from triage work):** LLM-cost vs algorithm-defense-rate (template-handled %) using `reply_drafts.pipeline_engine` telemetry. Surfaces the cost saved by Algorithm-First.
-6. **Bulk-process progress UX (Low):** the self-advancing loop reports `{processed, remaining, done}`; ensure a progress toast and a stop control exist in `ReviewsListClient.tsx`.
+1. **`assigned_branches` backfill (High — unblocks RLS):** populate `profiles.assigned_branches` for all staff, verify admin role. Precondition for unlocking RLS STEP B.
+2. **Doc sync (High):** add shipped features to `docs/ARCHITECTURE.md` (migration table 015, route list, processReviewById). Slim `PROJECT_STATE.md`.
+3. **Archive the planning tree (High):** mark/relocate `00_`–`12_` (102 files) as `archive/` or add `.aiignore` so scans/globs skip them. Biggest single token-waste source.
+4. **`risk_level` sort (Med — latent bug):** `reviews/page.tsx` orders `risk_level` as text → severity rank needed (CASE/ordinal). Same class as date-sort bug already fixed.
+5. **Dashboard widget (Med):** LLM-cost vs algorithm-defense-rate (template-handled %) using `reply_drafts.pipeline_engine` telemetry.
+6. **Bulk-process progress UX (Low):** ensure progress toast + stop control exist in `ReviewsListClient.tsx`.
+7. **`/reviews/[id]` + `/api/ai/generate-reply` 수렴 (Low):** short/careful 변형 제거, `processReviewById` 결정론적 게이트키퍼로 단일화.
 
 ## Do NOT touch / out of scope (guardrails)
 - Do NOT build: GBP/Naver/TripAdvisor **auto-posting**, full enterprise RBAC, PDF report generation, Slack/email automation, any **automatic public posting**.
@@ -49,6 +50,3 @@
 - [ ] `npm run lint` = 0  •  [ ] `npm run build` = 0
 - [ ] DB change applied via Supabase MCP (`vmrvyqqlebviaczsgapn`) **and** committed as a `supabase/migrations/NNN_*.sql` file — update the table in `CLAUDE_CONTEXT.md` §4
 - [ ] Commit + `git push origin main` **only when the user asks** → Vercel auto-deploys
-
-## This audit task (in progress)
-Producing exactly four files — `REPORT.md`, `CURRENT_TASK.md`, `DECISIONS.md`, `CLAUDE_CONTEXT.md`. Read-only: no code/doc edits, no commits, no PRs, no package installs. The trailing `[지령: {작업명 요약}]` block in the request is a **placeholder template**, not an executable task.
