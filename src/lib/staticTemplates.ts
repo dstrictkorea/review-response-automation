@@ -212,10 +212,14 @@ export function slotB_acknowledgment(lang: Language, idx = 0): string {
       '말씀 주신 부분, 저희가 직접 챙기겠습니다.',
     ],
     en: [
-      'We take your feedback seriously, and a member of our team will review it promptly and follow up with care.',
-      'Your feedback has been noted. Our team will address your concerns right away to ensure this does not happen again.',
-      'We value your honest feedback and will take immediate steps to improve the experience going forward.',
-      'We will carefully review your feedback and ensure it is reflected in meaningful service improvements.',
+      'We hear you, and this has been passed to our team for immediate review.',
+      'Your feedback has been noted — our on-site team will address this directly so it does not happen again.',
+      'This is exactly the kind of feedback we need. We will act on it right away.',
+      'Thank you for taking the time to let us know. Our team is looking into it now.',
+      'Noted — we will make sure this reaches the right people today.',
+      'We take this seriously and will follow up internally to prevent a recurrence.',
+      'Your honest feedback helps us get better. We are on it.',
+      'This is being reviewed by our team. We appreciate you telling us.',
     ],
     ja: [
       '頂いたご意見を重く受け止め、担当者が速やかに確認のうえ、誠心誠意ご案内いたします。',
@@ -440,15 +444,15 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   DURATION_COMPLAINT: {
     ko: [
-      '관람 시간이 기대에 미치지 못하셨다는 말씀을 귀담아듣겠습니다. 콘텐츠 구성을 지속적으로 발전시키겠습니다.',
-      '전시 규모나 소요 시간에 대한 아쉬움을 진심으로 받아들이겠습니다. 더욱 다양하고 풍부한 콘텐츠로 보답하겠습니다.',
-      '관람 분량에 관한 솔직한 피드백 감사합니다. 콘텐츠 확장 계획을 지속적으로 추진하겠습니다.',
-      '전시 볼륨에 대한 의견을 무겁게 받아들이고, 체험 콘텐츠를 단계적으로 확충하겠습니다.',
+      '티켓 가격 대비 관람 분량이 짧게 느껴지셨다는 말씀 충분히 이해합니다. 체험 구역을 지속적으로 확장하여 더 풍부한 시간을 드리겠습니다.',
+      '관람에 드신 시간이 기대보다 짧으셨군요. 콘텐츠와 인터랙티브 존을 단계적으로 확충해 가겠습니다.',
+      '전시 규모에 대한 솔직한 의견 감사드립니다. 새로운 공간과 콘텐츠를 지속적으로 추가하여 방문 가치를 높여 나가겠습니다.',
+      '관람 볼륨에 대한 소중한 의견 잘 받았습니다. 체험 콘텐츠 확장 계획을 가속화하겠습니다.',
     ],
     en: [
-      'We appreciate your honest feedback about the exhibition length. We are working to expand and enrich our content.',
-      'Thank you for sharing your thoughts on the duration. Expanding our content offerings is a key commitment going forward.',
-      'Thank you for your candid feedback on the content volume. We will continue pursuing our content expansion plan.',
+      'We hear you — the exhibition felt shorter than expected for the ticket price. We are actively expanding our experience zones to offer more for your visit.',
+      'Thank you for your candid feedback on the content volume. We will continue adding new zones and interactive elements to make each visit feel more complete.',
+      'We appreciate your honest take on the exhibition length. Expanding our content offerings is a key priority, and we hope to offer you a fuller experience next time.',
       'We take your comments on exhibition volume seriously and will expand experiential content incrementally.',
     ],
     ja: [
@@ -551,10 +555,10 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '고객 응대 품질에 대한 우려를 주셔서 감사합니다. 현장 CS 매니저가 즉각적인 개선 조치를 취하겠습니다.',
     ],
     en: [
-      'We sincerely apologize for the poor staff interaction you experienced. Our CS manager will immediately review this and reinforce staff training.',
-      'Thank you for your candid feedback on our staff. We will immediately re-evaluate our customer service training to prevent a recurrence.',
-      'We apologize for the staff attitude that fell short of our standards. We are committed to ensuring all staff provide friendly and professional service.',
-      'Thank you for raising this concern. Our on-site CS manager will take immediate corrective action.',
+      'That should not have happened. Our CS manager will speak directly with the team today.',
+      'We are sorry your interaction with our staff fell short — this will be reviewed and addressed right away.',
+      'Thank you for telling us. Staff conduct like this is not acceptable, and we will act on it.',
+      'We hear you, and your experience has been flagged for our operations team to handle directly.',
     ],
     ja: [
       'スタッフの対応でご不快をおかけし、誠に申し訳ございません。CSマネージャーが直ちに内容を確認し、スタッフ教育の強化に取り組みます。',

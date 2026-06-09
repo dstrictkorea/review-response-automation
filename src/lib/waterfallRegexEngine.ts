@@ -63,7 +63,7 @@ const DEFAULT_EMERGENCY =
 
 // 'bad'는 부정이지만 "not bad"(긍정 관용구)는 제외 (?<!not\s).
 const DEFAULT_COMPLAINT =
-  /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무)|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue)|not\s*worth|overrated)|(?<!not\s)\bbad\b/i
+  /(불친절|짜증|최악|실망|돈\s*아깝|바가지|시장통|도떼기|더럽|냄새|의자\s*없|주차\s*불편|대기\s*너무|위생[^.!?\n]{0,15}(?:불량|문제|엉망|불결|못\s*따라|수준\s*못|아쉬|나쁘|불만)|화장실[^.!?\n]{0,15}(?:더럽|냄새|지저분|청소|불결|위생)|끈적|환기\s*(?:안|불량)|에어컨\s*(?:고장|꺼|없))|(rude|attitude|unprofessional|worst|disappoint|rip\s*off|waste\s*of|overprice|scam|packed|crowded|zoo|messy|dirty|filthy|smell|stink|no\s*seat|nowhere\s*to\s*sit|parking|long\s*(line|wait|queue)|not\s*worth|overrated|no\s*air\s*(?:con|conditioning)|unbearably\s*hot|sweltering|ac\s*(?:broken|off|wasn[''']?t\s*working)|stuffy|poor\s*ventilation|ruined\s*by|restroom[^.!?\n]{0,8}(?:dirty|disgusting|filthy|unclean))|(?<!not\s)\bbad\b/i
 
 const DEFAULT_CHURN =
   /(다시는|두번\s*다시는)\s*(안\s*올|안\s*갈)|(never\s*again|never\s*com|won[''’]?t\s*be\s*back|won[''’]?t\s*return|wouldn[''’]?t\s*recommend|not\s*recommend|do\s*not\s*go|skip\s*this|regret)/i
@@ -79,7 +79,7 @@ const DEFAULT_SARCASM =
   /(안\s*아깝|아깝지\s*않|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
 const DEFAULT_POSITIVE =
-  /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷|괜찮|힐링|몰입|감격|기대\s*이상|기대\s*그\s*이상|재밌|재미있|신기|신선|특별|설레)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*(?:it|checking\s*out)|good\s*location|healing|immersive|relaxing)/i
+  /(완벽|오아시스|대박|100점|200점|좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷|괜찮|힐링|몰입|감격|기대\s*이상|기대\s*그\s*이상|재밌|재미있|신기|신선|특별|설레)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*(?:it|checking\s*out)|good\s*location|healing|immersive|relaxing|must[- ]?see|must[- ]?visit|pretty|charming|lovely|breathtaking|mesmerizing|outstanding|exceptional|superb|delightful)/i
 
 const DEFAULT_QUESTION =
   /[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)/i
@@ -90,13 +90,13 @@ const DEFAULT_ARTWORK =
 // ── 현장 운영 중심 컴플레인 (복합 리뷰 의미 희석 방지: 1개라도 매칭 시 COMPLAINT 확정) ──
 // (?<!안\s) — "동선이 안 복잡"(부정) 등 회피. [^.!?\n]{0,N} — 문장 범위 내 근접 매칭.
 const DEFAULT_LAYOUT =
-  /(?<!안\s)동선[^.!?\n]{0,12}(복잡|불편|엉망|얽|헷갈)|hard\s*to\s*navigate|confusing\s*(layout|flow|path)|maze[-\s]?like/i
+  /(?<!안\s)동선[^.!?\n]{0,12}(복잡|불편|엉망|얽|헷갈)|표지판[^.!?\n]{0,8}(?:없|부족|안\s*보|미흡|제로)|안내[^.!?\n]{0,8}(?:없음|부족|미흡|미비)|길\s*(?:찾기|찾다)[^.!?\n]{0,10}(?:힘들|어렵|헷갈|못|30분|한참)|입구[^.!?\n]{0,10}(?:못\s*찾|안\s*보|헷갈)|hard\s*to\s*navigate|confusing\s*(layout|flow|path)|maze[-\s]?like|no\s*(?:signs?|signage)\b|signs?\s*(?:are\s*)?(?:missing|unclear|non[- ]?existent|nowhere)|couldn[''']?t\s*find\s*(?:the\s+)?(?:entrance|exit|way)/i
 const DEFAULT_DISPLAY =
   /(?<!안\s)(영상[^.!?\n]{0,8}(흐릿|흐림|깨)|화질[^.!?\n]{0,6}(별로|구림|나쁨|저하|문제)|디스플레이[^.!?\n]{0,6}(고장|문제))|blurry|out\s*of\s*sync|low\s*resolution|projector[^.!?\n]{0,14}(blurry|broken|off|sync|issue)/i
 const DEFAULT_DURATION =
   /(?<!안\s)(규모[^.!?\n]{0,6}작|금방\s*끝|너무\s*짧|관람\s*시간[^.!?\n]{0,8}짧)|shorter\s*than\s*advertised|too\s*short/i
 const DEFAULT_CROWD =
-  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡|입장\s*대기[^.!?\n]{0,10}(?:길|오래|너무|줄|지쳤|힘들|불편)|대기\s*(?:시간이|가)\s*(?:길었|오래|너무|길어|좀)|줄이?\s*(?:너무\s*)?길(?:어서|었)|오래\s*기다(?:렸|려야))|overcrowded|too\s*crowded|packed\s*with\s*people/i
+  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡|입장\s*대기[^.!?\n]{0,10}(?:길|오래|너무|줄|지쳤|힘들|불편)|대기\s*(?:시간이|가)\s*(?:길었|오래|너무|길어|좀)|줄이?\s*(?:너무\s*)?길(?:어서|었)|오래\s*기다(?:렸|려야)|통로[^.!?\n]{0,12}(?:막|서서|지나갈\s*수\s*없)|틱톡\s*(?:춤|촬영|찍)|관람객\s*통제[^.!?\n]{0,8}(?:안\s*됨|전혀|없음|불가|안\s*되)|플래시[^.!?\n]{0,10}(?:터트|남발|막지|통제))|overcrowded|too\s*crowded|packed\s*with\s*people|crowd\s*(?:management|control)\s*(?:is\s*)?(?:non[- ]?existent|terrible|absent|lacking|poor)|people\s*(?:were\s*)?(?:push|pushing|bumping|shoving)|no\s*crowd\s*control/i
 
 // AMLV 보강: 인터랙티브 부족 (센서/체험 불만) + 가격 불만
 const DEFAULT_INTERACTIVE =
@@ -118,7 +118,7 @@ const DEFAULT_ROOM_SPECIFIC =
 
 // SYSTEM_COMPLAINT: 키오스크·앱·예약·입장 시스템 오류 (슬롯 C → 기술팀 즉시 조치 약속)
 const DEFAULT_SYSTEM_COMPLAINT =
-  /(?<!안\s*)(키오스크[^.!?\n]{0,10}(?:오류|고장|안\s*됨|에러|먹통))|(?:예약|입장)\s*시스템[^.!?\n]{0,10}(?:오류|문제|실패|먹통)|kiosk[^.!?\n]{0,20}(?:broken|error|didn[''']?t\s*work|froze|crashed|failed)|(?:booking|ticket)[^.!?\n]{0,20}(?:system[^.!?\n]{0,10}failed|didn[''']?t\s*work)|app\s*(?:crashed|froze|didn[''']?t\s*work)/i
+  /(?<!안\s*)(키오스크[^.!?\n]{0,10}(?:오류|고장|안\s*됨|에러|먹통))|(?:예약|입장)\s*시스템[^.!?\n]{0,10}(?:오류|문제|실패|먹통)|(?:티바|티바\s*테이블)[^.!?\n]{0,15}(?:더럽|안\s*닦|끈적|위생|냄새|불결)|kiosk[^.!?\n]{0,20}(?:broken|error|didn[''']?t\s*work|froze|crashed|failed)|(?:booking|ticket)[^.!?\n]{0,20}(?:system[^.!?\n]{0,10}failed|didn[''']?t\s*work)|app\s*(?:crashed|froze|didn[''']?t\s*work)|(?:tea\s*bar\s*(?:table|counter|surface)?)[^.!?\n]{0,15}(?:dirty|sticky|unclean|hygiene|grimy)/i
 
 // REVISIT_COMPLAINT: 재방문 실망 패턴 (단순 재방문 언급과 달리 부정 비교 맥락 포함)
 const DEFAULT_REVISIT_COMPLAINT =
@@ -127,7 +127,7 @@ const DEFAULT_REVISIT_COMPLAINT =
 // STAFF_COMPLAINT: 직원 태도/응대 불만 (위험도 medium 격상 — processReviewById의 COMPLAINT → medium이 자동 처리)
 // 싸가지없음/직원최악 등 슬랭 포함: Tier 1 sanitizer와 협력 — 탐지는 여기서, 순화는 sanitizeAndScoreRisk
 const DEFAULT_STAFF_COMPLAINT =
-  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증|싸가지|ㅂ[ㅅ이]\s*짓|개\s*같))|(?:직원|스태프)\s*(?:최악|꼰대|개판)|(?:staff|employee|worker|guard|host|cashier)[^.!?\n]{0,20}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|had\s+(?:an?\s+)?attitude)/i
+  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증|싸가지|ㅂ[ㅅ이]\s*짓|개\s*같|폰\s*만\s*봄|핸드폰[^.!?\n]{0,6}봄))|(?:직원|스태프)\s*(?:최악|꼰대|개판)|직원[^.!?\n]{0,15}(?:질문|대답)[^.!?\n]{0,8}(?:안\s*하|무시|없이|모르쇠)|(?:staff|employee|worker|guard|host|cashier|server)[^.!?\n]{0,30}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|had\s+(?:an?\s+)?attitude|(?:told|asked|made)\s+(?:us|me)\s+(?:to\s+)?(?:move|keep\s+moving|leave|hurry|rush)|rushed?\s+(?:us|me)|threw?\s+(?:our|my|the)\s+(?:cups?|drinks?|items?|things?))|(?:tea\s*bar)[^.!?\n]{0,20}(?:rude|불친절|무례|unfriendly)/i
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
@@ -325,8 +325,12 @@ export function analyzeReview(
   }
 
   // ── Layer 3: 이중부정/도치 복구 (불만 오인 → 긍정) ──────────────────────────────
+  // SARCASM_VETO: 이 단어들이 있으면 사캐즘 복구 불가 — "나쁘지 않으나 최악" 같은 복합 문장에서
+  // 사캐즘 부분이 전체 불만을 덮어쓰는 오류 방지.
+  const SARCASM_VETO =
+    /(최악|완전\s*최악|진짜\s*최악|기분을?\s*다?\s*망쳤|기분이?\s*망가|ruined|terrible\s*experience|horrible|atrocious|unacceptable|complete\s*disaster)/i
   let sarcasmPositive = false
-  if (C.sarcasm.test(text)) {
+  if (C.sarcasm.test(text) && !SARCASM_VETO.test(text)) {
     isComplaint = false
     sarcasmPositive = true
     tags.push('이중부정(긍정)')
@@ -382,6 +386,25 @@ export function analyzeReview(
     status = 'AMBIGUOUS'
     requiresLLM = true
     reason = '알고리즘 확신 불가(중립/질문/모호) → LLM 위임'
+  }
+
+  // ── 별점 기반 최후 보정 — AMBIGUOUS 상태에서만 동작 ─────────────────────────────
+  // (긍정 패턴 미탐지 시 별점으로 추론, 파국적 오분류 방지)
+  if (status === 'AMBIGUOUS') {
+    if (ratingHigh && !isComplaint) {
+      // 5·4★ + 불만 없음 → COMPLIMENT 격상 (완벽/오아시스 등 신규 긍정어 미탐지 보정)
+      status = 'COMPLIMENT'
+      requiresLLM = false
+      reason = '고평점(4·5점) 긍정 미탐지 → 별점 기반 COMPLIMENT 격상'
+    } else if (typeof rating === 'number' && rating <= 1 && !C.positive.test(text) && tags.length === 0) {
+      // 1★ + 원문에 긍정 신호 전혀 없음 + 분류 태그 없음 → COMPLAINT 격상
+      // !hasPositive 대신 원문(raw) 기준으로 판정: 필러 제거 후에만 긍정이 사라지는 경우(S3b) 방어
+      isComplaint = true
+      status = 'COMPLAINT'
+      requiresLLM = true
+      reason = '최저 별점(1점), 긍정/분류 태그 없음 → COMPLAINT 격상'
+      tags.push('저평점_부정신호')
+    }
   }
 
   // 피크 시간대 언급 탐지 — 한국어 패턴 추가 (기존 EN-only → KO/EN)
