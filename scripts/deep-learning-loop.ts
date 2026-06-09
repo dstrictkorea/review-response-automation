@@ -2582,6 +2582,94 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
     review_text: 'تجربة استثنائية بكل المقاييس. الألوان والأصوات تخلق عالماً سحرياً يصعب وصفه بالكلمات. الموظفون كانوا محترفين للغاية وودودين. قضيت ساعتين ونصف ولم أشعر بالوقت. أوصي بشدة لكل من يزور دبي.' },
 
   // ─────────────────────────────────────────────────────────────────
+  // [Round 21] — zh/ja/vi/en 패턴 보강 검증 + 신규 시나리오
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 21] 중국어 — 인파 통제 실패 (★2, COMPLAINT)
+  // 기대: COMPLAINT (人太多了 + 挤来挤去 패턴)
+  { rating: 2, location: 'AMDB', lang: 'zh', demographic: '28岁中国女性, 情侣游', scenario: 'zh-crowd-too-many-fix',
+    reviewer_name: '王晓雪',
+    review_text: '展览本身很美，但人太多了，根本没办法好好欣赏。工作人员对人流控制几乎没有，大家都在互相挤来挤去拍照。希望能加强现场管理，限制入场人数。整体体验很差。' },
+
+  // [Round 21] 중국어 (번체) — 투영기 고장 + 사기당한 느낌 (★2, COMPLAINT)
+  // 기대: COMPLAINT (投影壞 + 感覺被欺騙 패턴)
+  { rating: 2, location: 'AMNY', lang: 'zh', demographic: '45歲香港男性, 商務旅客', scenario: 'zh-projector-broken-fix',
+    reviewer_name: '陳建明',
+    review_text: '其中一個展區的投影機壞掉了，工作人員說正在修理，但等了超過半小時還沒修好。買票時沒有說會有展區關閉，感覺被欺騙了。票價偏高，時間太短，體驗不如預期。' },
+
+  // [Round 21] 중국어 — 재방문 실망 (★2, COMPLAINT)
+  // 기대: COMPLAINT (内容一模一样 패턴)
+  { rating: 2, location: 'AMLV', lang: 'zh', demographic: '33岁中国男性, 再访客', scenario: 'zh-revisit-same-content-fix',
+    reviewer_name: '李明阳',
+    review_text: '第二次来了，上次非常震撼。但这次内容几乎一模一样，没有任何新展品。票价还涨了。期待能看到新的内容更新，不然很难再次推荐给朋友。' },
+
+  // [Round 21] 중국어 — 에어컨 너무 추움 (★3, COMPLAINT)
+  // 기대: COMPLAINT (空调太冷 패턴)
+  { rating: 3, location: 'AMDB', lang: 'zh', demographic: '41岁中国女性, 家庭旅客', scenario: 'zh-ac-too-cold-fix',
+    reviewer_name: '刘艺芸',
+    review_text: '艺术效果很棒，但空调太冷了，我们差点被冻坏。展品本身值得一看，但现场温度管理需要改善。尤其是带着孩子来的家庭，建议穿厚一点再进入。' },
+
+  // [Round 21] 일본어 — 노인 아내 발목 부상 (★1, EMERGENCY)
+  // 기대: EMERGENCY (足をひねった 패턴)
+  { rating: 1, location: 'AMDB', lang: 'ja', demographic: '65才 日本人男性, 夫婦', scenario: 'ja-ankle-injury-emergency-fix',
+    reviewer_name: '田中正雄',
+    review_text: '暗い通路での案内が不十分で、妻が足をひねってしまいました。スタッフに報告しましたが、対応が遅く、誠意が感じられませんでした。高齢者や体の不自由な方への配慮が必要です。二度と来ません。' },
+
+  // [Round 21] 일본어 — 일본어 서비스 완전 부재 (★2, COMPLAINT)
+  // 기대: COMPLAINT (日本語サービスなし 패턴)
+  { rating: 2, location: 'AMLV', lang: 'ja', demographic: '30代 日本人女性, 一人旅', scenario: 'ja-no-japanese-service-fix',
+    reviewer_name: '斉藤美咲',
+    review_text: 'ラスベガスにもARTE MUSEUMがあると聞いて楽しみにしていましたが、日本語のサービスが全くありませんでした。案内板も英語のみ、スタッフも日本語が話せず、不安でした。オーディオガイドも日本語対応なし。改善を強く求めます。' },
+
+  // [Round 21] 일본어 — 이전 방문보다 전시 품질 저하 (★2, COMPLAINT)
+  // 기대: COMPLAINT (作品数 前回より少なく 패턴)
+  { rating: 2, location: 'AMDB', lang: 'ja', demographic: '38才 日本人女性, 再訪', scenario: 'ja-quality-decline-fix',
+    reviewer_name: '中村恵',
+    review_text: '以前来たときはとても感動したのに、今回は作品数が前回より少なくて残念でした。いくつかの部屋は閉鎖されていて、全体的なボリュームが下がった印象です。スタッフの対応は良かったですが、コンテンツの質が落ちています。' },
+
+  // [Round 21] 베트남어 — 프로젝터 오류 + 부분 체험 불가 (★3, COMPLAINT)
+  // 기대: COMPLAINT (máy chiếu lỗi 패턴)
+  { rating: 3, location: 'AMDB', lang: 'vi', demographic: 'Người Việt Nam 30 tuổi nữ', scenario: 'vi-projector-error-fix',
+    reviewer_name: 'Trần Thị Mai',
+    review_text: 'Trải nghiệm khá ấn tượng về mặt hình ảnh nhưng một số phòng bị lỗi máy chiếu. Nhân viên thông báo đang sửa chữa nhưng chúng tôi đợi 20 phút mà không có cập nhật. Mong rằng lần sau thiết bị hoạt động đầy đủ.' },
+
+  // [Round 21] 영어 — 장애인 + 간병인 동반 경험 (★3, COMPLAINT → accessibility)
+  // 기대: COMPLAINT (accessibility issues)
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: '55yo American female with MS, plus caregiver', scenario: 'en-disability-caregiver-experience',
+    reviewer_name: 'Carol Simmons',
+    review_text: 'I have multiple sclerosis and used a mobility scooter. The main entrance was accessible but two of the inner galleries had raised thresholds that my scooter could not cross. My caregiver had to leave me at the entrance of those rooms while she went in. The staff were sympathetic but could not help. For a world-class venue, the accessibility provisions need serious investment.' },
+
+  // [Round 21] 이탈리아어 — 커플 긍정 방문 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'it', demographic: 'Coppia italiana, 35 anni', scenario: 'it-couple-positive',
+    reviewer_name: 'Marco Rossi',
+    review_text: 'Un\'esperienza assolutamente straordinaria! L\'arte digitale e la musica si fondono in modo perfetto. Ogni sala è un\'esperienza diversa e coinvolgente. Il personale è stato gentile e professionale. Torneremo sicuramente!' },
+
+  // [Round 21] 한국어 — 사진 촬영 협업 인플루언서 좋은 경험 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '26세 한국 인플루언서 여성', scenario: 'ko-photo-influencer-positive',
+    reviewer_name: '이주은',
+    review_text: '콘텐츠 크리에이터로서 사진 촬영 환경이 얼마나 중요한지 알고 있는데, 여기는 진짜 모든 게 완벽해요. 각 공간마다 독립적인 무드가 있어서 컨셉 사진 찍기에 최고입니다. 직원분께서도 좋은 앵글까지 직접 알려주셔서 너무 감사했어요. 팔로워들한테도 꼭 가라고 추천했습니다.' },
+
+  // [Round 21] 영어 — 중학교 현장학습 교사 관점 (★4, COMPLIMENT)
+  // 기대: COMPLIMENT (교육적 긍정 + 일부 개선점)
+  { rating: 4, location: 'AMNY', lang: 'en', demographic: '44yo American male middle school teacher', scenario: 'en-school-fieldtrip-teacher',
+    reviewer_name: 'Mr. David Torres',
+    review_text: 'Brought 30 eighth-graders here as part of a digital arts curriculum unit. The students were completely engaged — even the ones who usually tune out in museums. The sensory immersion worked brilliantly as a hook. I would have loved more guided educational content or curriculum tie-ins. A few rooms were a bit scary for some of the more sensitive students. Overall highly recommend for educators with the right prep.' },
+
+  // [Round 21] 한국어 — 70대 할머니 첫 디지털 아트 경험 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '72세 한국 여성 어르신', scenario: 'ko-elderly-grandmother-first-digital',
+    reviewer_name: '박순례',
+    review_text: '큰아들이 두바이 출장 중에 데려가 주었어요. 처음엔 그냥 그림 보는 줄 알았는데 세상에, 그림이 움직이고 소리가 나고 바닥도 빛나고... 평생 이런 경험은 처음이에요. 일흔 넘은 나이에도 이렇게 놀랄 수 있다니. 정말 신기하고 아름다웠어요. 손자한테도 꼭 보여주고 싶어요.' },
+
+  // [Round 21] 영어 — 시각장애 저시력 방문자 (★2, COMPLAINT)
+  // 기대: COMPLAINT (accessibility)
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '40yo American female, low vision', scenario: 'en-low-vision-complaint',
+    reviewer_name: 'Rachel Cohen',
+    review_text: 'I am low-vision and attended with a sighted friend. There is very little tactile or audio description of what I was experiencing. Essentially I had to rely entirely on my friend\'s description of the visuals. For an immersive art museum, there needs to be far more consideration for visitors with visual impairments. I left feeling excluded rather than included.' },
+
+  // ─────────────────────────────────────────────────────────────────
   // [Round 20] — 새 각도: 언어 추가/수정 검증 + 다방면 시나리오
   // ─────────────────────────────────────────────────────────────────
 
