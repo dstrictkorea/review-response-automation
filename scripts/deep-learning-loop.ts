@@ -3032,6 +3032,58 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 2, location: 'AMLV', lang: 'en', demographic: '41yo Australian female, non-Korean tourist', scenario: 'en-non-korean-excluded',
     reviewer_name: 'Claire Thompson',
     review_text: 'Many of the interactive prompts and informational panels were only available in Korean. As a non-Korean speaker I felt excluded from a significant part of the experience. Staff were unable to provide English explanations. For an internationally marketed venue, this is unacceptable.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 28] — CHURN/REPEAT 검증, 사진규정 비일관성, 음식불만, 재방문 긍정
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 28] 한국어 — 명시적 이탈 의사 (★1, CHURN)
+  // 기대: CHURN (다시는 안 올 패턴)
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '39세 한국인 남성, 이탈 의사 표명', scenario: 'ko-explicit-churn',
+    reviewer_name: '장민준',
+    review_text: '입장 대기만 40분. 에어컨은 꺼져있고 직원들은 불친절. 다시는 안 올 것 같습니다. 돈이 아깝습니다.' },
+
+  // [Round 28] 영어 — "never again" 이탈 (★1, CHURN)
+  // 기대: CHURN (never again 패턴)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '31yo American male, explicit churn', scenario: 'en-never-again',
+    reviewer_name: 'Derek Wilson',
+    review_text: 'Terrible experience from start to finish. Rude staff, broken equipment, overpriced entry. Never again. Save your money.' },
+
+  // [Round 28] 한국어 — 재방문 긍정 (★5, REPEAT)
+  // 기대: REPEAT (재방문 + 두 번째 패턴)
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '27세 한국인 여성, 재방문', scenario: 'ko-repeat-positive',
+    reviewer_name: '강예린',
+    review_text: '지난 달에 이어 두 번째 방문입니다. 콘텐츠가 조금씩 바뀌어서 또 색다른 느낌이었어요. 재방문인데도 설레는 마음으로 입장했습니다. 앞으로도 꾸준히 올 것 같아요.' },
+
+  // [Round 28] 영어 — 사진 규정 비일관성 (★2, COMPLAINT)
+  // 기대: COMPLAINT (inconsistent enforcement 패턴 추가 검증)
+  { rating: 2, location: 'AMDB', lang: 'en', demographic: '29yo British female, content creator', scenario: 'en-photo-inconsistent-policy',
+    reviewer_name: 'Sophie Adams',
+    review_text: 'The photo rules were completely inconsistent. Different staff members gave different answers — one said no phones in room 3, another said it was fine. This inconsistent enforcement is confusing and unfair to visitors. A clear written policy at the entrance would help enormously.' },
+
+  // [Round 28] 한국어 — 카페/음식 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (음식 품질 관련 불만 — 새 패턴 필요할 수 있음)
+  { rating: 2, location: 'AMNY', lang: 'ko', demographic: '34세 한국인 여성, 카페 이용', scenario: 'ko-cafe-food-complaint',
+    reviewer_name: '백지민',
+    review_text: '전시 자체는 괜찮았는데 내부 카페가 너무 별로였어요. 커피 맛은 최악이고 가격은 비쌌습니다. 직원도 불친절하고 청결도도 의문이었어요. 미술관 카페 치고는 너무 실망스러웠습니다.' },
+
+  // [Round 28] 영어 — 내용 오해로 실망 (★2, COMPLAINT — feel misled 패턴 검증)
+  // 기대: COMPLAINT (feel misled 패턴)
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '55yo American male, traditional art lover', scenario: 'en-misled-by-name',
+    reviewer_name: 'Harold Griffin',
+    review_text: 'I came expecting traditional art — paintings, sculptures, installations you can observe and contemplate. What I found was essentially an expensive light show set to music. I feel misled by the word "museum" in the name. Not for everyone.' },
+
+  // [Round 28] 중국어 — 허니문 커플 긍정 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'zh', demographic: '28岁中国女性, 蜜月旅行', scenario: 'zh-honeymoon-positive',
+    reviewer_name: '林小雨',
+    review_text: '蜜月旅行来到迪拜，ARTE博物馆绝对是最难忘的体验！光影效果超级浪漫，和老公拍了好多美照。工作人员非常热情，服务超棒。强烈推荐给所有情侣！' },
+
+  // [Round 28] 프랑스어 — 파리 단독 여행자 (★4, COMPLIMENT)
+  // 기대: COMPLIMENT (★4 긍정)
+  { rating: 4, location: 'AMDB', lang: 'fr', demographic: '31yo French female, solo traveler', scenario: 'fr-paris-solo-positive',
+    reviewer_name: 'Camille Moreau',
+    review_text: 'Une expérience vraiment immersive et originale. Les installations lumineuses sont à couper le souffle. J\'aurais aimé un peu plus de contenu en français, mais cela ne gâche pas l\'expérience. Je recommande vivement à tous les visiteurs de Dubaï.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
