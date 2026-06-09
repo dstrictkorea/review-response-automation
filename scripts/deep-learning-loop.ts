@@ -2580,6 +2580,106 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'شاب سعودي 26 عاماً، رحلة منفردة', scenario: 'ar-solo-positive',
     reviewer_name: 'خالد العمري',
     review_text: 'تجربة استثنائية بكل المقاييس. الألوان والأصوات تخلق عالماً سحرياً يصعب وصفه بالكلمات. الموظفون كانوا محترفين للغاية وودودين. قضيت ساعتين ونصف ولم أشعر بالوقت. أوصي بشدة لكل من يزور دبي.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 20] — 새 각도: 언어 추가/수정 검증 + 다방면 시나리오
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 20] 프랑스어 — décevant 수정 검증 (★2, 장비 고장 실망)
+  // 기대: COMPLAINT (décevant 패턴이 이제 매칭되어야 함)
+  { rating: 2, location: 'AMNY', lang: 'fr', demographic: 'Femme française, 37 ans, touriste', scenario: 'fr-décevant-fix-validation',
+    reviewer_name: 'Nathalie Dupont',
+    review_text: 'Franchement décevant. Plusieurs installations ne fonctionnaient pas le jour de notre visite et le personnel semblait indifférent au problème. On nous a juste dit "désolé" sans proposer de solution. Pour le prix demandé, on s\'attendait à beaucoup mieux. L\'expérience était en panne à plusieurs endroits.' },
+
+  // [Round 20] 한국어 — 에어컨 파티클 갭 수정 검증 (★2, 여름 폭염)
+  // 기대: COMPLAINT (에어컨[^.!?\n]{0,4}(?:고장|꺼|없) 이제 매칭)
+  { rating: 2, location: 'AMLV', lang: 'ko', demographic: '30대 한국 관광객 가족', scenario: 'ko-ac-broken-summer-fix-validation',
+    reviewer_name: '강민수',
+    review_text: '7월에 방문했는데 에어컨이 고장났는지 너무 더웠습니다. 라스베가스 여름에 에어컨도 안 나오는 실내 전시관이라니 믿기지 않았어요. 아이들이 더위 먹을 뻔해서 30분도 못 있고 나왔습니다. 직원한테 말했더니 "점검 중"이라고만 하더군요.' },
+
+  // [Round 20] 러시아어 — разочарован 패턴 추가 검증 (★2, 실망)
+  // 기대: COMPLAINT (разочарован 패턴 이제 매칭)
+  { rating: 2, location: 'AMDB', lang: 'ru', demographic: 'Российский турист, 40 лет', scenario: 'ru-razočarovan-fix-validation',
+    reviewer_name: 'Дмитрий Волков',
+    review_text: 'Очень разочарован посещением. Ожидал намного больше по такой цене. Многие экспонаты не работали, а персонал был равнодушен к нашим вопросам. Очень плохо организовано для такого количества посетителей. Слишком дорого за то, что мы увидели.' },
+
+  // [Round 20] 한국어 — 호텔 컨시어지 추천으로 방문, 긍정 (★5)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '45대 한국 비즈니스 여행객', scenario: 'ko-hotel-concierge-referral',
+    reviewer_name: '오세현',
+    review_text: '호텔 컨시어지 직원이 적극 추천해줘서 반신반의하며 방문했는데, 완전히 압도당했습니다. 두바이 출장 중 유일한 여유 시간이었는데 여기 온 게 신의 한 수였어요. 빛과 소리가 만드는 공간이 이렇게 경이로울 수 있다니. 같이 간 클라이언트도 "이게 두바이 최고 명소"라고 하더군요. 다음 출장 때도 꼭 올 겁니다.' },
+
+  // [Round 20] 영어 — 시즌패스 홀더, 반복 방문 중 만족도 하락 (★2)
+  // 기대: CHURN 또는 COMPLAINT (never again / won't be back + complain)
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '32yo American female, season pass holder', scenario: 'en-season-pass-decline',
+    reviewer_name: 'Jessica Park',
+    review_text: 'I\'ve been a season pass holder since the opening and visited at least ten times. Something has definitely changed — the exhibits feel less maintained, the rooms that used to be breathtaking now have flickering panels and broken sensors that nobody seems to fix. I asked a staff member about it and was told "it\'s being worked on" for the third visit in a row. I won\'t be renewing my pass next year, which honestly breaks my heart because I loved this place so much.' },
+
+  // [Round 20] 영어 — 나이트 이벤트 방문, 긍정 (★5)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '29yo American couple, evening event', scenario: 'en-night-event-positive',
+    reviewer_name: 'Marcus & Aliya Johnson',
+    review_text: 'We attended the exclusive after-hours evening event and it was absolutely magical. Having the entire museum essentially to ourselves at night with the ambient lighting turned up created an experience unlike anything else in New York. The music, the projections, the cocktails — all perfectly curated. This is the version of ARTE everyone should experience at least once.' },
+
+  // [Round 20] 한국어 — 현직 OT 간호사, 의료 안전 관점 불안 (★3)
+  // 기대: COMPLAINT 또는 AMBIGUOUS (의료 전문가 시각의 안전 우려 — EMERGENCY 아님)
+  { rating: 3, location: 'AMDB', lang: 'ko', demographic: '35세 한국인 여성 작업치료사 OT', scenario: 'ko-ot-nurse-safety-concern',
+    reviewer_name: '김도희',
+    review_text: '작업치료사로 일하고 있어서 공간 안전성에 민감하게 봤습니다. 어두운 구간이 꽤 많은데 바닥 단차 표시가 부족하고 유도등도 흐릿한 곳이 있었어요. 어린이나 노인 방문객이 자칫 발을 헛딛을 수 있어 보여서 걱정됐습니다. 작품 자체는 아름다웠지만, 안전 관련 개선이 필요하다고 생각합니다. 의무적으로 갖춰야 할 시설기준을 충족하는지 점검이 필요할 것 같아요.' },
+
+  // [Round 20] 터키어 — 첫 방문, 긍정 (★5)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'tr', demographic: 'Türk turist, 33 yaş, çift', scenario: 'tr-first-visit-positive',
+    reviewer_name: 'Emre Yılmaz',
+    review_text: 'Dubai ziyaretimizin en güzel anı burasıydı. Dijital sanat ve müziğin bu kadar uyumlu birleşebileceğini hiç düşünmemiştim. Her oda farklı bir deneyim sunuyor ve fotoğraflar inanılmaz çıkıyor. Personel çok yardımsever ve nazikti. Kesinlikle tavsiye ederim, Dubai\'ye gelen herkese mutlaka söylüyorum.' },
+
+  // [Round 20] 폴란드어 — 전시 내용 얕음 + 가격 불만 (★2)
+  // 기대: COMPLAINT
+  { rating: 2, location: 'AMNY', lang: 'pl', demographic: 'Polka, 38 lat, miłośniczka sztuki', scenario: 'pl-shallow-content-overpriced',
+    reviewer_name: 'Agnieszka Kowalska',
+    review_text: 'Spodziewałam się czegoś głębszego artystycznie. Wystawy wyglądają spektakularnie, ale brakuje jakiejkolwiek treści czy kontekstu — to bardziej Instagram trap niż prawdziwe muzeum. Za tę cenę oczekiwałam przynajmniej przewodnika lub opisów dzieł. Bardzo rozczarowująca wizyta dla kogoś, kto szuka prawdziwej sztuki.' },
+
+  // [Round 20] 혼합 언어 스트레스 테스트 — 한/영 코드스위칭 (★3)
+  // 기대: AMBIGUOUS 또는 COMPLAINT (혼합 언어 처리 능력 테스트)
+  { rating: 3, location: 'AMLV', lang: 'ko', demographic: '26세 재미교포 2세, 여성', scenario: 'ko-en-mixed-codeswitching-complaint',
+    reviewer_name: 'Sophia Kim',
+    review_text: '처음엔 진짜 wow였는데... 근데 staff이 너무 불친절했어요. I asked a simple question and the guy literally rolled his eyes at me. 한국어로 물어보니까 그냥 영어로만 대답하고. 작품은 beautiful했지만 직원 태도 때문에 experience가 많이 망가졌어요. 개선이 필요할 것 같아요.' },
+
+  // [Round 20] 영어 — 여러 지점 비교 방문, 전반 긍정 (★4)
+  // 기대: COMPLIMENT (★4 긍정 + 지점 비교는 태그 없음)
+  { rating: 4, location: 'AMNY', lang: 'en', demographic: '44yo Japanese expat male, multi-location visitor', scenario: 'en-multi-location-comparison',
+    reviewer_name: 'Kenji Watanabe',
+    review_text: 'I\'ve now visited ARTE in Las Vegas, Dubai, and New York. Each location has its own character — Vegas feels boldest and most immersive, Dubai has the best spatial design, and New York has the strongest curatorial intent. The New York location is slightly smaller but the artwork selection feels more thoughtful. Overall a consistently excellent experience across all three cities. Would love to see the catalog refresh more frequently.' },
+
+  // [Round 20] 영어 — 단체 할인 미적용 + 직원 태도 불만 (★2)
+  // 기대: COMPLAINT
+  { rating: 2, location: 'AMDB', lang: 'en', demographic: '52yo Indian school teacher, group organizer', scenario: 'en-group-discount-dispute',
+    reviewer_name: 'Priya Nair',
+    review_text: 'I organized a group visit of 22 students and pre-booked the group rate. At the entrance, the staff refused to honor the group discount saying "our system doesn\'t show it" and asked us to pay full price. After 40 minutes of standing at the entrance with 22 teenagers, we were made to feel like we had done something wrong. Eventually resolved but the experience was unnecessarily stressful. The artwork itself is wonderful but the admin process needs serious improvement.' },
+
+  // [Round 20] 영어 — 초단문 ★1 부정 (스트레스 테스트: 최소 입력)
+  // 기대: COMPLAINT (★1 + no positive → auto-escalate 경로)
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '24yo American male', scenario: 'en-ultra-short-negative',
+    reviewer_name: 'Tyler Brooks',
+    review_text: 'Total waste of money. Don\'t go.' },
+
+  // [Round 20] 영어 — 초단문 ★5 긍정 (스트레스 테스트: 최소 입력)
+  // 기대: COMPLIMENT (★5 + 매우 짧은 긍정)
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '27yo American female', scenario: 'en-ultra-short-positive',
+    reviewer_name: 'Emma Zhang',
+    review_text: 'Mind-blowing. Best thing in NYC.' },
+
+  // [Round 20] 한국어 — AI 생성 리뷰 의심 스트레스 테스트 (★5)
+  // 기대: COMPLIMENT (AI 생성처럼 과도하게 완벽한 문장 → AI_SMELL 탐지 테스트)
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '인공지능 리뷰 시뮬레이션', scenario: 'ko-ai-generated-review-smell',
+    reviewer_name: 'AI테스터',
+    review_text: '정말 최고의 경험이었습니다. 모든 것이 완벽했고, 직원들은 매우 친절했으며, 전시 내용은 놀랍도록 인상적이었습니다. 방문 내내 감동의 연속이었고, 이곳을 선택한 것이 정말 잘한 결정이었습니다. 다음 방문도 기대됩니다. 모든 분들께 강력히 추천드립니다. 소중한 시간을 최고의 경험으로 채울 수 있는 곳입니다.' },
+
+  // [Round 20] 한국어 — 야간 이벤트 군중 관리 실패 (★2, COMPLAINT)
+  // 기대: COMPLAINT (混雜 + 직원 대응 미흡)
+  { rating: 2, location: 'AMNY', lang: 'ko', demographic: '31세 한국 여성, 야간 이벤트 참가자', scenario: 'ko-night-event-crowd-fail',
+    reviewer_name: '윤서연',
+    review_text: '야간 스페셜 이벤트 티켓을 구매했는데 사람이 너무 많아서 제대로 감상할 수가 없었어요. 입장 인원 제한이 있다고 광고했는데 실제로는 전혀 지켜지지 않은 것 같았습니다. 직원들에게 문의하니 "저희도 모릅니다"라는 답변만 돌아왔어요. 인기 구간 앞에는 30분씩 줄을 서야 했고, 프리미엄 이벤트라기엔 너무 혼잡하고 불친절했습니다.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
