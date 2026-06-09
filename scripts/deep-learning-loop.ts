@@ -1248,6 +1248,183 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 3, location: 'AMDB', lang: 'vi', demographic: '29yo Vietnamese female', scenario: 'vi-3star',
     reviewer_name: 'Nguyễn Thị Mai',
     review_text: 'Trải nghiệm khá ấn tượng về mặt hình ảnh nhưng một số phòng bị lỗi máy chiếu. Nhân viên không thể giải thích rõ ràng bằng tiếng Anh. Giá vé khá cao so với thời gian tham quan.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 틱톡/소셜미디어 관점 — 크리에이터 경험
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMDB', lang: 'en', demographic: '21yo TikTok creator, UAE-based', scenario: 'en-tiktok-creator',
+    reviewer_name: 'Amira Hassan',
+    review_text: 'Went specifically for TikTok content and honestly it delivered. Every room is a different concept. My only gripe is the "no tripod" policy — hard to create stable content without one. Hopefully they will create a creator-friendly timeslot eventually.' },
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '24대 한국인 유튜버', scenario: 'ko-youtuber-5star',
+    reviewer_name: '임지현',
+    review_text: '유튜브 여행 채널 운영 중인데 라스베가스 편 촬영으로 방문했어요. 직원분들이 촬영 허용 구역과 각도 잘 안내해 주셔서 너무 감사했어요. 영상 업로드했더니 조회수 대박났네요. 구독자분들도 아르떼 너무 가고 싶다고 댓글 폭발이에요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 특수 언어 — 힌디어 / 터키어 (유럽어권 관광 패턴)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '29yo Turkish female tourist', scenario: 'en-turkish-5star',
+    reviewer_name: 'Elif Kaya',
+    review_text: 'The most beautiful thing I have experienced in Dubai. Everything is perfect — the lights, the music, the scent. My photos from the butterfly room look like they are from a dream. I told all my friends in Istanbul to put this on their bucket list.' },
+  { rating: 3, location: 'AMDB', lang: 'en', demographic: '34yo Iranian male tourist', scenario: 'en-iranian-3star',
+    reviewer_name: 'Reza Hosseini',
+    review_text: 'Visually very impressive, though some rooms felt rushed in design compared to others. I expected a more spiritual atmosphere — some rooms achieved that but others felt more commercial. Worth visiting at least once if you appreciate digital art.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 정신건강 / 명상적 관점
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '38yo American female therapist', scenario: 'en-therapist-healing',
+    reviewer_name: 'Dr. Sarah Kim',
+    review_text: 'As a therapist, I often recommend sensory experiences to clients working through anxiety. ARTE New York is exactly the kind of environment that can allow the nervous system to reset. The whale room in particular creates a profound sense of calm.' },
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '33대 한국인 남성 번아웃', scenario: 'ko-burnout-recovery',
+    reviewer_name: '박동훈',
+    review_text: '심한 번아웃 상태로 무기력하게 지내다가 친구 권유로 갔어요. 별이 쏟아지는 방에서 20분을 있었는데 처음으로 마음이 편해지는 느낌을 받았습니다. 예술이 치료가 될 수 있다는 걸 알게 됐어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 기업 사원 복지 방문
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMLV', lang: 'en', demographic: '41yo American female HR director', scenario: 'en-hr-employee-welfare',
+    reviewer_name: 'Jennifer Wu',
+    review_text: 'We organized a wellness afternoon for 20 staff members. ARTE handled the group booking smoothly, the experience energized the team in a way that no conference room exercise ever could. Ticket pricing for groups could be more competitive though.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 고령 방문객 이동 어려움
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'ko', demographic: '68대 한국인 여성', scenario: 'ko-elderly-mobility',
+    reviewer_name: '윤복순',
+    review_text: '칠순 기념으로 자녀들이 데려다줬어요. 전시는 아름다웠는데 서 있는 시간이 너무 길었어요. 중간에 앉을 수 있는 곳이 별로 없어서 허리가 너무 아팠습니다. 의자나 쉬는 공간이 조금 더 있으면 좋겠어요.' },
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '71yo American male with cane', scenario: 'en-elderly-no-seating',
+    reviewer_name: 'Harold Jenkins',
+    review_text: 'I am 71 years old and use a walking cane. There was virtually nowhere to sit in the entire exhibition. I had to leave early because standing for 90 minutes is simply not possible for me. A venue that welcomes all ages must also seat all ages.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 전시 해설 / 오디오 가이드 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMLV', lang: 'en', demographic: '52yo American male art educator', scenario: 'en-audio-guide-complaint',
+    reviewer_name: 'Professor Charles Bell',
+    review_text: 'The visual experience is undeniably powerful, but the lack of substantive artist and curatorial context is a missed opportunity. The audio guide is extremely shallow. For those of us with a deeper interest in media art, there is nothing to learn here about the work.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 이민자 / 해외 거주 한국인
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '43대 한국인 여성 (미국 거주)', scenario: 'ko-korean-american-5star',
+    reviewer_name: '신혜림',
+    review_text: '뉴욕에 10년째 살면서 처음 갔는데 왜 이제야 알았을까 싶었어요. 타향살이에 지쳐있던 마음이 한방에 풀렸어요. 한국적인 감성이 담긴 공간이 뉴욕 한복판에 있다는 게 괜히 뭉클했습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 환경/지속가능성 관심 방문객
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMDB', lang: 'en', demographic: '30yo Australian male environmental activist', scenario: 'en-eco-conscious',
+    reviewer_name: 'Liam Harper',
+    review_text: 'Stunning digital nature that made me think deeply about what we risk losing in the real world. I appreciate that this kind of art can create environmental awareness. Would love to see explicit sustainability messaging and know what the venue\'s carbon footprint looks like.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 반복 고객 — 여러 지점 방문 고충
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '28대 한국인 여성 해외여행 마니아', scenario: 'ko-all-locations-visited',
+    reviewer_name: '전수빈',
+    review_text: '두바이, 라스베가스, 뉴욕 세 곳 다 가봤어요. 각 지점마다 특색이 달라서 좋긴 한데 콘텐츠가 많이 겹쳐요. 세 군데 다 방문한 팬 입장에서는 차별화된 독점 콘텐츠가 조금 더 있으면 좋겠어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 사고 위험 재발 (두 번째 슬립/낙상 패턴)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '44yo American female', scenario: 'en-wet-floor-injury',
+    reviewer_name: 'Christine Moore',
+    review_text: 'The floor in the ocean room was wet and there were no wet floor signs. I slipped and fell and hurt my knee badly. When I reported it to a staff member they seemed completely indifferent. This is a serious safety hazard and needs immediate attention.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 미술 전공자의 비평적 관점
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'en', demographic: '28yo British female, fine arts student', scenario: 'en-fine-arts-critique',
+    reviewer_name: 'Eleanor Marsh',
+    review_text: 'As a fine arts student, I find the concept compelling but the execution somewhat shallow. The works prioritize spectacle over meaning. That said, there are two or three rooms where genuine artistic vision shines through. Worth seeing with a critical eye.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 마케팅 전문가 관점
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '35yo American male marketing director', scenario: 'en-marketing-perspective',
+    reviewer_name: 'Ryan Hoffman',
+    review_text: 'As someone who works in brand experience, I was genuinely impressed by how seamlessly ARTE turns visitors into brand ambassadors. Every room is designed to be shared. The scent branding is genius. Whatever agency designed this deserves every award going.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 8] 사전 예약 없이 현장 방문 후 기다림 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '38대 한국인 남성', scenario: 'ko-walkin-long-wait',
+    reviewer_name: '오진호',
+    review_text: '사전 예약 안 하고 현장 방문했다가 2시간 대기했어요. 온라인 예약 시스템이 있으면 미리 알려줬어야죠. 안내판도 없고, 직원도 대기 시간을 제대로 안 알려줬어요. 결국 들어가긴 했는데 그 기다림이 너무 지쳤어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 한국어 다양한 직업/생활 환경
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '55대 한국인 남성 의사', scenario: 'ko-doctor-healing',
+    reviewer_name: '이상진',
+    review_text: '오랜 진료 생활로 번아웃이 심했는데 뉴욕 출장 중 들렀어요. 고요한 파도 방에서 의식적으로 아무 생각 없이 있었습니다. 오랜만에 진정한 휴식을 경험한 것 같아요. 이런 공간이 필요한 분들이 많을 것 같습니다.' },
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '19대 한국인 여성 대학 신입생', scenario: 'ko-college-freshman',
+    reviewer_name: '박소연',
+    review_text: '대학 입학 기념으로 엄마랑 같이 왔어요. 평소에 예술에 관심 없었는데 여기 오고 나서 생각이 달라졌어요. 학교에서 예술 수업 들을 때 더 재미있을 것 같아요. 진짜 삶에 풍요를 줄 수 있는 경험이었어요.' },
+  { rating: 4, location: 'AMDB', lang: 'ko', demographic: '47대 한국인 남성 경영자', scenario: 'ko-ceo-4star',
+    reviewer_name: '문성웅',
+    review_text: '해외 임원진과 함께 비즈니스 투어로 방문했어요. 외국 파트너들의 반응이 매우 좋았습니다. 한국 기업이 이런 세계적 수준의 문화 콘텐츠를 만들었다는 게 자랑스러웠어요. 다음 방문 때도 파트너들을 데려오고 싶습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 영어 — 다양한 직업/상황
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '44yo American female nurse', scenario: 'en-nurse-healing',
+    reviewer_name: 'Monica Davis',
+    review_text: 'After a brutal year in the ICU, my husband surprised me with tickets. I actually cried in the whale room. There is something profoundly healing about being surrounded by that kind of beauty. Thank you for making a space like this.' },
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '27yo American male veteran, PTSD', scenario: 'en-veteran-sensory-overload',
+    reviewer_name: 'Marcus Johnson',
+    review_text: 'I am a veteran with PTSD and sensory sensitivities. The sudden loud booms in one of the sound rooms triggered me badly. There should be a clear warning at the entrance about high-decibel audio elements for visitors who may be affected.' },
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '61yo American male architect', scenario: 'en-architect-5star',
+    reviewer_name: 'Robert Finley',
+    review_text: 'As an architect, I came skeptical but left converted. The spatial sequencing is masterful — each room earns the transition to the next. The way sound and scent are designed as extensions of visual space is genuinely sophisticated. Outstanding work.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 어린이 관점 / 가족 다양 구성
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '8세 한국인 어린이 (부모 대필)', scenario: 'ko-child-perspective',
+    reviewer_name: '유진우 (8세)',
+    review_text: '엄마가 대신 써줘요. 저는 거기서 진짜 꿈나라에 온 것 같았어요. 나비 방이 제일 좋았고, 또 가고 싶어요. 별 방에서 별이 하늘에서 떨어지는 것처럼 보여서 너무 신기했어요!' },
+  { rating: 4, location: 'AMLV', lang: 'en', demographic: '39yo American father with autistic child', scenario: 'en-autism-parent',
+    reviewer_name: 'David Torres',
+    review_text: 'My 10-year-old son is on the autism spectrum and sometimes struggles in crowds. The sensory experience here actually delighted him — he especially loved the light patterns repeating. Staff were genuinely kind when I explained his needs. Took away one star only for the noise level in one room.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 문화적 오해 / 기대치 불일치
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: '55yo British male, classical art lover', scenario: 'en-classical-art-skeptic',
+    reviewer_name: 'Frederick Hughes',
+    review_text: 'I prefer old masters to light shows but my daughter insisted. I will admit some rooms had a kind of grandeur that was hard to deny. Not my usual cup of tea but I understand why younger generations find this moving. Give it a chance if someone you love wants to go.' },
+  { rating: 2, location: 'AMDB', lang: 'en', demographic: '46yo American female, expected museum', scenario: 'en-expected-museum',
+    reviewer_name: 'Carol Patterson',
+    review_text: 'I thought this was an art museum with paintings and sculpture. It is not — it is essentially a very expensive light show. I feel misled by the word museum in the name. The content itself was pleasant but totally not what I came for.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 한국어 — 소셜미디어 과장 기대 후 실망
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ko', demographic: '26대 한국인 여성', scenario: 'ko-sns-hype-disappointment',
+    reviewer_name: '최다인',
+    review_text: '인스타에서 너무 예쁘게 나와서 기대하고 갔는데 직접 가보면 사진이랑 달라요. 스마트폰으로 찍으면 그냥 평범한 사진이에요. 촬영 노하우 없으면 실망할 수 있어요. 인플루언서 기준으로 기대하고 가면 안 돼요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 경쟁사 심층 비교
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMDB', lang: 'en', demographic: '37yo Singapore-based American male', scenario: 'en-deep-competitor-compare',
+    reviewer_name: 'Jason Lim',
+    review_text: 'I have been to teamLab in Tokyo, PACE in Shanghai, and now ARTE Dubai. Each has its own identity. ARTE wins on scent immersion, which is genuinely its own innovation. PACE is harder hitting intellectually. teamLab is more playful and interactive. All worth experiencing.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 재방문 계획 언급 with 건설적 피드백
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMNY', lang: 'ko', demographic: '32대 한국인 여성', scenario: 'ko-revisit-suggestion',
+    reviewer_name: '정아영',
+    review_text: '전시 자체는 훌륭해요. 다음에 또 오고 싶은데, 시즌별로 콘텐츠가 변경된다면 재방문 이유가 더 생기겠죠. 멤버십이나 충성 고객 프로그램이 있으면 주기적으로 방문하고 싶을 것 같아요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 9] 한국어 — 넓이/규모 기대 실망
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMLV', lang: 'ko', demographic: '41대 한국인 남성', scenario: 'ko-scale-smaller-than-expected',
+    reviewer_name: '배준혁',
+    review_text: '인터넷에서 보고 규모가 엄청 클 줄 알았는데 생각보다 아담했어요. 1시간이 안 걸려서 관람이 끝났습니다. 콘텐츠 품질은 좋지만 양이 부족하게 느껴졌어요. 티켓 가격을 생각하면 좀 아쉬웠습니다.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
