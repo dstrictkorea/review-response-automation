@@ -1775,6 +1775,153 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 2, location: 'AMLV', lang: 'ja', demographic: '45才日本人女性', scenario: 'ja-construction-noise',
     reviewer_name: '田中京子',
     review_text: '隣の工事の騒音がひどく、展示の音楽や映像への没入感が完全に壊れました。スタッフに相談しましたが「対応できない」との一言でした。芸術作品の雰囲気を大切にするなら、工事中の営業は再考すべきではないでしょうか。作品自体は素晴らしかっただけに残念です。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 유모차 접근성 불만 (아빠 방문자)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '34대 한국인 남성, 2세 아이와 방문', scenario: 'ko-stroller-access',
+    reviewer_name: '강동욱',
+    review_text: '유모차 끌고 왔는데 엘리베이터가 없어서 계단만 있는 구간에서 유모차를 들고 다녀야 했어요. 직원한테 물어봤더니 이 구간은 유모차 진입이 어렵다고만 했고 도와주지는 않았어요. 아이와 함께하는 가족 방문객을 위한 접근성 개선이 필요합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 폐소공포증 / 어두운 공간 불안감 (건설적 피드백)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '31대 한국인 여성', scenario: 'ko-claustrophobia',
+    reviewer_name: '윤소희',
+    review_text: '전시 자체는 정말 아름다웠는데 일부 구간이 너무 어둡고 좁아서 답답한 느낌이 들었어요. 폐소공포증이 있는 분이라면 미리 알고 가시는 게 좋을 것 같아요. 입장 전에 이런 부분을 고지해주면 좋겠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — 미국 대학교수 교육 현장 학습 인솔
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '58yo American female university professor', scenario: 'en-professor-fieldtrip',
+    reviewer_name: 'Dr. Margaret Chen',
+    review_text: 'I brought 25 undergraduate students from my Digital Media Arts class. The experience exceeded every expectation. Students who struggle to engage with traditional galleries were completely absorbed here. The fusion of classical art with immersive technology is exactly what contemporary arts education needs. Will definitely return with next year\'s cohort.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — 1세대 이민자의 감성적 경험 (한국 예술 첫 접촉)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '61yo Korean-American female first-generation immigrant', scenario: 'en-korean-diaspora-emotional',
+    reviewer_name: 'Minjung Park',
+    review_text: 'I left Korea 35 years ago and walking through this exhibition brought me to tears. The cherry blossoms, the waves, the Korean seasons — it was like touching home again. My American-born children saw Korea through art for the first time. I am grateful this exists in Las Vegas of all places. A profound and deeply personal experience.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 교사 인솔 고등학생 단체 방문 (교육적 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMNY', lang: 'ko', demographic: '42대 한국인 여성 교사', scenario: 'ko-teacher-fieldtrip',
+    reviewer_name: '이정아',
+    review_text: '고등학교 미술 수업 과제로 학생 28명 인솔해서 다녀왔습니다. 아이들이 너무 좋아해서 보람 있었어요. 다만 단체 관람 전용 입구나 별도 안내 서비스가 있으면 더 좋을 것 같아요. 작품 설명 자료도 교육 목적으로 요청드렸는데 제공이 어렵다고 하셔서 아쉬웠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 중국어 — 싱글 비즈니스 여성 (홀로 방문)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'zh', demographic: '28岁中国女性商务旅行', scenario: 'zh-solo-businesswoman',
+    reviewer_name: '王芳',
+    review_text: '一个人出差途中独自来访。没想到这么治愈。在迪拜的繁忙行程中，这一小时的沉浸式体验让我彻底放松下来。FOREST区域是我的最爱，仿佛置身于真实的自然之中。强烈推荐给所有在迪拜出差的朋友。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — 색맹 방문객 접근성 우려 (다양성 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: '37yo American male colorblind visitor', scenario: 'en-colorblind-accessibility',
+    reviewer_name: 'Nathan Brooks',
+    review_text: 'I am colorblind and some of the color-based interactive elements were difficult for me to engage with fully. There was no alternative mode or guidance for colorblind visitors. The overall experience was still beautiful, but accessibility for color vision deficiency needs consideration. A simple colorblind mode would make a huge difference.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 미술관 운영자 관점 (큐레이터/갤러리 오너)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '49대 한국인 여성 갤러리 운영자', scenario: 'ko-gallery-owner',
+    reviewer_name: '조은희',
+    review_text: '소규모 갤러리를 운영하는 입장에서 방문했습니다. 관람객과 공간의 상호작용 설계가 정말 탁월합니다. 조명 설계, 동선 유도, 공간 전환 방식이 모두 세심하게 계획되어 있어요. 미디어 아트의 새로운 기준을 보여주는 공간이라고 생각합니다. 업계 종사자로서 많은 영감을 받았습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — 의사 가족 방문 (의료 전문인 시각)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '47yo British male doctor, family visit', scenario: 'en-doctor-family',
+    reviewer_name: 'Dr. James Walker',
+    review_text: 'After a grueling week at a medical conference, my family and I needed something restorative. This was exactly that. The multi-sensory environment was therapeutic in a way I didn\'t expect. My teenage sons, who are firmly anti-museum, were completely captivated. A brilliant combination of art and sensory science.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 낙상/미끄러짐 응급상황 (EMERGENCY 테스트)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '58대 한국인 여성', scenario: 'ko-slip-fall-minor',
+    reviewer_name: '문정희',
+    review_text: '전시 관람 중에 어두운 구간에서 바닥에 미끄러져서 넘어졌습니다. 무릎이 긁히고 멍이 들었어요. 직원에게 말했더니 병원 안내도 없이 그냥 확인해보겠다는 말만 했어요. 어두운 구간 안전 관리가 필요합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 일본어 — 오디오 가이드 없음 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'ja', demographic: '39才日本人カップル', scenario: 'ja-no-audio-guide',
+    reviewer_name: '木村健太',
+    review_text: '視覚的には非常に美しい展示でした。しかし日本語のオーディオガイドや説明文がほとんどなく、作品の意図や背景を理解するのが難しかったです。英語や韓国語の説明が多く、日本語対応をもっと充実させていただきたいです。内容自体は素晴らしいので、次回に期待しています。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 포르투갈어 — 브라질 커플 긍정 리뷰 (남미 신규 언어)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'pt', demographic: 'Casal brasileiro 29 anos', scenario: 'pt-brazil-couple-5star',
+    reviewer_name: 'Lucas Oliveira',
+    review_text: 'Uma experiência absolutamente incrível! As instalações de luz e som nos deixaram completamente imersos. Ficamos quase 2 horas lá dentro e não queríamos sair. A combinação de natureza e tecnologia é perfeita. Com certeza o ponto alto da nossa viagem a Nova York. Recomendamos demais para quem visitar a cidade!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 저녁 늦게 방문한 직장인 (마지막 타임 경험)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '36대 한국인 남성 직장인, 저녁 9시 방문', scenario: 'ko-late-evening-visit',
+    reviewer_name: '박민준',
+    review_text: '야근 후 마지막 타임에 혼자 왔는데 관람객이 거의 없어서 공간을 혼자 독차지한 느낌이었어요. 전시 하나하나 천천히 다 볼 수 있어서 너무 좋았습니다. 낮보다 늦은 시간에 오는 것도 완전히 다른 경험인 것 같아요. 번아웃 해소에 최고입니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — 인플루언서 (팔로워 50만) 매우 긍정
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '24yo American female lifestyle influencer 500k followers', scenario: 'en-influencer-5star',
+    reviewer_name: 'Alyssa Morgan',
+    review_text: 'I have visited immersive art experiences in NYC, London, Paris and Tokyo and ARTE Las Vegas is genuinely top tier. Every single room is content-worthy. My Reel from here got 2M views overnight. The WAVE room and GARDEN room are unmatched for golden-hour vibes. If you\'re a content creator, this is non-negotiable. Put it on your list.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 친구 소매치기 피해 (EMERGENCY 법적+보상)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '26대 한국인 여성', scenario: 'ko-theft-police',
+    reviewer_name: '김민지',
+    review_text: '전시 관람 중에 친구 지갑이 없어졌어요. 직원에게 신고했더니 CCTV 확인이 불가하다고 하면서 경찰을 부르라고만 했어요. 경찰 불렀고 사건 접수했습니다. 분실물 보관함도 없고 관리가 너무 허술합니다. 피해 보상을 요청합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 불교 신자 관점 (자연/생명 미적 체험)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '61대 한국인 남성 불교 신자', scenario: 'ko-buddhist-visitor',
+    reviewer_name: '강정원',
+    review_text: '불교를 믿는 사람으로서 이 전시에서 깊은 울림을 느꼈습니다. 파도가 치고, 꽃이 피고 지고, 빛이 흐르는 것이 마치 불교에서 말하는 무상(無常)의 아름다움 같았어요. 예술이 종교를 초월해서 진리를 이야기할 수 있다는 것을 느꼈습니다. 마음이 많이 치유됐습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — VR/AR 비교 관점 (테크 종사자)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '32yo American male tech engineer, VR developer', scenario: 'en-vr-comparison',
+    reviewer_name: 'Kevin Zhang',
+    review_text: 'I build VR experiences for a living so I came in skeptical. What makes ARTE different is the absence of any wearables — pure environmental immersion through light, sound and scent. It delivers a more embodied experience than any headset I have used. The scale of the projections creates genuine awe that VR headsets cannot replicate. Technically impressive.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 재방문 충성 고객 (5회 방문, 콘텐츠 업데이트 요청)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMLV', lang: 'ko', demographic: '40대 한국인 여성, 5회 방문', scenario: 'ko-loyal-5th-visit',
+    reviewer_name: '이수진',
+    review_text: '다섯 번째 방문입니다. 갈 때마다 데려가고 싶은 사람이 생겨서 또 왔어요. 작품의 완성도는 변함없이 훌륭한데, 이제는 새로운 콘텐츠가 더 자주 업데이트되면 좋겠다는 아쉬움이 있어요. 작년과 올해가 거의 같아서 다섯 번째는 좀 익숙해졌습니다. 그래도 여전히 좋아서 또 올 것 같습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 스페인어 — 긍정적 콜롬비아 관광객 (신규 스페인어 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'es', demographic: 'Turista colombiana 27 años', scenario: 'es-colombia-5star',
+    reviewer_name: 'Isabella Torres',
+    review_text: '¡Una experiencia absolutamente mágica! Vine desde Colombia específicamente para visitar ARTE MUSEUM DUBAI y superó todas mis expectativas. La sala de flores de cerezo me dejó sin palabras. Es el tipo de arte que te hace sentir algo profundo. Vale cada centavo. Volveré en mi próximo viaje a Dubai sin duda.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 한국어 — 극단적 짧은 부정 (★1, 한 줄)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '22대 한국인 남성', scenario: 'ko-one-liner-negative',
+    reviewer_name: '정성훈',
+    review_text: '돈 아깝고 시간 낭비.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 13] 영어 — 공황장애/불안 방문객 (어두운 공간 우려)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: '29yo American female with anxiety disorder', scenario: 'en-anxiety-dark-rooms',
+    reviewer_name: 'Rachel Kim',
+    review_text: 'I have anxiety and panic disorder. Some of the darker enclosed rooms were genuinely difficult for me. There was no warning beforehand about the nature of the dark spaces. Staff were kind but not trained to assist visitors with anxiety. A content advisory at the entrance would help visitors like me prepare. The art was beautiful when I could experience it.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
