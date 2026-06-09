@@ -38,10 +38,22 @@ export function slotA_greeting(lang: Language, name: string, idx = 0): string {
   const nm = name.trim()
   const v: Record<Language, string[]> = {
     ko: [
+      // 0: 정중 표준
       `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 방문해 주셔서 진심으로 감사드립니다.`,
+      // 1: 랜드마크 언급, 정중
       `{branch_name}에 소중한 발걸음을 해주신${nm ? ` ${nm}님께` : ''} 진심으로 감사드립니다. {landmark}에 자리한 저희 전시관을 찾아주셔서 더욱 기쁩니다.`,
+      // 2: 표준 변형
       `안녕하세요${nm ? `, ${nm}님` : ''}. 소중한 시간을 내어 {branch_name}를 선택해 주셔서 깊이 감사드립니다.`,
+      // 3: 지점 강조 정중
       `${nm ? `${nm}님, ` : ''}{landmark}에 위치한 {branch_name}를 방문해 주셔서 진심으로 환영하며 감사드립니다.`,
+      // 4: SHORT 캐주얼 (자연스러운 AI 톤)
+      `${nm ? `${nm}님, ` : ''}리뷰 남겨주셔서 감사합니다!`,
+      // 5: SHORT 친근
+      `안녕하세요${nm ? ` ${nm}님` : ''}! {branch_name}를 찾아주셔서 기쁩니다.`,
+      // 6: 경험 공유 감사
+      `${nm ? `${nm}님, ` : ''}{branch_name}에서의 경험을 공유해 주셔서 감사해요.`,
+      // 7: 반가움 강조
+      `{branch_name}에 와주셔서 반가웠습니다${nm ? `, ${nm}님` : ''}.`,
     ],
     en: [
       `Dear ${nm || 'valued guest'}, thank you so much for visiting {branch_name}.`,
@@ -74,10 +86,22 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
   const nm = name.trim()
   const v: Record<Language, string[]> = {
     ko: [
+      // 0: 정중 표준
       `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 이용하시면서 불편을 드린 점 진심으로 사과드립니다.`,
+      // 1: 공감 중심
       `${nm ? `${nm}님, ` : ''}{branch_name}에서 불편한 경험을 하셨다니 진심으로 죄송합니다.`,
+      // 2: 기대 미충족 표현
       `안녕하세요${nm ? `, ${nm}님` : ''}. 기대에 미치지 못하는 경험을 드린 점 깊이 유감스럽게 생각합니다.`,
+      // 3: 피드백 감사 + 사과
       `${nm ? `${nm}님, ` : ''}소중한 말씀 주셔서 감사합니다. {branch_name}에서의 불편에 진심으로 사과드립니다.`,
+      // 4: SHORT + 지점명 포함
+      `안녕하세요${nm ? ` ${nm}님` : ''}. {branch_name}에서 불편을 드려 정말 죄송합니다.`,
+      // 5: 솔직 피드백 인정 + 지점명
+      `${nm ? `${nm}님, ` : ''}솔직한 피드백 주셔서 감사합니다. {branch_name}에서의 불편에 죄송합니다.`,
+      // 6: 기대 미충족 + 지점명
+      `{branch_name}를 방문해 주셨는데 기대에 미치지 못해 죄송합니다${nm ? `, ${nm}님` : ''}.`,
+      // 7: 진심 강조 + 지점명
+      `${nm ? `${nm}님, ` : ''}{branch_name}에서의 불편한 경험에 대해 진심으로 사과드립니다.`,
     ],
     en: [
       `Dear ${nm || 'valued guest'}, we sincerely apologize for the inconvenience you experienced at {branch_name}.`,
@@ -103,15 +127,43 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
-//  Slot B — 따뜻한 감사 응답 (SAFE/COMPLIMENT) / 4 variants × 4 languages
+//  Slot B — 따뜻한 감사 응답 (SAFE/COMPLIMENT) / 8 KO + 4 EN/JA/ZH variants
+//  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 응답 우선 반환 (AI같은 답변 구현)
 // ════════════════════════════════════════════════════════════════════════════════
-export function slotB_appreciation(lang: Language, idx = 0): string {
+export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: string | null): string {
+  // ── 맥락 거울 응답 (KO 전용): 리뷰가 언급한 감성 키워드로 맞춤 응답 ───────────────
+  if (contextMirror && lang === 'ko') {
+    const echoMap: Record<string, string> = {
+      '힐링': '힐링이 되셨다니 저희도 정말 기쁩니다. 이런 후기가 저희에게 큰 힘이 돼요.',
+      '몰입': '몰입감 있는 경험이 되셨다니 스태프 모두 정말 보람차네요.',
+      '데이트': '특별한 데이트 장소로 {branch_name}를 선택해 주셔서 감사합니다.',
+      '가족': '소중한 가족과의 시간을 {branch_name}에서 함께해 주셔서 더욱 기쁩니다.',
+      '친구': '좋은 분들과 함께 즐거운 시간 보내셨다니 저희도 행복합니다.',
+      '사진': '사진 찍기 좋은 공간으로 기억해 주셔서 감사합니다.',
+      '감동': '감동을 받으셨다니 저희도 뭉클해지네요. 그런 경험을 드릴 수 있어 영광입니다.',
+      '분위기': '분위기가 마음에 드셨다니 정말 기쁩니다.',
+    }
+    if (echoMap[contextMirror]) return echoMap[contextMirror]
+  }
+
   const v: Record<Language, string[]> = {
     ko: [
+      // 0: 정중 클래식
       '남겨주신 따뜻한 후기를 읽으며 저희 또한 큰 힘을 얻었습니다. 소중한 시간을 함께해 주셔서 감사합니다.',
+      // 1: 스태프 격려 중심
       '귀중한 시간을 내어 후기를 남겨 주셔서 스태프 모두 큰 격려를 받았습니다.',
+      // 2: 원동력 표현
       '고객님의 따뜻한 말씀이 저희에게 큰 자랑이자 원동력이 됩니다. 진심으로 감사합니다.',
+      // 3: 보람 강조
       '남겨주신 격려의 말씀 덕분에 저희 모두 큰 보람을 느낍니다. 고맙습니다.',
+      // 4: SHORT 직접 공감 (캐주얼)
+      '좋은 경험이 되셨다니 저희도 정말 기쁩니다.',
+      // 5: SHORT 힘 표현
+      '이런 따뜻한 후기가 저희에게 정말 큰 힘이 돼요.',
+      // 6: SHORT 감사 수용
+      '공유해 주신 소감 감사히 받았습니다.',
+      // 7: 스태프 기쁨 (친근)
+      '스태프들이 이 후기를 보면 정말 기뻐할 것 같아요.',
     ],
     en: [
       'Your kind words mean a great deal to our entire team. Thank you for spending your time with us.',
@@ -137,15 +189,27 @@ export function slotB_appreciation(lang: Language, idx = 0): string {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
-//  Slot B — 사안 수용 · 즉각 검토 약속 (COMPLAINT/EMERGENCY) / 4 variants × 4 languages
+//  Slot B — 사안 수용 · 즉각 검토 약속 (COMPLAINT/EMERGENCY) / 8 KO + 4 EN/JA/ZH variants
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotB_acknowledgment(lang: Language, idx = 0): string {
   const v: Record<Language, string[]> = {
     ko: [
+      // 0: 정중 검토 약속
       '말씀해 주신 내용을 무겁게 받아들이며, 담당자가 신속히 확인하여 성심껏 안내드리겠습니다.',
+      // 1: 개선 약속 중심
       '소중한 피드백을 바탕으로 개선 방안을 신속히 검토하겠습니다. 같은 불편이 반복되지 않도록 최선을 다하겠습니다.',
+      // 2: 검토 + 안내 약속
       '담당자가 빠른 시간 내 내용을 검토하여 성실히 안내드리겠습니다.',
+      // 3: 서비스 개선 반영
       '말씀해 주신 내용을 면밀히 검토하여 서비스 개선에 적극 반영하겠습니다.',
+      // 4: SHORT 직접 수용
+      '소중한 말씀 잘 받았습니다. 즉시 확인하겠습니다.',
+      // 5: 재발 방지 중심
+      '같은 불편이 반복되지 않도록 팀 전체가 확인하겠습니다.',
+      // 6: 피드백 가치 인정
+      '솔직한 말씀 덕분에 저희가 더 나아질 수 있습니다. 꼭 개선하겠습니다.',
+      // 7: 즉각 대응 강조
+      '말씀 주신 부분, 저희가 직접 챙기겠습니다.',
     ],
     en: [
       'We take your feedback seriously, and a member of our team will review it promptly and follow up with care.',
@@ -558,15 +622,43 @@ export function slotD_peak_hours(lang: Language, idx = 0): string {
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  Slot E — 멀티지점 정체성 클로징 + 재방문 권유 (SAFE/COMPLIMENT)
-//  4 variants × 4 languages | {branch_name}
+//  8 KO + 4 EN/JA/ZH variants | {branch_name}
+//  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 클로징 우선 반환
 // ════════════════════════════════════════════════════════════════════════════════
-export function slotE_positive(lang: Language, idx = 0): string {
+export function slotE_positive(lang: Language, idx = 0, contextMirror?: string | null): string {
+  // ── 맥락 거울 클로징 (KO 전용): 리뷰 감성에 맞는 재방문 권유 ───────────────────────
+  if (contextMirror && lang === 'ko') {
+    const closeMap: Record<string, string> = {
+      '힐링': '{branch_name}가 언제나 힐링의 공간이 될 수 있도록 노력하겠습니다. 또 찾아주세요.',
+      '몰입': '더욱 깊은 몰입 경험으로 다시 뵐 수 있기를 기대합니다.',
+      '데이트': '다음 특별한 날에도 {branch_name}에서 만나요.',
+      '가족': '다음에도 소중한 가족과 함께 꼭 다시 찾아주세요.',
+      '친구': '다음에도 좋은 분들과 함께 찾아주세요.',
+      '사진': '다음에도 좋은 사진 많이 남겨 가세요.',
+      '감동': '또 다른 감동으로 다시 뵐 수 있기를 기대합니다.',
+      '분위기': '언제든지 {branch_name}에서 또 만나요.',
+    }
+    if (closeMap[contextMirror]) return closeMap[contextMirror]
+  }
+
   const v: Record<Language, string[]> = {
     ko: [
+      // 0: 감동 약속 정중
       '앞으로도 잊지 못할 감동을 선사하는 {branch_name}가 되겠습니다. 다시 만나뵐 그날을 기대하겠습니다.',
+      // 1: 새로운 감동 약속
       '다음에도 {branch_name}에서 새로운 감동과 영감을 드릴 수 있도록 최선을 다하겠습니다.',
+      // 2: 전시 약속 + 재방문 권유
       '{branch_name}는 앞으로도 더욱 풍성한 전시로 보답하겠습니다. 언제든지 다시 방문해 주세요.',
+      // 3: 특별한 순간 약속
       '소중한 방문에 다시 한번 감사드리며, {branch_name}에서 또 다른 특별한 순간을 함께하기를 기대합니다.',
+      // 4: SHORT 재방문 권유 (캐주얼)
+      '또 찾아주세요!',
+      // 5: SHORT 만남 기대
+      '언제든지 다시 {branch_name}에서 만나요.',
+      // 6: SHORT 방문 기대
+      '다음 방문도 기대하겠습니다.',
+      // 7: SHORT 좋은 시간 기원
+      '또 좋은 시간 함께 나눌 수 있기를 바랍니다.',
     ],
     en: [
       'It would be our honor to welcome you back to {branch_name} for another unforgettable experience.',
@@ -593,15 +685,27 @@ export function slotE_positive(lang: Language, idx = 0): string {
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  Slot E — 불만 응대 최소 클로징 (COMPLAINT/EMERGENCY)
-//  4 variants × 4 languages | {branch_name}
+//  8 KO + 4 EN/JA/ZH variants | {branch_name}
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotE_negative(lang: Language, idx = 0): string {
   const v: Record<Language, string[]> = {
     ko: [
+      // 0: 개선 약속 클래식
       '소중한 의견 감사드리며, 더 나은 서비스로 보답드리겠습니다.',
+      // 1: 재방문 기대 + 사과
       '다시 한번 불편에 대해 사과드리며, 앞으로는 더 만족스러운 경험을 제공하겠습니다.',
+      // 2: 발전 감사
       '말씀해 주신 덕분에 저희가 더 발전할 수 있습니다. 감사합니다.',
+      // 3: 지점 발전 약속
       '소중한 피드백에 감사드리며, 더 나은 {branch_name}가 될 수 있도록 노력하겠습니다.',
+      // 4: SHORT 다음 기대
+      '다음 방문에서는 더 좋은 경험 드리겠습니다.',
+      // 5: SHORT 기억 약속
+      '소중한 말씀 잊지 않겠습니다.',
+      // 6: 개선 후 재방문 기대
+      '개선된 {branch_name}에서 다시 뵐 수 있기를 바랍니다.',
+      // 7: SHORT 노력 약속
+      '더 나은 경험을 드릴 수 있도록 열심히 하겠습니다.',
     ],
     en: [
       'Thank you for your valuable feedback. We are committed to doing better.',

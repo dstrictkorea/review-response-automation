@@ -301,5 +301,95 @@ function pr(text: string, rating: number, lang: 'ko' | 'en') {
   check('S8 KO no unresolved {placeholder}', !/\{[a-z_]+\}/.test(replyKO), 'unresolved token in KO reply')
 }
 
+// ════════════════════════════════════════════════════════════════════════════════
+//  CSV 엣지케이스 TDD — 실제 arte_reviews_2026-06-09.csv 분석 기반 신규 케이스
+// ════════════════════════════════════════════════════════════════════════════════
+
+// ── S9: 1★ + 필러 추천 꼬리 → SAFE 오분류 방지 (Rating Override + FILLER_PATTERN) ──
+// CSV row 8 재현: rating=1, "기대한 만큼은 아니었습니다. 커플 데이트로 추천합니다."
+{
+  const text = '기대한 만큼은 아니었습니다. 커플 데이트로 추천합니다.'
+  const d = analyzeReview(text, 1)
+  check('S9 1★+필러추천 → NOT SAFE', d.status !== 'SAFE', d.status)
+  check('S9 1★+필러추천 → COMPLAINT or AMBIGUOUS', d.status === 'COMPLAINT' || d.status === 'AMBIGUOUS', d.status)
+  check('S9 1★+필러추천 → isComplaint or requiresLLM', d.isComplaint || d.requiresLLM, `isComplaint=${d.isComplaint}, requiresLLM=${d.requiresLLM}`)
+  check('S9 저평점_부정신호 tag 존재', d.tags.includes('저평점_부정신호'), d.tags.join(','))
+}
+
+// ── S10: 2★ + 줄/대기 불만 → COMPLAINT (DEFAULT_CROWD 한국어 확장) ──────────────
+// CSV row 4 재현: rating=2, "입장 대기가 길어서 조금 지쳤네요. 커플 데이트로 추천합니다."
+{
+  const text = '입장 대기가 길어서 조금 지쳤네요. 커플 데이트로 추천합니다.'
+  const d = analyzeReview(text, 2)
+  check('S10 2★+대기불만 → COMPLAINT', d.status === 'COMPLAINT', d.status)
+  check('S10 CROWD_COMPLAINT tag', d.tags.includes('CROWD_COMPLAINT'), d.tags.join(','))
+  check('S10 isComplaint=true', d.isComplaint === true)
+}
+
+// ── S11: 2★ + 가격 대비 아쉬움 → VALUE_COMPLAINT (DEFAULT_VALUE 한국어 확장) ────
+// CSV row 15 재현: rating=2, "가격 대비 만족도는 좀 아쉬웠어요. 사진 찍기에도 좋아요."
+{
+  const text = '가격 대비 만족도는 좀 아쉬웠어요. 사진 찍기에도 좋아요.'
+  const d = analyzeReview(text, 2)
+  check('S11 2★+가격불만 → COMPLAINT', d.status === 'COMPLAINT', d.status)
+  check('S11 VALUE_COMPLAINT tag', d.tags.includes('VALUE_COMPLAINT'), d.tags.join(','))
+}
+
+// ── S12: 한국어 hasPeakHours 탐지 ──────────────────────────────────────────────
+{
+  const textKO1 = '평일에 가면 더 좋을 것 같네요. 주말은 사람이 너무 많았어요.'
+  const d1 = analyzeReview(textKO1)
+  check('S12-a KO 평일/주말언급 → hasPeakHours=true', d1.hasPeakHours === true, `hasPeakHours=${d1.hasPeakHours}`)
+
+  const textKO2 = '주말에는 사람이 많아서 혼잡했어요. 다음엔 평일에 방문하면 좋을 것 같아요.'
+  const d2 = analyzeReview(textKO2)
+  check('S12-b KO 혼잡+평일언급 → hasPeakHours=true', d2.hasPeakHours === true, `hasPeakHours=${d2.hasPeakHours}`)
+  check('S12-b KO CROWD_COMPLAINT tag', d2.tags.includes('CROWD_COMPLAINT'), d2.tags.join(','))
+}
+
+// ── S13: 5★ + 힐링 → COMPLIMENT + contextMirror='힐링' ─────────────────────────
+{
+  const text = '분위기가 너무 좋아서 힐링 제대로 했습니다. 완전 추천해요!'
+  const d = analyzeReview(text, 5)
+  check('S13 5★+힐링 → COMPLIMENT', d.status === 'COMPLIMENT', d.status)
+  check('S13 contextMirror=힐링', d.contextMirror === '힐링', `contextMirror=${d.contextMirror}`)
+  // 슬롯 B/E에서 맥락 거울 반영 확인
+  const reply = buildStaticReply(d, { branchCode: 'AMLV', language: 'ko', reviewId: 'test-s13' })
+  check('S13 reply: 힐링 언급', /힐링/.test(reply), reply.slice(0, 200))
+  check('S13 no unresolved {placeholder}', !/\{[a-z_]+\}/.test(reply), 'unresolved token')
+}
+
+// ── S14: 4★ + 데이트 맥락 → contextMirror='데이트' + 답변에 데이트 반영 ──────────
+{
+  const text = '남자친구랑 데이트로 왔는데 정말 좋았어요!'
+  const d = analyzeReview(text, 4)
+  check('S14 4★+데이트 → COMPLIMENT', d.status === 'COMPLIMENT', d.status)
+  check('S14 contextMirror=데이트', d.contextMirror === '데이트', `contextMirror=${d.contextMirror}`)
+  const reply = buildStaticReply(d, { branchCode: 'AMLV', language: 'ko', reviewId: 'test-s14' })
+  check('S14 reply: 데이트 언급', /데이트/.test(reply), reply.slice(0, 200))
+}
+
+// ── S15: 3★ + "괜찮았어요" → SAFE (DEFAULT_POSITIVE에 괜찮 추가 확인) ────────────
+{
+  const text = '전체적으로 괜찮았어요.'
+  const d = analyzeReview(text, 3)
+  check('S15 3★+괜찮 → SAFE (not AMBIGUOUS)', d.status === 'SAFE', d.status)
+}
+
+// ── S16: SHORT 모드 검증 — 단순 SAFE 긍정 리뷰 → 3슬롯(A+B+E), Slot C 생략 ─────
+// 평점 없음 = SAFE(not COMPLIMENT) → SHORT 모드 활성화
+{
+  const text = '좋았어요!'
+  const d = analyzeReview(text)  // 평점 없음 → SAFE (SHORT 모드 대상)
+  check('S16 단순긍정(무평점) → SAFE', d.status === 'SAFE', d.status)
+  check('S16 isArtworkFocused=false', d.isArtworkFocused === false)
+  check('S16 hasPeakHours=false', d.hasPeakHours === false)
+  check('S16 contextMirror=null (단순긍정)', d.contextMirror == null, `mirror=${d.contextMirror}`)
+  // SHORT 모드(SAFE + 작품미언급 + 피크미언급 + 거울없음): Slot C 없음 → highlight_room 미포함
+  const reply = buildStaticReply(d, { branchCode: 'AMLV', language: 'ko', reviewId: 'test-s16' })
+  check('S16 SHORT모드: highlight_room 미포함', !/{highlight_room}/.test(reply), reply.slice(0, 200))
+  check('S16 no unresolved {placeholder}', !/\{[a-z_]+\}/.test(reply), 'unresolved token')
+}
+
 console.log(`\n${failures === 0 ? '✅ ALL PASS' : `❌ ${failures} FAILURE(S)`}`)
 process.exit(failures === 0 ? 0 : 1)

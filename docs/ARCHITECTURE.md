@@ -17,7 +17,7 @@
 | 배포 | Vercel (Fluid Compute) | — |
 | 인증 | Supabase Auth + Google OAuth 2.0 | — |
 
-> **결정론적 하이브리드 파이프라인 (도입 중, Phase 1 준비 완료)**: `WaterfallRegexEngine`(KO/EN 다층 정규식, `/i`, Early-Return) → `reviewProcessor` 게이트키퍼. SAFE=정적 템플릿(LLM 미사용) · EMERGENCY=수동 검토 격리 · COMPLAINT/AMBIGUOUS=LLM Fallback(알고리즘 태그/근거 프롬프트 주입). 모든 게시 답변은 금칙어 필터 통과 강제(Double-Check). **DB 구동(migration 013)**: 규칙/템플릿은 `automation_rules`/`response_templates`에서 로드(인메모리 `rulesCache`), 관리자 `/api/admin/rules`로 CRUD. EMERGENCY Layer는 코드 하드코딩 불변(DB는 additive).
+> **Zero-Cost NLP 모사 엔진 + 결정론적 하이브리드 파이프라인 (2026-06-09 현행)**: `synonymEngine.ts`(유의어사전+N-gram+contextMirror) → `WaterfallRegexEngine`(KO/EN 5-Layer 폭포수, FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, hasPeakHours KO/EN, Rating Override) → `reviewProcessor` 게이트키퍼. **SAFE/COMPLIMENT=5-슬롯 정적 조립(LLM 미사용, 1,024+ 조합)** · EMERGENCY=수동 검토 격리 · COMPLAINT/AMBIGUOUS=LLM Fallback. `staticTemplates`(KO 8-variant+SHORT) + `replyTemplates`(contextMirror echo/close map, SHORT 모드). 모든 게시 답변은 금칙어 필터 통과 강제(Double-Check). DB 구동: 규칙은 `automation_rules`→`rulesCache`(TTL 60s) 로드. EMERGENCY Layer는 코드 하드코딩 불변(DB는 additive).
 
 ---
 
@@ -75,8 +75,15 @@ review-response-automation/
 │   │   ├── aiService.ts              ← AI 프롬프트 SSOT ★
 │   │   └── filterService.ts          ← 글로벌 위험 키워드 필터 ★
 │   ├── lib/
-│   │   ├── automation/
-│   │   │   └── IntelligentOrchestrator.ts ← 배치 AI 파이프라인 (io-v3) ★
+│   │   ├── synonymEngine.ts          ← ★ Zero-Cost NLP: 유의어사전+N-gram+FILLER_PATTERN+contextMirror
+│   │   ├── waterfallRegexEngine.ts   ← ★ 5-Layer 결정론적 분류 엔진 (KO/EN, FILLER, LOW_RATING_BODY)
+│   │   ├── reviewProcessor.ts        ← SAFE/COMPLAINT/EMERGENCY 라우팅 게이트키퍼
+│   │   ├── processReviewById.ts      ← admin-context 단일 리뷰 처리 (bulk/cron 공통)
+│   │   ├── staticTemplates.ts        ← 5-슬롯 다국어 정적 템플릿 (KO 8-variant, contextMirror)
+│   │   ├── replyTemplates.ts         ← 5-슬롯 조립 엔진 (다지점 해시, SHORT모드, contextMirror)
+│   │   ├── branchMetadata.ts         ← 지점 토큰 팩토리 ({branch_name}/{landmark}/{highlight_room})
+│   │   ├── rulesCache.ts             ← DB 규칙 인메모리 캐시 (TTL 60s)
+│   │   ├── branches.ts               ← branchSignatureWork (ETERNAL NATURE 대표작)
 │   │   ├── i18n/index.ts             ← 4개 국어 사전 ★
 │   │   ├── importMapping.ts          ← CSV 파싱 + 포맷 매핑
 │   │   ├── badges.ts                 ← 상태·위험도 CSS + Korean 레이블

@@ -2,17 +2,23 @@
  * replyTemplates.ts — 5-슬롯 다차원 조합 답변 조립 엔진 + Kill-Switch
  *
  * 슬롯 구조:
- *   SAFE / COMPLIMENT:  [A: 인사] + [B: 감정응답] + [C: 작품/일반] + [D?: 피크힌트] + [E: 클로징]
+ *   SAFE / COMPLIMENT:  [A: 인사] + [B: 감정응답] + [C?: 작품/일반] + [D?: 피크힌트] + [E: 클로징]
  *   COMPLAINT / EMERGENCY: [A: 사과] + [B: 수용확인] + [C?: 태그액션] + [D?: 피크힌트] + [E: 미니클로징]
  *
  * 변형 선택: reviewId → 슬롯별 독립 소수 해시 → idxA/idxB/idxC/idxD/idxE
- *   idxA = slotHash(id,  2) % 4
- *   idxB = slotHash(id,  3) % 4
- *   idxC = slotHash(id,  5) % 4
- *   idxD = slotHash(id,  7) % 3  (Slot D는 3-variant)
- *   idxE = slotHash(id, 11) % 4
- * 256 기본 조합 (4×4×4×4 슬롯) × 10 태그 = 다차원 다양성 보장.
+ *   idxA = slotHash(id,  2) % 8   ← KO 8-variant 확장 (en/ja/zh는 arr.length%로 자동 순환)
+ *   idxB = slotHash(id,  3) % 8
+ *   idxC = slotHash(id,  5) % 4   ← Slot C 태그 기반 (4 변형 유지)
+ *   idxD = slotHash(id,  7) % 3   ← Slot D 피크힌트 (3 변형 유지)
+ *   idxE = slotHash(id, 11) % 8
+ * 8×8×4×4 KO 기본 조합 = 1,024 조합 × 10 태그 = 다차원 다양성 보장.
  * reviewId 미제공 시 모든 idx=0 → 기본 변형 폴백 (하위 호환).
+ *
+ * SHORT 모드: isArtworkFocused=false, hasPeakHours=false, contextMirror=null 이면
+ *   Slot C 생략 → A + B + E (3슬롯) → 답변 TMI 방지.
+ *
+ * contextMirror: WaterfallResult에서 추출한 감성 키워드(힐링/데이트 등)를
+ *   slotB/slotE에 전달 → 리뷰 내용을 반영하는 맞춤형 답변 생성 (AI같은 답변 구현).
  *
  * 토큰 치환: buildStaticReply 마지막 단계에서 applyBranchTokens()가
  * {branch_name}, {landmark}, {highlight_room}, {facility}를 일괄 치환한다.
@@ -67,11 +73,11 @@ interface SlotIndices {
 
 function buildSlotIndices(reviewId: string | null | undefined): SlotIndices {
   return {
-    idxA: slotHash(reviewId,  2) % 4,
-    idxB: slotHash(reviewId,  3) % 4,
-    idxC: slotHash(reviewId,  5) % 4,
-    idxD: slotHash(reviewId,  7) % 3,
-    idxE: slotHash(reviewId, 11) % 4,
+    idxA: slotHash(reviewId,  2) % 8,  // KO 8-variant, EN/JA/ZH 자동 % arr.length
+    idxB: slotHash(reviewId,  3) % 8,
+    idxC: slotHash(reviewId,  5) % 4,  // 태그 기반 pivot 4-variant 유지
+    idxD: slotHash(reviewId,  7) % 3,  // 피크힌트 3-variant 유지
+    idxE: slotHash(reviewId, 11) % 8,
   }
 }
 
@@ -90,6 +96,8 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
 
   let rawReply: string
 
+  const mirror = result.contextMirror ?? null
+
   if (result.isEmergency || result.isComplaint) {
     // ── COMPLAINT / EMERGENCY: A + B + C? + D? + E ──────────────────────────
     // Kill-Switch: ETERNAL NATURE 찬양 블록 원천 차단
@@ -104,17 +112,26 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
     const parts: string[] = [a, b, ...(c ? [c] : []), ...(d ? [d] : []), e]
     rawReply = parts.join('\n\n')
   } else {
-    // ── SAFE / COMPLIMENT: A + B + C + D? + E ───────────────────────────────
+    // ── SAFE / COMPLIMENT: A + B + [C?] + [D?] + E ─────────────────────────
     const a = slotA_greeting(lang, name, idxA)
-    const b = slotB_appreciation(lang, idxB)
-    // 작품 중심 → ETERNAL NATURE 블록 / 일반 → 대표 공간 언급
-    const c = result.isArtworkFocused
-              ? slotC_artwork(lang, sig, idxC)
-              : slotC_general(lang, idxC)
+    // contextMirror가 있으면 슬롯 B가 리뷰 내용 반영 맞춤 응답 반환 (AI같은 답변)
+    const b = slotB_appreciation(lang, idxB, mirror)
+
+    // SHORT 모드: SAFE(저·무평점) 단순 긍정 리뷰 + 작품미언급 + 피크미언급 + 맥락거울없음
+    //   → Slot C 생략 → A + B + E (3슬롯) = 답변 TMI 방지
+    // FULL 모드: COMPLIMENT(4-5★) 또는 작품 중심이거나 피크타임 언급이거나 맥락거울 있음
+    const useShortMode = result.status === 'SAFE' && !result.isArtworkFocused && !result.hasPeakHours && !mirror
+    const c = useShortMode
+              ? null
+              : result.isArtworkFocused
+                ? slotC_artwork(lang, sig, idxC)
+                : slotC_general(lang, idxC)
+
     // 긍정 리뷰에서 피크타임 언급 시 방문 권유 힌트 추가
     const d = result.hasPeakHours ? slotD_peak_hours(lang, idxD) : null
-    const e = slotE_positive(lang, idxE)
-    const parts: string[] = [a, b, c, ...(d ? [d] : []), e]
+    // contextMirror가 있으면 슬롯 E가 리뷰 내용 반영 맞춤 클로징 반환
+    const e = slotE_positive(lang, idxE, mirror)
+    const parts: string[] = [a, b, ...(c ? [c] : []), ...(d ? [d] : []), e]
     rawReply = parts.join('\n\n')
   }
 

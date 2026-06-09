@@ -20,6 +20,8 @@ import { scanText } from '@/services/filterService'
 import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 // 순수 데이터 모듈 — 클라이언트 번들 안전
 import { getBranchTokens } from '@/lib/branchMetadata'
+// Zero-Cost NLP 모사: 유의어 사전 + 필러 패턴 + 맥락 거울 추출
+import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror } from '@/lib/synonymEngine'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -44,6 +46,8 @@ export interface WaterfallResult {
   isRepeatVisitor: boolean   // 과거 방문 입증
   isChurnRisk: boolean       // 미래 이탈 위험
   hasPeakHours: boolean      // 피크/혼잡 시간대 언급 여부 (Slot C 대체 클로징 트리거)
+  /** 맥락 거울 — 리뷰 핵심 감성 키워드(힐링/데이트/가족/사진 등). 답변 슬롯 B/E 맞춤 구성용. */
+  contextMirror?: string | null
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -75,7 +79,7 @@ const DEFAULT_SARCASM =
   /(안\s*아깝|아깝지\s*않|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
 const DEFAULT_POSITIVE =
-  /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*(?:it|checking\s*out)|good\s*location)/i
+  /(좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷|괜찮|힐링|몰입|감격|기대\s*이상|기대\s*그\s*이상|재밌|재미있|신기|신선|특별|설레)|(beautiful|amazing|great|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|recommend|worth\s*(?:it|checking\s*out)|good\s*location|healing|immersive|relaxing)/i
 
 const DEFAULT_QUESTION =
   /[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)/i
@@ -92,19 +96,19 @@ const DEFAULT_DISPLAY =
 const DEFAULT_DURATION =
   /(?<!안\s)(규모[^.!?\n]{0,6}작|금방\s*끝|너무\s*짧|관람\s*시간[^.!?\n]{0,8}짧)|shorter\s*than\s*advertised|too\s*short/i
 const DEFAULT_CROWD =
-  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡)|overcrowded|too\s*crowded|packed\s*with\s*people/i
+  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡|입장\s*대기[^.!?\n]{0,10}(?:길|오래|너무|줄|지쳤|힘들|불편)|대기\s*(?:시간이|가)\s*(?:길었|오래|너무|길어|좀)|줄이?\s*(?:너무\s*)?길(?:어서|었)|오래\s*기다(?:렸|려야))|overcrowded|too\s*crowded|packed\s*with\s*people/i
 
 // AMLV 보강: 인터랙티브 부족 (센서/체험 불만) + 가격 불만
 const DEFAULT_INTERACTIVE =
   /\bnot\s+(?:very\s+)?interactive\b|\bexpected\s+more\s+interaction\b|\black\s+of\s+interaction\b/i
 
 const DEFAULT_VALUE =
-  /\b(?:ticket\s+)?price\b|\bexpected\s+more\s+for\s+the\s+money\b|\btoo\s+expensive\b|\bnot\s+worth\s+(?:the\s+)?(?:money|price)\b/i
+  /\b(?:ticket\s+)?price\b|\bexpected\s+more\s+for\s+the\s+money\b|\btoo\s+expensive\b|\bnot\s+worth\s+(?:the\s+)?(?:money|price)\b|가격\s*대비[^.!?\n]{0,15}(?:아쉬|별로|좀|부족|실망|않)|가성비[^.!?\n]{0,10}(?:아쉬|별로|좀|부족|나쁨|떨어|않)|가격에\s*비해\s*(?:좀|많이|너무)?\s*(?:아쉬|별로|실망)|(?:입장료|티켓값|요금)[^.!?\n]{0,8}(?:비싸|아깝|부담|높)/i
 
-// Rating 1-2 노이즈 필터: 저평점 리뷰에서 아이러니하게 붙는 긍정 접미 패턴 → 무시
-// (DEFAULT_POSITIVE에 포함되어 정상 맥락에선 긍정으로 처리되지만, rating ≤ 2인 경우 analyzeReview에서 텍스트에서 먼저 제거)
-const NOISE_POSITIVE =
-  /\bworth\s*checking\s*out\b|\bgood\s*location\b/i
+// Rating 1-2 노이즈 필터: 저평점 리뷰에서 아이러니하게 붙는 필러 추천 문장 → 무시
+// synonymEngine.FILLER_PATTERN으로 고도화 (기존 영문 2패턴 → 한/영 N-gram 17패턴으로 확장)
+// 정상 맥락(고평점)에선 긍정 신호로 처리되지만, rating ≤ 2인 경우 텍스트에서 먼저 제거.
+const NOISE_POSITIVE = FILLER_PATTERN
 
 // ── PHASE 3: 4 Niche Complaint Tags ──────────────────────────────────────────────
 
@@ -280,6 +284,7 @@ export function analyzeReview(
         isRepeatVisitor: false,
         isChurnRisk: false,
         hasPeakHours: false,
+        contextMirror: null,
       }
     }
     // landmarkFP=true → fall through to normal classification
@@ -327,9 +332,20 @@ export function analyzeReview(
   }
 
   // ── 감성 신호 ──────────────────────────────────────────────────────────────────
-  // Rating 1-2 노이즈 필터: 저평점 리뷰에서 아이러니하게 붙는 긍정 접미 패턴(worth checking out, good location) 무시
+  // Rating 1-2: 필러 추천 문장 제거 후 긍정 판정 (FILLER_PATTERN = 고도화 NOISE_POSITIVE)
   const ratingLow = typeof rating === 'number' && rating <= 2
+  const ratingHigh = typeof rating === 'number' && rating >= 4
   const textForPositive = ratingLow ? text.replace(NOISE_POSITIVE, '') : text
+
+  // ── Layer 3.5: 저평점(1-2★) 부정 본문 신호 강제 보정 ───────────────────────────
+  // 사캐즘 복구 이후에도 저평점+부정 본문이면 COMPLAINT로 격상 (필러 추천 오탐 방지)
+  // 대상: "기대한 만큼은 아니었습니다. 커플 데이트로 추천합니다." [1★] 형태
+  if (ratingLow && !isComplaint && LOW_RATING_NEGATIVE_BODY.test(text)) {
+    isComplaint = true
+    sarcasmPositive = false  // 사캐즘 복구 무력화 (저평점에서 안전 우선)
+    tags.push('저평점_부정신호')
+  }
+
   const hasPositive = sarcasmPositive || C.positive.test(textForPositive)
   const isQuestion = C.question.test(text)
   if (!isComplaint && hasPositive && C.artwork.test(text)) {
@@ -343,7 +359,7 @@ export function analyzeReview(
   let reason: string
 
   // ── Rating Override — 고평점(4·5점)은 EMERGENCY가 아닌 한 건설적 피드백(COMPLIMENT)으로 완화 ──
-  const ratingHigh = typeof rating === 'number' && rating >= 4
+  // ratingHigh는 Layer 3.5에서 이미 선언됨
 
   if (isComplaint) {
     if (ratingHigh) {
@@ -367,7 +383,13 @@ export function analyzeReview(
     reason = '알고리즘 확신 불가(중립/질문/모호) → LLM 위임'
   }
 
-  const hasPeakHours = /\bpeak\s+hours\b|\bbusy\s+hours\b/i.test(text)
+  // 피크 시간대 언급 탐지 — 한국어 패턴 추가 (기존 EN-only → KO/EN)
+  const hasPeakHours =
+    /\b(?:peak|busy)\s+hours?\b/i.test(text) ||
+    /평일[에에는]?\s*(?:가면|오면|방문하면|오시면|방문을\s*추천)|주말[에에는]?\s*(?:사람이?\s*많|혼잡|북적|복잡|피하|삼가)|피크\s*타임|혼잡한?\s*시간대?/i.test(text)
+
+  // 맥락 거울: 리뷰 감성 핵심 키워드 추출 (답변 슬롯 B/E 맞춤 구성용)
+  const contextMirror = extractContextMirror(text)
 
   return {
     status,
@@ -381,6 +403,7 @@ export function analyzeReview(
     isRepeatVisitor,
     isChurnRisk,
     hasPeakHours,
+    contextMirror,
   }
 }
 
