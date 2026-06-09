@@ -3130,6 +3130,46 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMNY', lang: 'en', demographic: '33yo American female, sensory experience', scenario: 'en-scent-positive',
     reviewer_name: 'Natalie Kim',
     review_text: 'What sets ARTE apart from every other immersive art experience I have visited is the scent. As you move through the rooms, the fragrance shifts to match the visuals. It creates a deeply multi-sensory experience that is truly unforgettable. Absolutely brilliant.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 30] — 다국어 직원징계 EMERGENCY, 포르투갈어 불만, 이탈리아어 혼재, 초장문
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 30] 프랑스어 — 직원 해고 요구 (★1, EMERGENCY)
+  // 기대: EMERGENCY (devrait être renvoyé 패턴 추가)
+  { rating: 1, location: 'AMDB', lang: 'fr', demographic: '41yo French male, staff complaint', scenario: 'fr-staff-fired-demand',
+    reviewer_name: 'Pierre Leconte',
+    review_text: 'Un membre du personnel nous a parlé de manière extrêmement irrespectueuse devant d\'autres visiteurs. Ce comportement est inacceptable et cet employé devrait être renvoyé immédiatement. Je ne reviendrai jamais.' },
+
+  // [Round 30] 독일어 — 직원 해고 요구 (★1, EMERGENCY)
+  // 기대: EMERGENCY (sollte entlassen werden 패턴 추가)
+  { rating: 1, location: 'AMNY', lang: 'de', demographic: '48yo German male, staff complaint', scenario: 'de-staff-fired-demand',
+    reviewer_name: 'Thomas Becker',
+    review_text: 'Ein Mitarbeiter hat uns grob und respektlos behandelt. Das war äußerst unprofessionell. Dieser Mitarbeiter sollte sofort entlassen werden. Für ein internationales Museum ist dieses Verhalten inakzeptabel.' },
+
+  // [Round 30] 포르투갈어 — 가격 + 군중 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (decepcionante/muito caro 패턴)
+  { rating: 2, location: 'AMDB', lang: 'pt', demographic: '35yo Brazilian female, tourist', scenario: 'pt-price-crowd-complaint',
+    reviewer_name: 'Fernanda Costa',
+    review_text: 'Muito decepcionante para o preço cobrado. O lugar estava lotado demais e não conseguimos apreciar nada com calma. Para o valor do ingresso, esperávamos muito mais. Não recomendo.' },
+
+  // [Round 30] 이탈리아어 — 혼재 ★3 (AMBIGUOUS)
+  // 기대: AMBIGUOUS (★3 긍정+부정 혼재)
+  { rating: 3, location: 'AMLV', lang: 'it', demographic: '29yo Italian female, couple visit', scenario: 'it-mixed-review',
+    reviewer_name: 'Sofia Esposito',
+    review_text: 'L\'esperienza visiva è davvero impressionante e le installazioni sono molto curate. Tuttavia il prezzo è un po\' elevato e c\'era molta gente. Nel complesso è stata una bella esperienza, ma non eccezionale.' },
+
+  // [Round 30] 영어 — 초장문 불만 (★2, COMPLAINT — 복잡한 5단락 스트레스 테스트)
+  // 기대: COMPLAINT
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '46yo American female, detailed reviewer', scenario: 'en-ultralong-complaint',
+    reviewer_name: 'Patricia Hoffman',
+    review_text: 'I want to provide a detailed account of our visit so others can make an informed decision. We arrived at 2pm on a Saturday and waited 45 minutes in line despite having pre-booked tickets. The ticketing process was disorganized. Once inside, the first gallery was beautiful and we were impressed. However, the second room we visited had its main projector displaying only half the image — clearly broken. Staff in that room acknowledged the problem but said nothing could be done. The temperature throughout the museum was sweltering with no air conditioning working properly. We asked three different staff members about this and received three different explanations. In the gift shop, items were overpriced and the staff were dismissive when we asked questions. Finally, the exit was confusing and we spent 15 minutes trying to find our way out. For $40 per person, this experience was not worth it and we would not return.' },
+
+  // [Round 30] 스페인어 — 직원 해고 요구 (★1, EMERGENCY)
+  // 기대: EMERGENCY (debería ser despedido 패턴 추가)
+  { rating: 1, location: 'AMDB', lang: 'es', demographic: '37yo Spanish female, staff complaint', scenario: 'es-staff-fired-demand',
+    reviewer_name: 'Carmen Vega',
+    review_text: 'Una empleada nos trató de manera muy grosera e irrespetuosa. Delante de todos los visiteurs, nos gritó sin ninguna razón. Este tipo de comportamiento es inaceptable y esa empleada debería ser despedida inmediatamente. No volveremos.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
