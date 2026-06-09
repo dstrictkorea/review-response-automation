@@ -125,8 +125,9 @@ const DEFAULT_REVISIT_COMPLAINT =
   /\b(?:second\s+visit|visited\s+before|used\s+to\s+be|disappointed\s+this\s+time)\b|(?<!안\s*)(재방문|두\s*번째|예전에는|과거에)/i
 
 // STAFF_COMPLAINT: 직원 태도/응대 불만 (위험도 medium 격상 — processReviewById의 COMPLAINT → medium이 자동 처리)
+// 싸가지없음/직원최악 등 슬랭 포함: Tier 1 sanitizer와 협력 — 탐지는 여기서, 순화는 sanitizeAndScoreRisk
 const DEFAULT_STAFF_COMPLAINT =
-  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증))|(?:staff|employee|worker|guard|host|cashier)[^.!?\n]{0,20}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|had\s+(?:an?\s+)?attitude)/i
+  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증|싸가지|ㅂ[ㅅ이]\s*짓|개\s*같))|(?:직원|스태프)\s*(?:최악|꼰대|개판)|(?:staff|employee|worker|guard|host|cashier)[^.!?\n]{0,20}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|had\s+(?:an?\s+)?attitude)/i
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)

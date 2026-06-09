@@ -17,7 +17,8 @@
 | 배포 | Vercel (Fluid Compute) | — |
 | 인증 | Supabase Auth + Google OAuth 2.0 | — |
 
-> **Zero-Cost NLP 모사 엔진 + 결정론적 하이브리드 파이프라인 (2026-06-09 현행)**: `synonymEngine.ts`(유의어사전+N-gram+contextMirror) → `WaterfallRegexEngine`(KO/EN 5-Layer 폭포수, FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, hasPeakHours KO/EN, Rating Override) → `reviewProcessor` 게이트키퍼. **SAFE/COMPLIMENT=5-슬롯 정적 조립(LLM 미사용, 1,024+ 조합)** · EMERGENCY=수동 검토 격리 · COMPLAINT/AMBIGUOUS=LLM Fallback. `staticTemplates`(KO 8-variant+SHORT) + `replyTemplates`(contextMirror echo/close map, SHORT 모드). 모든 게시 답변은 금칙어 필터 통과 강제(Double-Check). DB 구동: 규칙은 `automation_rules`→`rulesCache`(TTL 60s) 로드. EMERGENCY Layer는 코드 하드코딩 불변(DB는 additive).
+> **3-Tier Risk-Based 스마트 라우팅 + Zero-Cost NLP 모사 엔진 (2026-06-09 현행)**:
+> `synonymEngine.ts`(N-gram+contextMirror + **3-Tier Risk Dict** + `sanitizeAndScoreRisk()`) → `WaterfallRegexEngine`(KO/EN 5-Layer 폭포수+Rating Override) → **`reviewProcessor` 스마트 게이트키퍼**: SAFE/COMPLIMENT=5-슬롯 정적 AI_DONE · EMERGENCY=격리 · **COMPLAINT Tier1=5-슬롯 사과문 AI_DONE(LLM 불필요, 승인 불필요)** · **COMPLAINT/AMBIGUOUS Tier2/3=PENDING_APPROVAL 격리** · AMBIGUOUS Tier1=LLM Fallback. 다중 불만 태그 → `extractPrimaryIntent()` 10단계 우선순위 가중치. `staticTemplates`(KO 8-variant+SHORT+contextMirror) + `replyTemplates`(SHORT 모드). 모든 답변 금칙어 Double-Check. DB: `automation_rules`→`rulesCache`(TTL 60s). EMERGENCY 하드코딩 불변.
 
 ---
 
@@ -107,10 +108,19 @@ review-response-automation/
 │   │   ├── 001_initial.sql
 │   │   ├── 002_channel_api_enabled.sql
 │   │   ├── 003_import_tables.sql
-│   │   ├── 004_global_optimization.sql  ← country_code, 초기값, 해시 인덱스 (라이브 미적용)
-│   │   ├── 005_algorithm_first_pipeline.sql ← pg_trgm/intents/templates (라이브 미적용)
-│   │   ├── 006_review_telemetry.sql     ← reply_drafts 텔레메트리 (✅ 라이브 적용)
-│   │   └── 007_branches_seed.sql        ← 11개 공식 지점 시드 (✅ 라이브 적용)
+│   │   ├── 004_global_optimization.sql     ← country_code, 초기값, 해시 인덱스
+│   │   ├── 005_algorithm_first_pipeline.sql ← pg_trgm/intents/templates
+│   │   ├── 006_review_telemetry.sql        ← reply_drafts 텔레메트리 (✅ 라이브)
+│   │   ├── 007_branches_seed.sql           ← 11개 공식 지점 시드 (✅ 라이브)
+│   │   ├── 009_multi_branch_rbac.sql       ← profiles.role + assigned_branches STEP A (✅)
+│   │   ├── 010_reviews_soft_delete.sql     ← soft delete (✅)
+│   │   ├── 011/012_hard_delete_rpc.sql     ← hard delete RPC (✅)
+│   │   ├── 013_automation_rules.sql        ← automation_rules + response_templates (✅)
+│   │   ├── 014_engine_precision_amlv.sql   ← AMLV 정밀도 보강 (✅)
+│   │   ├── 015_legacy_purge.sql            ← reply_template_variants/intent_keywords/review_intents DROP (✅)
+│   │   └── 016_assigned_branches_backfill.sql ← RLS STEP B 선결: assigned_branches 백필 (✅ committed, 적용 대기)
+│   ├── gated/
+│   │   └── rbac_rls_step_b.sql             ← 🔒 GATED: "RLS 락 해제" 승인 후에만 적용
 │   └── seed.sql
 ├── PROJECT_STATE.md                  ← ★ 이 파일의 형제 — 프로젝트 상태 원본
 └── docs/

@@ -191,3 +191,104 @@ export function extractContextMirror(text: string): string | null {
 
   return null
 }
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  3-Tier Risk Dictionary & Sanitization Layer
+//
+//  목적: COMPLAINT/AMBIGUOUS 라우팅 전 독성 순화 및 리스크 등급 판별.
+//    Tier 1 (Sanitizable → AI_DONE 허용): 비속어/슬랭 → 비즈니스 언어 치환
+//    Tier 2 (Critical → PENDING_APPROVAL 강제): 법무/운영 Critical 리스크
+//    Tier 3 (Unknown Toxicity → PENDING_APPROVAL + fallback): 미지 극단 표현
+//
+//  처리 순서: Tier 2 감지 → Tier 1 치환 → Tier 3 감지 → clean(Tier 1 반환)
+// ════════════════════════════════════════════════════════════════════════════════
+
+export interface RiskAssessment {
+  /** 1=순화가능(AI_DONE), 2=Critical(격리), 3=Unknown Toxic(격리+fallback) */
+  tier: 1 | 2 | 3
+  /** 순화/치환 텍스트 (Tier 1=치환완료, Tier 2=원문유지, Tier 3=fallback 덮어쓰기) */
+  sanitizedText: string
+  /** 탐지된 리스크 플래그 레이블 목록 */
+  flags: string[]
+  /** 치환 이력 [{original, replacement}] */
+  replacements: Array<{ original: string; replacement: string }>
+}
+
+// ── Tier 1: 비속어/슬랭 → 비즈니스 언어 치환 목록 ──────────────────────────────
+// 형식: [RegExp(flags='i'), replacementText, flagLabel]
+// 처리: test(i) → replace(gi) 순으로 사용
+const TIER1_SANITIZE: Array<[RegExp, string, string]> = [
+  // 가격 비속어: 창렬, 돈ㅈㄴ아깝, 개비싸, 도둑같은가격
+  [/창렬|돈\s*ㅈㄴ\s*아깝|돈\s*존나\s*아깝|개\s*비싸|가성비\s*개\s*똥|도둑\s*같은\s*가격/i, '티켓 가격', 'PRICE_SLANG'],
+  // 인파/혼잡 비속어: 시장통, 돗대기, 개많음, 사람개많
+  [/시장통|돗대기\s*시장|도떼기|개\s*많음|사람\s*개\s*많|북새통|사람이?\s*존나\s*많|사람\s*ㅈㄴ\s*많/i, '혼잡한 관람 환경', 'CROWD_SLANG'],
+  // 직원 비속어: 싸가지없음, 직원최악, 직원개같
+  [/싸가지\s*없|싸가지없음|직원\s*최악|직원\s*개\s*같|직원\s*꼰대|직원\s*무례하|직원\s*개판/i, '직원 서비스', 'STAFF_SLANG'],
+  // 일반 불만 비속어: 열받음, 개짜증, 빡침
+  [/개\s*열받|열받음|개\s*짜증|존\s*나\s*짜증|완전\s*빡침|빡쳤|환장\s*하|개\s*빡침/i, '관람 불편', 'FRUSTRATION_SLANG'],
+  // 가치 비하 비속어: 바가지, 돈낭비, 완전쓰레기
+  [/바가지|돈\s*낭비|완전\s*쓰레기|전시\s*개\s*별로|개\s*실망|개\s*쓰레기\s*같|ㅈ같은\s*전시/i, '관람 만족도', 'VALUE_SLANG'],
+]
+
+// ── Tier 2: Critical 리스크 — waterfallRegexEngine DEFAULT_EMERGENCY 보완망 ─────
+// 특정 직원 지목, 법적 위협 표현, 아동 부상 근접 패턴 등 추가 포착
+const TIER2_CRITICAL: RegExp =
+  /(?:특정\s*직원|담당\s*직원|직원\s*(?:실명|성함|이름))|직원\s*(?:해고하|신고하|고발)\s*(?:겠|해야|할|했)|소비자\s*고발|집단\s*소송|언론\s*제보|인스타\s*(?:박살|올릴|퍼뜨릴)|sns\s*(?:올릴|퍼뜨릴|폭파)|온라인\s*(?:신고|도배|뭉개)|(?:아이|아들|딸|애)[^.!?\n]{0,15}(?:다쳤|다칩|넘어졌|부딪|피가\s*났)|환불\s*(?:요구|거부|안\s*해|해\s*달라|못\s*받)|법적\s*(?:조치|대응|책임)/i
+
+// ── Tier 3: 딕셔너리 미등록 극단 욕설 / 특수기호 혼합 비속어 ─────────────────────
+// 자음 조합 욕설(ㅅㅂ, ㄲㅈ, ㅁㅊ) + 특수기호 대체 욕설
+// ※ Tier 1 처리 후 남은 텍스트에서 탐지 (Tier 1이 먼저 클린하므로 Tier 1 외 패턴만 도달)
+const TIER3_UNKNOWN_TOXIC: RegExp =
+  /ㅅ\s*ㅂ|ㄲ\s*ㅈ|ㅁ\s*ㅊ|씨\s*[발팔x@*#%^]|ㅂ\s*시\s*발|ㄳ\s*ㅎ|ㅆ\s*ㅂ|ㅈ\s*같(?:\s*은)?\s*(?:곳|데|전시|뮤지엄)|개\s*새\s*끼|완전\s*개\s*[ㅅ시s]/i
+
+/** Tier 3 강제 치환 텍스트 — 원문 폐기 후 이 안전 표현으로 덮어씀 */
+export const TIER3_FALLBACK_TEXT = '말씀해주신 관람 불편 사항'
+
+/**
+ * sanitizeAndScoreRisk — 3-Tier 리스크 평가 및 독성 순화 (순수 함수)
+ *
+ * 처리 파이프라인:
+ *   1. Tier 2 Critical 탐지 → 즉시 tier=2 반환 (원문 유지)
+ *   2. Tier 1 비속어 치환 → 순화 완료 시 tier=1 반환
+ *   3. Tier 3 미지 욕설 탐지 → fallback 덮어쓰기, tier=3 반환
+ *   4. Clean → tier=1 반환 (변경 없음)
+ */
+export function sanitizeAndScoreRisk(text: string): RiskAssessment {
+  const t = (text ?? '').trim()
+  const flags: string[] = []
+  const replacements: Array<{ original: string; replacement: string }> = []
+
+  // ── Step 1: Tier 2 Critical 탐지 (최우선 — 발견 즉시 반환) ─────────────────────
+  if (new RegExp(TIER2_CRITICAL.source, TIER2_CRITICAL.flags).test(t)) {
+    flags.push('CRITICAL_RISK')
+    return { tier: 2, sanitizedText: t, flags, replacements }
+  }
+
+  // ── Step 2: Tier 1 순화 처리 ─────────────────────────────────────────────────
+  let sanitized = t
+  let hasTier1 = false
+  for (const [pattern, replacement, flagLabel] of TIER1_SANITIZE) {
+    // test에 i 플래그만 사용 (stateless), replace에 gi 추가 (전체 치환)
+    if (new RegExp(pattern.source, 'i').test(sanitized)) {
+      hasTier1 = true
+      flags.push(flagLabel)
+      sanitized = sanitized.replace(new RegExp(pattern.source, 'gi'), (matched) => {
+        replacements.push({ original: matched, replacement })
+        return replacement
+      })
+    }
+  }
+  if (hasTier1) {
+    return { tier: 1, sanitizedText: sanitized, flags, replacements }
+  }
+
+  // ── Step 3: Tier 3 Unknown Toxic 탐지 ─────────────────────────────────────────
+  if (new RegExp(TIER3_UNKNOWN_TOXIC.source, TIER3_UNKNOWN_TOXIC.flags).test(t)) {
+    flags.push('UNKNOWN_TOXIC')
+    replacements.push({ original: t, replacement: TIER3_FALLBACK_TEXT })
+    return { tier: 3, sanitizedText: TIER3_FALLBACK_TEXT, flags, replacements }
+  }
+
+  // ── Clean: 독성 없음 → tier=1 (AI_DONE 허용 기본값) ─────────────────────────
+  return { tier: 1, sanitizedText: t, flags: [], replacements: [] }
+}
