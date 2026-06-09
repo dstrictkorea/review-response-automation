@@ -2370,6 +2370,111 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 3, location: 'AMDB', lang: 'ko', demographic: '48세 한국인 남성, 투자 관심', scenario: 'ko-investor-perspective',
     reviewer_name: '이성민',
     review_text: '전시 콘텐츠는 훌륭하지만 운영 비효율이 보입니다. 입장 대기 관리, 인력 배치, 시설 유지보수 모두 개선이 필요해 보여요. 훌륭한 IP를 갖고 있는데 운영 품질이 받쳐주지 않으면 장기적으로 아쉬울 것 같습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 독일어 — 커플 기념일 방문 (★5 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'de', demographic: 'Deutsches Paar, Mitte 30, Hochzeitstag', scenario: 'de-anniversary-positive',
+    reviewer_name: 'Julia und Thomas Wagner',
+    review_text: 'Wir haben unseren 5. Hochzeitstag hier gefeiert und es war magisch. Das Personal war unglaublich freundlich und hat uns sogar einen besonderen Platz gezeigt für Fotos. Die Lichtinstallationen waren atemberaubend. Wir werden definitiv wiederkommen. Absolute Empfehlung!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 베트남어 — 소셜미디어 인플루언서, 매우 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'vi', demographic: 'Travel blogger người Việt, 25 tuổi', scenario: 'vi-influencer-positive',
+    reviewer_name: 'Phạm Thu Hương',
+    review_text: 'Đây là một trong những trải nghiệm đẹp nhất trong chuyến đi New York của tôi! Các căn phòng ánh sáng và âm nhạc thực sự choáng ngợp. Nhân viên rất thân thiện và nhiệt tình. Tôi đã ở đây hơn 2 tiếng và vẫn muốn ở thêm. Nhất định sẽ quay lại!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 러시아어 — 가족 방문, 매우 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ru', demographic: 'Российская семья с детьми, мама 34 года', scenario: 'ru-family-positive',
+    reviewer_name: 'Елена Соколова',
+    review_text: 'Невероятно красивое место! Ходили всей семьёй с двумя детьми — они были в восторге. Персонал очень отзывчивый и помог нам с маршрутом. Инсталляция с водой особенно впечатлила. Рекомендую всем!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 한국어 — 젖은 바닥 미끄러짐 (★1, EMERGENCY)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '55세 한국인 여성', scenario: 'ko-wet-floor-slip',
+    reviewer_name: '한미영',
+    review_text: '물 전시 구역에서 바닥이 미끄러워 넘어졌어요. 안전 경고 표시도 없었고 직원도 아무도 없었어요. 무릎과 손목을 다쳐서 병원에 가야 했어요. 안전 관리가 전혀 되어 있지 않았어요. 이런 사고가 다시 생기면 안 됩니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 영어 — 올캡스 분노 클레임 (★1, stress test)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '44yo American male, angry reviewer', scenario: 'en-all-caps-angry',
+    reviewer_name: 'David Thompson',
+    review_text: 'WORST EXPERIENCE OF MY LIFE. THE STAFF WAS COMPLETELY RUDE AND DISMISSIVE. THE AC WAS BROKEN AND IT WAS UNBEARABLY HOT INSIDE. I WANT A FULL REFUND. THIS IS AN ABSOLUTE SCAM. DO NOT WASTE YOUR MONEY HERE.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 중국어 — 유리 파편 부상 (★1, EMERGENCY)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'zh', demographic: '28岁中国女性游客', scenario: 'zh-glass-injury',
+    reviewer_name: '陈晓燕',
+    review_text: '展览中一件装置的玻璃破裂，碎片划伤了我的手臂，流血了。工作人员虽然来了，但处理非常不专业，只给了几张纸巾。我不得不去急诊室缝针。这种安全隐患是不可接受的，我要求赔偿医疗费用。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 영어 — 안내견 거부 (★1, EMERGENCY/COMPLAINT)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '41yo visually impaired American female', scenario: 'en-guide-dog-denied',
+    reviewer_name: 'Rebecca Moore',
+    review_text: 'I am visually impaired and my guide dog was denied entry by staff despite being a certified service animal. This is a direct violation of the ADA. The staff were dismissive and unapologetic. I was humiliated in front of other visitors. My lawyer will be in touch regarding this ADA violation.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 아랍어 — 매우 긍정, 가족 방문 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'عائلة إماراتية، الأب 42 عاماً', scenario: 'ar-family-positive',
+    reviewer_name: 'عبدالله المنصوري',
+    review_text: 'تجربة رائعة لا تُنسى! زرنا المتحف مع أطفالنا وكانوا في غاية السعادة. الموظفون كانوا ودودين ومتعاونين جداً. الإضاءة والصوت خلقا تجربة سحرية. سنعود بالتأكيد وسنوصي به لجميع الأصدقاء.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 한국어 — 화재 경보 오발령, 공황 상태 (★1)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '29세 한국인 여성', scenario: 'ko-fire-alarm-panic',
+    reviewer_name: '신지혜',
+    review_text: '관람 중 갑자기 화재 경보가 울렸어요. 직원들이 우왕좌왕하면서 어디로 나가야 하는지 제대로 안내해주지 않았어요. 공황 상태가 와서 너무 힘들었어요. 나중에 오발령이었다고 하던데, 그래도 비상 대피 안내가 너무 엉망이었어요. 정말 무서웠고 다시는 오고 싶지 않아요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 영어 — 인플루언서 촬영 거부 후 위협 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '26yo American influencer, 500K followers', scenario: 'en-influencer-threat',
+    reviewer_name: 'Madison Lee',
+    review_text: 'I have 500K followers on Instagram and came to create content. Staff blocked me from filming even in the designated photography zones without any explanation. I was treated rudely. I will be posting about this terrible experience to all my followers. You just lost a major promotional opportunity.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 일본어 — 휠체어 접근 불가 단차 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ja', demographic: '車椅子使用者の家族、日本人男性45歳', scenario: 'ja-wheelchair-step',
+    reviewer_name: '木村健太',
+    review_text: '車椅子を使用している家族と訪問しましたが、いくつかの展示室への段差があり入室できませんでした。スタッフに相談しましたが、「構造上の問題で対応できない」とのことで、車椅子対応の代替ルートも示されませんでした。アクセシビリティへの配慮が足りないと感じました。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 한국어 — 미세먼지/공기질 문제 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '32세 한국인 남성, 호흡기 질환 있음', scenario: 'ko-air-quality-issue',
+    reviewer_name: '오준서',
+    review_text: '환기가 너무 안 되어 있어서 공기가 정말 답답했어요. 밀폐된 공간에서 이렇게 많은 인원이 들어오니 공기질이 너무 나빴어요. 호흡기 질환이 있는 저는 나오자마자 기침이 심해졌어요. 환기 시스템 개선이 시급합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 프랑스어 — 파리 여행자, 매우 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'fr', demographic: 'Touriste parisienne, 31 ans', scenario: 'fr-solo-positive',
+    reviewer_name: 'Camille Bernard',
+    review_text: 'J\'ai été complètement éblouie. Venant de Paris où les musées sont légion, je craignais que ce soit trop commercial. Mais l\'expérience est authentiquement belle et émouvante. Le personnel est chaleureux et passionné. Une vraie découverte artistique. Je vais le recommander à tous mes amis.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 영어 — 이모지 섞인 불만 (★2, emoji review stress test)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '23yo American female, Gen Z', scenario: 'en-emoji-complaint',
+    reviewer_name: 'Ashley Johnson',
+    review_text: 'ok so the visuals were kinda cute 😍 but the AC was literally BROKEN 🥵🥵 and it was so hot i thought i was gonna pass out. staff were so rude when we asked about it 😤 and the line was super long for no reason?? NOT worth the money sorry 💀' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 18] 한국어 — 연예인 목격담 + 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '22세 한국인 여성, 팬덤 문화', scenario: 'ko-celebrity-sighting',
+    reviewer_name: '박나영',
+    review_text: '미술관 자체도 너무 예쁜데 유명 연예인이 촬영하러 왔더라고요! 직원분들이 팬들 안전하게 잘 통제해주시고 전시 관람에도 방해 안 되게 해주셔서 정말 감사했어요. 전시는 기본적으로 너무 아름답고 빛이 환상적이에요.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
