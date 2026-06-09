@@ -3056,7 +3056,7 @@ function detectMissedEcho(reviewText: string, reply: string, lang: string, statu
     if (!has힐링InReview && /가족|아이와|아이들과/.test(reviewText) && !/가족|아이|소중/.test(reply)) return 'MISSED_ECHO:가족'
   }
   if (lang === 'en') {
-    if (/\bheal\w*\b/i.test(reviewText) && !/heal|refresh/i.test(reply)) return 'MISSED_ECHO:healing'
+    if (/\bheal\w*\b/i.test(reviewText) && !/heal\w*|refresh\w*|calm\w*|sooth\w*|renew\w*|revit\w*|resonat\w*|meaningful\w*|touch\w*|inspir\w*|deeply\b/i.test(reply)) return 'MISSED_ECHO:healing'
     // date night: contextMirror EN 클로징이 "special" or "date" or "evening" 포함하면 OK
     if (/\bdate\s*night\b/i.test(reviewText) && !/\bdate\b|romantic|special.*evening|evening.*special|go-to/i.test(reply)) return 'MISSED_ECHO:date'
   }
@@ -3120,8 +3120,9 @@ function trackClosing(reply: string, lang: string): string | null {
   for (const [key, re] of Object.entries(closingPatterns)) {
     if (re.test(reply)) {
       CLOSING_CORPUS[key] = (CLOSING_CORPUS[key] || 0) + 1
-      // 150건 기준: 전체 리뷰의 5% 초과 시 반복 경고 (약 8건)
-      if (CLOSING_CORPUS[key] > 7) return `REPETITIVE_CLOSING:${key}(×${CLOSING_CORPUS[key]})`
+      // 데이터셋 크기 기준 5% 동적 임계값 (최소 7건)
+      const threshold = Math.max(7, Math.floor(SYNTHETIC_REVIEWS.length * 0.05))
+      if (CLOSING_CORPUS[key] > threshold) return `REPETITIVE_CLOSING:${key}(×${CLOSING_CORPUS[key]})`
     }
   }
   return null
