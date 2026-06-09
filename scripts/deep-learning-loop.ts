@@ -1425,6 +1425,356 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 3, location: 'AMLV', lang: 'ko', demographic: '41대 한국인 남성', scenario: 'ko-scale-smaller-than-expected',
     reviewer_name: '배준혁',
     review_text: '인터넷에서 보고 규모가 엄청 클 줄 알았는데 생각보다 아담했어요. 1시간이 안 걸려서 관람이 끝났습니다. 콘텐츠 품질은 좋지만 양이 부족하게 느껴졌어요. 티켓 가격을 생각하면 좀 아쉬웠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 다국적 커플 / 국제 커플
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '30yo mixed Korean-Canadian couple', scenario: 'en-international-couple-5star',
+    reviewer_name: 'Ji-hoon Park & Sarah Campbell',
+    review_text: 'My Korean husband brought me to ARTE as part of our anniversary trip to Dubai. I had never heard of it before and he was so excited to show me. The scent of the forest room made me genuinely emotional. We held hands through the whole thing. Perfect date.' },
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '33대 한국인 여성 & 34대 미국인 남성 커플', scenario: 'ko-intercultural-couple',
+    reviewer_name: '이소영',
+    review_text: '미국인 남자친구랑 왔는데 둘 다 문화권이 달라서 반응이 재밌었어요. 저는 한국 정서가 담긴 공간에 뭉클했고, 남자친구는 기술적 스케일에 놀랐어요. 같은 공간에서 다른 감동을 받은 게 신기했어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 종교 방문객 (불교/가톨릭 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '60yo South Korean Catholic nun', scenario: 'en-nun-spiritual-5star',
+    reviewer_name: 'Sister Catherine Yoon',
+    review_text: 'I came with a sense of skepticism about digital art. But standing in the light-filled forest room, I felt a profound stillness — not unlike prayer. Beauty, in whatever form it takes, can be a pathway to transcendence. I am glad I came.' },
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '58대 한국인 남성 불교 신자', scenario: 'ko-buddhist-5star',
+    reviewer_name: '박원석',
+    review_text: '불자인데 별이 쏟아지는 공간에 앉아있었을 때 내면의 고요함을 느꼈어요. 예술이 명상과 다르지 않다는 걸 새삼 깨달았습니다. 현대 기술로 이런 공간을 만들어 낸 것이 놀랍고 감사했어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 반사회적 관람객 (다른 관람객 불만)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ko', demographic: '39대 한국인 여성', scenario: 'ko-other-visitor-ruined',
+    reviewer_name: '정유나',
+    review_text: '전시 자체는 좋았는데 옆에서 플래시 사진 계속 터뜨리는 관람객 때문에 너무 힘들었어요. 직원한테 말했는데 제대로 안내를 안 해줬어요. 관람 분위기를 지킬 수 있는 더 강력한 안내가 필요합니다.' },
+  { rating: 3, location: 'AMDB', lang: 'en', demographic: '45yo American female', scenario: 'en-inconsiderate-visitors',
+    reviewer_name: 'Margaret Reynolds',
+    review_text: 'The exhibition itself is lovely but the visit was marred by a school group that was allowed to run through without supervision. Staff did nothing to manage the noise or behaviour. A mandatory quiet policy would go a long way.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 특수 요구 — 점자/시각장애
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'en', demographic: '35yo Omani male, partial sight', scenario: 'en-visual-impairment',
+    reviewer_name: 'Hassan Al-Balushi',
+    review_text: 'I have partial sight and came with a sighted companion. The scent and sound elements were genuinely accessible to me, which was a wonderful surprise. However, no tactile or audio description materials were available. With some small adaptations, this could be transformative for visually impaired visitors.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 숙취 상태 또는 음주 후 방문 (유머 리뷰)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '28yo British male, Las Vegas bachelor party', scenario: 'en-bachelor-party-fun',
+    reviewer_name: 'James Whitmore',
+    review_text: 'Accidentally ended up here after a night out in Vegas. Possibly the best accidental decision of my life. The group of six of us were completely mesmerized. Highly recommend as a morning-after activity. Calming, beautiful and weirdly profound for a bunch of hungover blokes.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 한국어 — 온도/냉방 불만 (여름)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '36대 한국인 여성', scenario: 'ko-ac-hot-summer',
+    reviewer_name: '강지수',
+    review_text: '여름에 방문했는데 에어컨이 제대로 작동 안 했어요. 안이 너무 더워서 땀이 줄줄 흘렀어요. 관람 중에 어지러울 뻔 했습니다. 두바이 여름에는 냉방 관리가 더 철저해야 할 것 같아요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 어린이 진짜 리뷰 (영어, 부모 대필 아닌 본인)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '11yo American female', scenario: 'en-child-own-review',
+    reviewer_name: 'Emma (age 11)',
+    review_text: 'This is the BEST PLACE I have ever been to in my whole life. My favourite was the butterfly room where they go all over you. I want to go back for my birthday. I told my teacher about it and she wants to bring the whole class. 10 out of 10.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 비건/채식주의자 관점
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '27yo American female vegan', scenario: 'en-vegan-5star',
+    reviewer_name: 'Maya Stein',
+    review_text: 'As a vegan and animal rights advocate, I appreciate that the nature represented here does not exploit any living creature. Digital nature that celebrates wildlife without harming it. The whale room gave me the same awe I get snorkeling. Genuinely moving.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 포토그래퍼 긍정 리뷰
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '33yo professional photographer from UK', scenario: 'en-photographer-5star',
+    reviewer_name: 'Callum Stewart',
+    review_text: 'As a professional photographer, I was skeptical about whether this would be photogenic beyond the usual tourist shots. But the light quality in several rooms is genuinely extraordinary — dynamic and layered. I came back three times in the same week.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 한국어 — 생일 파티 / 이벤트 문의
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '30대 한국인 여성 이벤트 기획자', scenario: 'ko-birthday-event-planner',
+    reviewer_name: '서하영',
+    review_text: '남자친구 생일 이벤트로 기획했는데 직원분들이 깜짝 이벤트 준비까지 도와줬어요. 그 방에서 나왔을 때 남자친구가 완전 감동 받아서 눈물 흘렸어요. 이런 특별한 순간을 함께 만들어주신 아르떼에 진심으로 감사드려요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 짧은 부정 리뷰 (1star, 이유 없음)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '38yo American male', scenario: 'en-1star-no-reason',
+    reviewer_name: 'Anonymous User',
+    review_text: 'Disappointed. Just not for me.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 10] 예약/입장 오류 EMERGENCY
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '27대 한국인 여성', scenario: 'ko-ticket-fraud-claim',
+    reviewer_name: '임수지',
+    review_text: '온라인 예약하고 결제까지 됐는데 현장에서 예약 내역이 없다고 했어요. 결제는 됐는데 입장을 못 하고, 환불도 안 된다고 했어요. 이건 사기예요. 소비자원에 신고하겠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 장기 여행자 / 디지털 노마드
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '29yo German female digital nomad', scenario: 'en-digital-nomad-5star',
+    reviewer_name: 'Anna Richter',
+    review_text: 'I have been traveling full-time for three years and visited immersive art installations on four continents. ARTE Dubai is among the top three experiences I have ever had. The scent design elevates it above everything else. Come with no expectations and leave transformed.' },
+  { rating: 4, location: 'AMNY', lang: 'ko', demographic: '31대 한국인 남성 원격근무자', scenario: 'ko-remote-worker-4star',
+    reviewer_name: '김태우',
+    review_text: '뉴욕 한 달 살기 중에 방문했어요. 외로울 때 혼자 와서 파도 방에서 멍하니 한참 있었어요. 평일 낮에 오니까 조용해서 더 좋았습니다. 한 번 더 오고 싶어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 소아과/소아 관련 안전 EMERGENCY
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '32yo American mother', scenario: 'en-child-injury',
+    reviewer_name: 'Amanda Blake',
+    review_text: 'My 4-year-old tripped in the dark room and hit his head on a corner. We had to take him to a hospital for stitches. There was no safety barrier and the area was completely unlit. This is completely unacceptable and I expect a formal response from management.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 짧고 강렬한 부정 (1-2 단어)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '28대 한국인 남성', scenario: 'ko-ultra-short-1star',
+    reviewer_name: '권진수',
+    review_text: '최악.' },
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '35yo American male', scenario: 'en-ultra-short-1star',
+    reviewer_name: 'Brian K',
+    review_text: 'Total waste of money.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 고객 VIP 특별 서비스 경험
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '55yo American female VIP corporate client', scenario: 'en-vip-private-event',
+    reviewer_name: 'Diana Chen',
+    review_text: 'We hosted a private company dinner for 15 at ARTE Dubai. The event team was extraordinary — seamless coordination, personalised touches, and the exhibition itself left our senior partners genuinely moved. This venue redefines corporate entertainment.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 한국어 — 코피/빛 민감성 증상 리뷰
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ko', demographic: '32대 한국인 여성', scenario: 'ko-light-sensitivity',
+    reviewer_name: '박지윤',
+    review_text: '빛에 민감한 편인데 일부 구역에서 너무 강한 플래시 효과 때문에 두통이 왔어요. 입구에서 사전 안내가 있었으면 좋겠어요. 예쁜 공간이지만 빛 민감성 있는 분들은 미리 아시고 가세요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 한국어 — 오입장/다음 예약자 자리 강제 퇴장
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '39대 한국인 남성', scenario: 'ko-forced-exit-before-time',
+    reviewer_name: '최재혁',
+    review_text: '분명히 2시간 입장권을 샀는데 1시간 40분만에 직원이 다음 타임 입장객 때문에 나가야 한다고 했어요. 저는 아직 돈 낸 시간이 남아 있었는데요. 규정이 명확하지 않고 불합리합니다. 환불을 요청합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 영어 — 관람 중 스마트폰 도난
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '33yo American female', scenario: 'en-phone-stolen',
+    reviewer_name: 'Tiffany Morgan',
+    review_text: 'My phone was stolen inside the exhibition. When I reported it to staff they were dismissive and said they could not help. I asked to check CCTV or file a report and was told that is not their responsibility. I had to call the police myself.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 한국어 — 위조 리뷰 의심 (다른 방문객 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMLV', lang: 'ko', demographic: '44대 한국인 여성 마케터', scenario: 'ko-suspicious-reviews',
+    reviewer_name: '이민정',
+    review_text: '저는 마케팅 일 하는 사람이라 느꼈는데, 일부 리뷰들이 너무 교과서 같은 문체로 쓰여 있어요. 진짜 방문객의 리뷰인지 의심되는 것들도 보여요. 실제 방문 경험은 좋았지만 리뷰 진정성에 좀 신경 써주시면 좋겠어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 영어 — 소셜 미디어 허위광고 주장
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '26yo American male', scenario: 'en-false-advertising-claim',
+    reviewer_name: 'Tyler West',
+    review_text: 'The ads showed rooms that did not exist when I visited. Multiple rooms shown in promotional videos were closed. This is false advertising and I want a refund for the discrepancy between what was advertised and what was actually available.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 한국어 — 직원 차별 경험 주장
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '27대 한국인 여성', scenario: 'ko-discrimination-claim',
+    reviewer_name: '황수연',
+    review_text: '외국인 관광객한테는 친절하게 응대하는 직원이 한국인인 저한테는 완전 냉담하게 대했어요. 같은 공간에서 이런 차별을 느낀 게 너무 불쾌했습니다. 직원 교육이 필요해 보여요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 일본어 추가 긍정 리뷰
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ja', demographic: '31才日本人女性グループ', scenario: 'ja-group-5star',
+    reviewer_name: '渡辺彩',
+    review_text: '女性4人でドバイ旅行中に訪れました。全員がここが旅行で一番よかったと口を揃えていました。特に光と音楽のシンクロが素晴らしかったです。写真も驚くほどよく撮れました。日本にもこんな場所があればいいのに！' },
+  { rating: 4, location: 'AMLV', lang: 'ja', demographic: '42才日本人男性ビジネス客', scenario: 'ja-business-4star',
+    reviewer_name: '高橋誠',
+    review_text: 'ラスベガス出張の合間に訪問。普段アートに興味がない私でも十分楽しめました。混んでいたのが少し残念でしたが、作品の質は確かでした。外国のビジネスパートナーをお連れしたい場所です。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 11] 중국어 추가 긍정/다양한 리뷰
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'zh', demographic: '23岁中国大学生', scenario: 'zh-student-5star',
+    reviewer_name: '周小明',
+    review_text: '在纽约留学，朋友推荐过来的。没想到会有这么震撼的体验！光影、声音和香气完美融合，让人忘记了时间。最喜欢星空那个房间，在里面坐了很久。非常值得一去！' },
+  { rating: 3, location: 'AMDB', lang: 'zh', demographic: '55岁中国女性游客', scenario: 'zh-elderly-3star',
+    reviewer_name: '孙美华',
+    review_text: '展览很漂亮，孙子非常喜欢。但年纪大了站不住，展览中间没有椅子可以坐。音效也有点太强烈，耳朵不太舒服。如果能提供更多休息设施，老年人来也会更方便。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 기업 단체 워크숍 불만 (예약 대비 운영 미숙)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMNY', lang: 'ko', demographic: '45대 한국인 남성 HR팀장', scenario: 'ko-corporate-teambuilding',
+    reviewer_name: '임태준',
+    review_text: '회사 팀 단합 행사로 30명 단체 예약을 했는데, 현장에서 안내가 전혀 없었어요. 담당 직원이 우리 그룹인지 모르고 그냥 흩어지게 뒀고, 별도 단체 브리핑은 없었습니다. 단체 할인도 약속과 달리 적용이 안 됐어요. 다음부터는 일반 투어 이상의 준비가 필요합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 영어 — 휠체어 이용자 접근성 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '52yo American male wheelchair user', scenario: 'en-wheelchair-accessibility',
+    reviewer_name: 'Robert Sanchez',
+    review_text: 'I use a wheelchair and found several areas completely inaccessible. There was no ramp near the entrance and the elevator was out of service with no staff to assist. I was not wheelchair accessible for most of the route and had to miss multiple rooms. This is a serious accessibility failure and needs to be addressed immediately.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 70대 노부부 편의시설 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '71세 한국인 남성, 아내와 방문', scenario: 'ko-elderly-couple',
+    reviewer_name: '박광수',
+    review_text: '아내와 둘이 왔는데, 아내가 무릎이 좋지 않아 앉을 곳을 계속 찾았습니다. 전시 내내 의자 하나를 못 찾았어요. 워낙 넓어서 걷다가 지쳐서 중간에 포기하고 나왔습니다. 노약자를 위한 휴식 공간이나 휠체어 대여 서비스 같은 것이 있으면 좋겠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 베트남어 — 언어 안내 불편 (주요 소수언어 보강)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'vi', demographic: '29 tuổi du khách nữ Việt Nam', scenario: 'vi-language-barrier',
+    reviewer_name: 'Nguyễn Thị Lan',
+    review_text: 'Triển lãm rất đẹp và ấn tượng. Tuy nhiên, không có hướng dẫn bằng tiếng Việt. Tất cả thông tin đều bằng tiếng Anh và tiếng Hàn, khiến tôi khó hiểu nội dung. Mong rằng sẽ có thêm ngôn ngữ hỗ trợ trong tương lai để du khách Việt Nam có thể trải nghiệm trọn vẹn hơn.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 프랑스어 — 신혼부부 낭만 기대 vs 현실 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'fr', demographic: 'Couple français 30ans en lune de miel', scenario: 'fr-honeymoon-complaint',
+    reviewer_name: 'Camille Dubois',
+    review_text: 'Nous venons de nous marier et espérions une expérience romantique et intime. Malheureusement, le lieu était très bondé et bruyant, ce qui a brisé l\'ambiance. Les files d\'attente étaient longues et nous avons passé plus de temps à attendre qu\'à profiter. Dommage car les visuels étaient magnifiques.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 독일어 — 사진작가 조명/화질 비판
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMLV', lang: 'de', demographic: '38-jähriger deutscher Fotograf', scenario: 'de-photographer-critique',
+    reviewer_name: 'Markus Weber',
+    review_text: 'Als professioneller Fotograf war ich neugierig auf die Lichtinstallationen. Die visuellen Effekte waren beeindruckend, jedoch waren viele Räume zu dunkel für gute Fotos ohne Stativ. Keine Anweisung zu Fotoregelungen. Insgesamt ein interessantes Konzept, aber für ernsthafte Fotografen schwierig.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 미술 전공 대학원생 예술 비평 관점
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMNY', lang: 'ko', demographic: '27대 한국인 미술 전공 대학원생', scenario: 'ko-art-student-critique',
+    reviewer_name: '서지현',
+    review_text: '미디어 아트 전공 대학원생으로서 흥미롭게 봤습니다. 기술적 완성도는 높고 관람객 체험 설계가 훌륭합니다. 다만 작품 해설이 좀 더 깊었으면 했어요. 누가 만들었는지, 어떤 기술이 사용됐는지 더 설명이 있으면 예술 교육적 가치도 커질 것 같습니다. 전반적으로 인상적인 공간이었습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 아랍어 — 무슬림 가족 종교/문화적 우려
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'ar', demographic: 'عائلة مسلمة من الإمارات', scenario: 'ar-muslim-family',
+    reviewer_name: 'فاطمة الأحمدي',
+    review_text: 'زرنا المكان مع الأطفال وكانت التجربة البصرية مذهلة. لكن بعض المحتوى في قاعات معينة كان مثيرًا للقلق من الناحية الثقافية لعائلتنا. أتمنى لو كان هناك إشعار مسبق بمحتوى القاعات حتى يتمكن الزوار من اختيار ما يناسبهم. التجربة العامة جيدة ولكن يحتاج إلى مزيد من مراعاة التنوع الثقافي.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 러시아어 — 줄 관리 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ru', demographic: '34-летняя россиянка, туристка', scenario: 'ru-queue-management',
+    reviewer_name: 'Анна Соколова',
+    review_text: 'Очереди были огромными и плохо организованными. Никаких указателей, никаких объяснений о времени ожидания. Простояли на входе 40 минут. Внутри тоже толпы людей, невозможно было нормально смотреть на экспонаты. Разочарована уровнем организации. Само искусство красивое, но посещение испорчено из-за плохого управления потоком посетителей.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 싱글맘 아이 동반, 편의시설 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '36대 한국인 싱글맘, 6세 딸과 방문', scenario: 'ko-single-mom-child',
+    reviewer_name: '최은영',
+    review_text: '여섯 살 딸이랑 둘이 왔는데 유아 기저귀 갈 공간도 없고 아이가 잠깐 앉아 쉴 공간도 없어서 힘들었어요. 아이가 조금 무섭다고 해서 직원한테 물어봤더니 안내를 제대로 못 해줬어요. 전시 자체는 예쁘지만 어린아이와 함께하는 방문객에 대한 배려가 부족한 것 같아요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 영어 — 환기/냉방 불만 (호주 관광객)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'en', demographic: '41yo Australian female tourist', scenario: 'en-ventilation-complaint',
+    reviewer_name: 'Jessica Clarke',
+    review_text: 'Dubai heat combined with poor air conditioning inside made the experience miserable. The AC wasn\'t working properly in at least three rooms. We were sweating through the exhibition. The artwork was beautiful but the stuffy, unbearably hot environment ruined the experience. Fix the air conditioning please.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 10대 청소년 인스타그램 긍정 (SNS 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '18세 한국인 여고생, 친구 3명과', scenario: 'ko-teen-instagram',
+    reviewer_name: '한지민',
+    review_text: '인스타그램에서 보고 너무 가고 싶었는데 실제로 와보니 사진보다 훨씬 예뻐요!! 친구들이랑 사진 엄청 찍었고 팔로워들 반응이 미쳤어요. WAVE 존이랑 FOREST 존 특히 대박. 인스타 갬성 최고입니다. 또 오고 싶어요!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 이탈리아어 — 신규 언어 긍정 리뷰
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'it', demographic: 'Coppia italiana 35 anni', scenario: 'it-couple-5star',
+    reviewer_name: 'Giulia Romano',
+    review_text: 'Un\'esperienza assolutamente straordinaria! Le installazioni luminose ci hanno lasciati senza parole. Ogni sala era una sorpresa. L\'integrazione tra arte, musica e profumi era perfetta. Abbiamo trascorso quasi 3 ore e non volevamo andarcene. Lo consigliamo vivamente a tutti i turisti di New York!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 스페인어 — 스페인어 안내 부재 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMLV', lang: 'es', demographic: 'Turista mexicana 33 años', scenario: 'es-no-spanish-signage',
+    reviewer_name: 'Sofía Ramírez',
+    review_text: 'Las instalaciones son visualmente impresionantes, pero toda la señalización estaba en inglés y coreano únicamente. No hay ninguna información en español, lo cual es frustrante dado que hay muchos visitantes hispanohablantes en Las Vegas. Esperaba al menos un folleto en español. El arte en sí es hermoso.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 지방에서 처음 현대 미디어 아트를 경험한 관람객 (감동 발견)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '54대 한국인 남성, 전남 순천 거주', scenario: 'ko-rural-first-discovery',
+    reviewer_name: '김판석',
+    review_text: '뉴욕 아들 집에 왔다가 처음 왔습니다. 저 같은 시골 사람도 이런 예술이 있는 줄 몰랐어요. 들어가자마자 눈물이 나더라고요. 자연이 이렇게도 표현될 수 있구나 싶었습니다. 우리 마을에는 없는 경험이었어요. 세상에 이런 아름다운 공간을 만들어주셔서 진심으로 감사합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 앱 예약 오류 시스템 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '29대 한국인 남성', scenario: 'ko-app-booking-error',
+    reviewer_name: '이준혁',
+    review_text: '앱으로 예약하고 QR코드를 받았는데 현장에서 QR코드가 인식이 안 됐어요. 직원한테 말했더니 본인들도 해결을 못 하겠다고 하면서 다시 현장 결제를 하라고 했습니다. 결국 같은 날 이중으로 결제했어요. 앱 오류인지 확인해달라는 말에도 제대로 안 해줬어요. 환불 요청합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 영어 — 청각장애인 접근성 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '44yo American deaf female', scenario: 'en-deaf-accessibility',
+    reviewer_name: 'Sandra Webb',
+    review_text: 'I am deaf and was disappointed to find no captions or subtitles for any of the audio elements. There was no hearing loop or any accommodations for hearing-impaired visitors. Staff were unhelpful when I asked about accessibility options. The visual art itself is beautiful but the lack of deaf accessibility is a real barrier.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 영어 — 카페 음식 알레르기 응급상황 (EMERGENCY)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '31yo American female', scenario: 'en-allergy-emergency',
+    reviewer_name: 'Lauren Kim',
+    review_text: 'I had a severe allergic reaction to something in the tea bar. I asked the staff beforehand about allergens in the drinks and they said everything was fine. Within minutes I was having an allergic reaction and needed my EpiPen. The staff panicked and didn\'t know what to do. There must be proper allergen labeling and staff training for allergy emergencies.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 경쟁 미술관 비교 (뮤지엄 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '38대 한국인 여성, 미술 애호가', scenario: 'ko-competitor-comparison',
+    reviewer_name: '장미래',
+    review_text: '서울 팀랩, 도쿄 팀랩 모두 가봤는데 비교하면 ARTE가 규모는 작아도 감성이 다르고 좋아요. 다만 팀랩보다 콘텐츠 교체 주기가 느린 것 같아서 두 번째 방문엔 새로움이 적었어요. 작품 해설이 좀 더 깊이 있으면 더 좋을 것 같습니다. 신규 콘텐츠 업데이트를 자주 해주세요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 법적 위협 포함 (소비자보호원 신고 예고)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '41대 한국인 남성', scenario: 'ko-consumer-protection-threat',
+    reviewer_name: '오재동',
+    review_text: '예약된 날짜와 다른 날 입장 처리가 됐는데 이미 결제 취소가 불가하다고 했습니다. 소비자원에 신고하겠습니다. 명백한 소비자 기만입니다. 환불 처리 안 해주면 법적 조치 취하겠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 한국어 — 직원 처벌 요구 포함 (강성 민원)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '33대 한국인 여성', scenario: 'ko-staff-punishment-demand',
+    reviewer_name: '신혜원',
+    review_text: '직원 한 명이 저한테 반말을 하고 다른 관람객 앞에서 망신을 줬어요. 이런 직원은 당연히 해고해야 한다고 생각합니다. 관리자한테 따졌더니 나중에 확인하겠다는 말만 하고 끝이었어요. 직원 교육 및 해당 직원 처벌이 이뤄지지 않으면 계속 제보할 겁니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 중국어 — 재방문 콘텐츠 실망 (재방문 비교)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'zh', demographic: '32岁中国女性，第二次访问', scenario: 'zh-revisit-disappointment',
+    reviewer_name: '李晓红',
+    review_text: '第二次来了，上次非常震撼。但这次内容几乎一模一样，没有任何新展品。票价还涨了。第一次来真的很惊艳，但如果内容不更新，很难推荐朋友再来。希望能够增加新内容，保持新鲜感。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 12] 일본어 — 공사 소음 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ja', demographic: '45才日本人女性', scenario: 'ja-construction-noise',
+    reviewer_name: '田中京子',
+    review_text: '隣の工事の騒音がひどく、展示の音楽や映像への没入感が完全に壊れました。スタッフに相談しましたが「対応できない」との一言でした。芸術作品の雰囲気を大切にするなら、工事中の営業は再考すべきではないでしょうか。作品自体は素晴らしかっただけに残念です。' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
