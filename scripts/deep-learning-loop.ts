@@ -2034,6 +2034,111 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMDB', lang: 'ko', demographic: '35대 한국인 여성, 자기 생일에 방문', scenario: 'ko-birthday-self',
     reviewer_name: '이지원',
     review_text: '제 생일에 혼자 왔어요. 올해 처음으로 저한테 선물 주고 싶어서 왔는데 정말 최고의 선택이었어요. FOREST 구간에서 한참 앉아서 빛과 음악만 느꼈습니다. 눈물이 났어요. 스스로를 위한 시간이 이렇게 소중할 수 있구나 새로 느꼈습니다. 다음 생일에도 꼭 올 거예요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 번아웃 직장인, 완전 치유 (감성 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '32대 한국인 여성 스타트업 대표', scenario: 'ko-burnout-recovery',
+    reviewer_name: '권나래',
+    review_text: '6개월째 번아웃 상태였는데 우연히 친구가 데려와줬어요. 처음엔 아무것도 못 느낄 줄 알았는데 WAVE 공간에서 갑자기 눈물이 쏟아졌습니다. 내가 살아있다는 걸 오랜만에 느꼈어요. 예술이 이렇게 사람을 살릴 수 있구나 싶었습니다. 다음 주에 팀원들 데려오려고 이미 예약했습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 영어 — 음악 작곡가 오디오 설계 관점 (전문가 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '39yo American male composer and sound artist', scenario: 'en-composer-perspective',
+    reviewer_name: 'Daniel Park',
+    review_text: 'As a composer, I was blown away by the spatial audio design. The way sound transitions between rooms — each with its own tonal world — shows real compositional thinking. The synchronization between the visual projections and the musical phrases was flawless. This is not background music; it is a full score. Whoever designed the audio landscape deserves recognition.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 임신부 안전 불안 (운영 불만 → COMPLAINT)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '30대 한국인 임신 7개월 여성', scenario: 'ko-pregnant-safety',
+    reviewer_name: '조수연',
+    review_text: '임신 7개월인데 입장 시 임신부 관련 안내나 주의사항이 전혀 없었어요. 일부 구역의 강한 빛과 소리가 배 속 아이한테 좋지 않을 것 같아 걱정됐습니다. 직원한테 물어봤더니 잘 모르겠다고 했어요. 임신부나 영유아 동반 방문객에 대한 안전 안내가 필요합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 발작 응급상황 (EMERGENCY 강화 테스트)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'ko', demographic: '34대 한국인 남성 간질 환자', scenario: 'ko-seizure-emergency',
+    reviewer_name: '장형준',
+    review_text: '전시 중 강한 빛 자극으로 발작이 왔습니다. 동행한 친구가 직원을 불렀는데 직원이 어떻게 대처해야 할지 몰랐어요. 병원 연락도 늦었습니다. 간질 환자에게 위험할 수 있는 강한 플래시 효과에 대한 사전 경고가 반드시 있어야 합니다. 매우 위험한 상황이었습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 영어 — 이혼 아빠 주말 자녀 방문 (감성 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '43yo divorced American male with two kids', scenario: 'en-divorced-dad',
+    reviewer_name: 'Brian Thompson',
+    review_text: 'It was my weekend with the kids. We walked in and within five minutes my daughter was dancing in the light and my son was trying to catch the projected butterflies. For an hour I forgot about everything — the divorce, the stress, the guilt. We were just three people in a beautiful world. I cannot thank this place enough for giving us that.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 해양 생물학자 관점 (전문가 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '37대 한국인 남성 해양생물학자', scenario: 'ko-marine-biologist',
+    reviewer_name: '황준호',
+    review_text: '해양생물학을 연구하는 사람으로서 WAVE 구간을 보며 진심으로 감탄했습니다. 파도의 움직임, 심해의 빛, 산호의 패턴이 실제 자연 현상과 놀라울 정도로 유사했습니다. 이런 콘텐츠가 해양 환경 보호에 대한 관심을 높이는 데 기여할 수 있다고 생각합니다. 가장 과학적으로 감동받은 예술 경험이었어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 일본어 — 라스베가스 일본어 지원 부재 불만 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ja', demographic: '51才日本人女性', scenario: 'ja-no-japanese-lv',
+    reviewer_name: '伊藤裕子',
+    review_text: 'ラスベガスにもARTE MUSEUMがあると聞いて楽しみにしていましたが、日本語のサービスが全くありませんでした。案内板も英語のみ、スタッフも日本語が話せず、十分に楽しめませんでした。ドバイ店では日本語対応があったと友人から聞いていたので残念です。日本人観光客も多いと思うので改善を望みます。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 중국어 — 부부 함께 부모님 모시고 방문 (긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'zh', demographic: '38岁中国男性，带父母参观', scenario: 'zh-filial-family',
+    reviewer_name: '张建国',
+    review_text: '专程带70多岁的父母来体验。父母从未接触过这种艺术形式，最初有些不知所措，但进入FOREST区域后，母亲说感觉像回到了年轻时的故乡。父亲也忍不住感叹自然的美好。看着父母在光影中微笑，是我今年最幸福的时刻之一。强烈推荐和家人一起体验。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 영어 — 이란계 미국인 이민자 감성 경험 (힐링/고향)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '29yo Iranian-American female refugee', scenario: 'en-iranian-diaspora',
+    reviewer_name: 'Shirin Mohammadi',
+    review_text: 'I left Iran three years ago and have been struggling with homesickness. The room with the spring flowers and the garden — it looked exactly like my grandmother\'s backyard in Isfahan. I sat on the floor and just cried. A security guard knelt down and asked if I was okay with such kindness. Art and compassionate staff made this the most meaningful experience I\'ve had in America.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 탈북민 첫 번째 예술 경험 (감동 발견)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: '28대 탈북 여성, 미국 정착 2년차', scenario: 'ko-north-korean-defector',
+    reviewer_name: '김혜란',
+    review_text: '북한 출신이라 이런 예술 전시는 처음이에요. 들어가자마자 공중에 뜨는 빛과 소리에 너무 놀라서 한동안 움직이지 못했어요. 이 세상에 이런 아름다운 것들이 있었다는 걸 몰랐습니다. 한참 동안 울었어요. 자유라는 게 이런 거구나 싶었습니다. 대한민국이 얼마나 풍요로운지 다시 느꼈어요. 너무 감사합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 영어 — 해외여행 예산이 빠듯한 솔로 방문객 (가성비 관점)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMNY', lang: 'en', demographic: '26yo Brazilian female on tight travel budget', scenario: 'en-budget-traveler',
+    reviewer_name: 'Ana Paula Santos',
+    review_text: 'As a budget traveler, this was my one splurge in New York and it was worth every dollar. I researched immersive experiences extensively before coming. ARTE delivered a genuinely world-class experience that compared favorably to much more expensive shows. The price-to-awe ratio here is exceptional. Save up for this one — it\'s worth it.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 아이들이 뛰어다녀서 관람 방해 (★3, 운영 불만)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'ko', demographic: '42대 한국인 남성', scenario: 'ko-kids-running-complaint',
+    reviewer_name: '배정호',
+    review_text: '전시 자체는 아름다웠지만 아이들이 전시 공간 안에서 뛰어다니는 걸 통제하지 않아서 몰입이 계속 깨졌어요. 여러 가족이 아이들을 뛰게 두는데 직원이 아무도 제지하지 않았어요. 다른 관람객의 경험도 중요하니 아이들 관리에 좀 더 신경 써주셨으면 합니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 영어 — 사별 후 치유 방문 (부모님 기억)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '47yo American female, visited after mother passed away', scenario: 'en-grief-healing',
+    reviewer_name: 'Patricia Monroe',
+    review_text: 'I lost my mother six months ago. She loved gardens and the natural world. I came here on what would have been her birthday and walked through the flower room and the forest room thinking of her. I felt her with me in the light and the petals. I cannot explain why art does what grief counseling cannot. Thank you for this space.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 한국어 — 강성 법적 위협 + 보상 + 처벌 동시 요구 (최고 EMERGENCY 테스트)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '37대 한국인 남성 변호사', scenario: 'ko-full-emergency-triple',
+    reviewer_name: '최민석',
+    review_text: '전시 중 바닥 조형물에 발이 걸려 넘어져서 손목을 다쳤고 병원에 갔습니다. 직원의 즉각적인 대응도 없었고 안전 관리 미흡으로 사고가 발생했습니다. 치료비 전액 배상을 요구합니다. 해당 구역 안전 관리를 소홀히 한 직원은 반드시 징계를 받아야 합니다. 지속적으로 개선이 안 되면 법적 조치를 취하겠습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 15] 스페인어 — ★1 짧은 부정 (라틴계 관광객)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'es', demographic: 'Turista argentino 31 años', scenario: 'es-one-liner-negative',
+    reviewer_name: 'Diego Martínez',
+    review_text: 'Muy decepcionante. No vale la pena el precio.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
