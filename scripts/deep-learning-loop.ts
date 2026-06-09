@@ -2852,6 +2852,88 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 2, location: 'AMNY', lang: 'ko', demographic: '31세 한국 여성, 야간 이벤트 참가자', scenario: 'ko-night-event-crowd-fail',
     reviewer_name: '윤서연',
     review_text: '야간 스페셜 이벤트 티켓을 구매했는데 사람이 너무 많아서 제대로 감상할 수가 없었어요. 입장 인원 제한이 있다고 광고했는데 실제로는 전혀 지켜지지 않은 것 같았습니다. 직원들에게 문의하니 "저희도 모릅니다"라는 답변만 돌아왔어요. 인기 구간 앞에는 30분씩 줄을 서야 했고, 프리미엄 이벤트라기엔 너무 혼잡하고 불친절했습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 25] — 신규 언어(nl/el/sv/no), 안전장치 스트레스 테스트, 엣지케이스
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 25] 네덜란드어 — 군중 + 가격 실망 (★2, COMPLAINT)
+  // 기대: COMPLAINT (teleurgesteld, veel te druk, niet de moeite waard)
+  { rating: 2, location: 'AMDB', lang: 'nl', demographic: '38yo Dutch female, couple', scenario: 'nl-crowd-disappointed',
+    reviewer_name: 'Laura van den Berg',
+    review_text: 'We waren echt teleurgesteld door dit bezoek. Het was veel te druk en we konden nauwelijks genieten van de installaties. Voor de prijs die je betaalt — bijna 30 euro per persoon — verwacht je toch meer exclusiviteit. Niet de moeite waard. We gaan hier niet meer terug.' },
+
+  // [Round 25] 그리스어 — 가격 불만 + 혼잡 (★2, COMPLAINT)
+  // 기대: COMPLAINT (απογοητευτικό, πολύ ακριβό, πολύ κόσμο)
+  { rating: 2, location: 'AMLV', lang: 'el', demographic: '45yo Greek male, family', scenario: 'el-price-too-high',
+    reviewer_name: 'Γιώργης Παπαδόπουλος',
+    review_text: 'Πολύ απογοητευτικό. Η εμπειρία ήταν εντυπωσιακή οπτικά αλλά πολύ ακριβή για αυτό που προσφέρει. Επίσης πολύ κόσμο μέσα — δεν μπορούσαμε να απολαύσουμε τίποτα ήρεμα. Δεν αξίζει τα χρήματα.' },
+
+  // [Round 25] 스웨덴어 — 가족 긍정 방문 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT (fantastiskt, jättefin, rekommenderar)
+  { rating: 5, location: 'AMNY', lang: 'sv', demographic: '34yo Swedish female, family with kids', scenario: 'sv-family-positive',
+    reviewer_name: 'Sofia Lindqvist',
+    review_text: 'En fantastiskt upplevelse för hela familjen! Barnen var helt hänförda av ljusinstallationerna och vi vuxna var lika imponerade. Personalen var vänlig och hjälpsam. Verkligen värt varje krona. Vi rekommenderar starkt detta till alla som besöker New York.' },
+
+  // [Round 25] 노르웨이어 — 접근성 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (skuffet, rullestol, ikke tilgjengelig)
+  { rating: 2, location: 'AMDB', lang: 'no', demographic: '52yo Norwegian male, wheelchair user', scenario: 'no-accessibility-complaint',
+    reviewer_name: 'Lars Eriksen',
+    review_text: 'Veldig skuffet over tilgjengeligheten. Jeg bruker rullestol og ble ikke informert om at deler av utstillingen ikke var tilgjengelig for rullestoler. Vi kjøpte billetter på forhånd uten denne informasjonen. Personalet var uvillig til å hjelpe. Ikke tilgjengelig nok.' },
+
+  // [Round 25] 한국어 — 법적 위협 + 사고 (★1, EMERGENCY)
+  // 기대: EMERGENCY (고소, 병원, 다쳤 — 반드시 관리자 승인 필요)
+  { rating: 1, location: 'AMLV', lang: 'ko', demographic: '47세 한국인 남성, 부상 피해자', scenario: 'ko-legal-threat-emergency',
+    reviewer_name: '박성진',
+    review_text: '전시 관람 중 어두운 구간에서 발을 헛디뎌 넘어졌습니다. 무릎을 다쳤고 병원에서 진료를 받았습니다. 안전 설비 미비로 인한 사고이므로 법적 책임을 물을 생각입니다. 고소하겠습니다. 빠른 연락 바랍니다.' },
+
+  // [Round 25] 한국어 — 환불 강력 요구 (★1, EMERGENCY)
+  // 기대: EMERGENCY (환불 패턴이 DEFAULT_EMERGENCY에 있음)
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '33세 한국인 여성, 환불 요구', scenario: 'ko-refund-demand-emergency',
+    reviewer_name: '이수진',
+    review_text: '사전 예약 후 당일 전시 일부가 닫혀 있었는데 사전 안내가 전혀 없었습니다. 입장료 전액 환불을 요구합니다. 소비자원에 신고할 의향도 있습니다. 빠른 처리 바랍니다.' },
+
+  // [Round 25] 영어 — 법적 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (attorney + lawsuit 패턴)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '58yo American male, legal threat', scenario: 'en-attorney-lawsuit-threat',
+    reviewer_name: 'Richard Caldwell',
+    review_text: 'My elderly mother slipped on a wet floor with no warning sign and was injured. I have already consulted an attorney. We are considering a lawsuit if this is not resolved immediately. I want a formal written response within 48 hours.' },
+
+  // [Round 25] 한국어 — 직원 해고 요구 (★1, EMERGENCY)
+  // 기대: EMERGENCY (해고해 패턴 in DEFAULT_EMERGENCY)
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '40세 한국인 여성, 직원 불만', scenario: 'ko-staff-punishment-demand',
+    reviewer_name: '최지원',
+    review_text: '매표소 직원이 노골적으로 무시하는 태도로 응대했습니다. 반말에 눈도 안 마주치고 고객을 투명인간 취급했어요. 그 직원은 해고해야 마땅합니다. 다시는 방문하지 않겠습니다.' },
+
+  // [Round 25] 영어 — CCTV 요청 (★2, COMPLAINT — EMERGENCY 아님)
+  // 기대: COMPLAINT. 회신에는 CCTV 확인 약속 절대 불가 (안전 규칙).
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '42yo American female, lost item', scenario: 'en-cctv-request-lost-item',
+    reviewer_name: 'Karen Mitchell',
+    review_text: 'Someone stole my wallet inside the exhibit. Staff were unhelpful. I would like you to review the CCTV footage from room 3 between 2pm and 3pm on Saturday. This is a serious security concern and I need a response.' },
+
+  // [Round 25] 한국어 — 임신부, 앉을 곳 없어 힘들었음 (★2, COMPLAINT)
+  // 기대: COMPLAINT (의자 없 + 힘들었 패턴)
+  { rating: 2, location: 'AMNY', lang: 'ko', demographic: '31세 한국인 여성, 임신 7개월', scenario: 'ko-pregnant-no-seating',
+    reviewer_name: '강하은',
+    review_text: '임신 7개월인데 전시 내내 앉을 공간이 전혀 없어서 너무 힘들었어요. 직원에게 요청했더니 "쉬는 공간은 따로 없다"고만 했습니다. 전시 자체는 아름다웠지만 임산부나 거동이 불편한 분들에 대한 배려가 전혀 없었어요. 개선이 필요합니다.' },
+
+  // [Round 25] 영어 — 기념일 경험 망침 (★2, COMPLAINT)
+  // 기대: COMPLAINT (ruined, overcrowded, terrible)
+  { rating: 2, location: 'AMDB', lang: 'en', demographic: '30yo British female, anniversary celebration', scenario: 'en-anniversary-ruined',
+    reviewer_name: 'Emily Clarke',
+    review_text: 'We chose ARTE for our anniversary, expecting a romantic experience. It was completely ruined by overcrowding — we could barely move. On top of that, one of the main rooms we had specifically come for was closed with no notice. The staff were indifferent. A deeply disappointing day that we had saved up for.' },
+
+  // [Round 25] 한국어 — ★1 + 비꼬기(사카즘) 텍스트 (COMPLAINT, 감성 역전 테스트)
+  // 기대: COMPLAINT (LOW_RATING_NEGATIVE_BODY or ★1 자체 트리거)
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '26세 한국인 남성, 비꼬기 리뷰어', scenario: 'ko-sarcasm-star1',
+    reviewer_name: '신동현',
+    review_text: '정말 대단하네요. 30분 줄 서서 들어갔더니 에어컨은 안 나오고 직원은 불친절하고, 가격은 최고급인데 내용물은 그 반도 안 되는 것 같아요. 완전히 돈 낭비. 별 하나도 아깝습니다.' },
+
+  // [Round 25] 영어 — ★5 오클릭 고백 + 실제 ★2 (AMBIGUOUS/COMPLAINT 경계 테스트)
+  // 기대: AMBIGUOUS (별점 5 + 부정 텍스트 혼재)
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '29yo American male, misclick', scenario: 'en-star-misclick',
+    reviewer_name: 'Jason Park',
+    review_text: 'I accidentally clicked 5 stars and cannot edit. This should be 2 stars. The experience was mediocre — overpriced, crowded, and one room was shut. Not worth the 35 dollar ticket.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
