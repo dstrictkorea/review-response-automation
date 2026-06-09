@@ -2582,6 +2582,90 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
     review_text: 'تجربة استثنائية بكل المقاييس. الألوان والأصوات تخلق عالماً سحرياً يصعب وصفه بالكلمات. الموظفون كانوا محترفين للغاية وودودين. قضيت ساعتين ونصف ولم أشعر بالوقت. أوصي بشدة لكل من يزور دبي.' },
 
   // ─────────────────────────────────────────────────────────────────
+  // [Round 23] — 새 언어 커버리지 + 극단적 시나리오 스트레스 테스트
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 23] 히브리어 — 첫 방문 긍정 (★5, COMPLIMENT)
+  { rating: 5, location: 'AMDB', lang: 'he', demographic: 'זוג ישראלי, 34, תיירים', scenario: 'he-couple-positive',
+    reviewer_name: 'נועה לוי',
+    review_text: 'חוויה מדהימה ובלתי נשכחת! השילוב של אמנות דיגיטלית ומוזיקה פשוט מושלם. כל חדר מציע חוויה אחרת וייחודית. הצוות היה אדיב ומסייע. ממליצים בחום לכל מי שמבקר בדובאי.' },
+
+  // [Round 23] 인도네시아어 — 가족 방문 긍정 (★5, COMPLIMENT)
+  { rating: 5, location: 'AMDB', lang: 'id', demographic: 'Keluarga Indonesia 35 tahun', scenario: 'id-family-positive',
+    reviewer_name: 'Rina Kusuma',
+    review_text: 'Pengalaman yang luar biasa! Anak-anak sangat menyukai setiap ruangan. Cahaya dan musik menciptakan suasana yang magis. Staf sangat ramah dan membantu. Sangat direkomendasikan untuk keluarga yang berkunjung ke Dubai!' },
+
+  // [Round 23] 태국어 — 솔로 방문, 실망 (★2, COMPLAINT)
+  // 기대: COMPLAINT or AMBIGUOUS (Thai language, not yet supported)
+  { rating: 2, location: 'AMDB', lang: 'th', demographic: 'หญิงไทยอายุ 29 ปี นักท่องเที่ยวเดี่ยว', scenario: 'th-solo-disappointment',
+    reviewer_name: 'สุนิสา พิชิตกุล',
+    review_text: 'ประสบการณ์ไม่ดีอย่างที่คาดหวัง ราคาแพงเกินไปสำหรับเวลา 45 นาที ห้องบางห้องอุปกรณ์เสีย และพนักงานไม่ค่อยช่วยเหลือ ไม่คุ้มราคาเลย' },
+
+  // [Round 23] 힌디어 — 가족 긍정 (★5, COMPLIMENT)
+  { rating: 5, location: 'AMDB', lang: 'hi', demographic: 'परिवार, 40 साल, दुबई पर्यटक', scenario: 'hi-family-positive',
+    reviewer_name: 'राजेश शर्मा',
+    review_text: 'बेहतरीन अनुभव! बच्चों को बहुत मज़ा आया और हम सभी इस अद्भुत डिजिटल कला से मंत्रमुग्ध हो गए। रोशनी और संगीत का संयोजन अद्वितीय है। स्टाफ बहुत मददगार था। दुबई आने पर ज़रूर जाएं!' },
+
+  // [Round 23] 영어 — 치매 환자 보호자, 안전 우려 (★3, COMPLAINT)
+  // 기대: COMPLAINT (accessibility + safety)
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: '58yo American female, caregiver for dementia patient', scenario: 'en-dementia-caregiver-concern',
+    reviewer_name: 'Linda Hoffman',
+    review_text: 'I brought my mother who has early-stage dementia. The dark rooms and disorienting projections were overwhelming for her — she became very distressed. There was no way to quickly exit one of the longer corridors. I had to carry her out while she was panicking. The experience should have clearer exit routes and content warnings for visitors with cognitive conditions.' },
+
+  // [Round 23] 한국어 — 비오는 날 실내 넘침, 관람 방해 (★2, COMPLAINT)
+  // 기대: COMPLAINT
+  { rating: 2, location: 'AMNY', lang: 'ko', demographic: '28세 한국인 남성, 솔로', scenario: 'ko-rainy-day-overcrowded',
+    reviewer_name: '남재현',
+    review_text: '비 오는 날 방문했더니 사람이 너무 몰려서 제대로 감상이 불가능했어요. 대기 줄도 길고 안에도 사람이 빽빽해서 사진도 못 찍었습니다. 인원 제한을 더 철저히 해줬으면 좋겠어요. 작품은 아름답지만 너무 혼잡했어요.' },
+
+  // [Round 23] 영어 — 빠른 영어 혼용 리뷰, 각주 스타일 (★4, COMPLIMENT)
+  // 기대: COMPLIMENT (unusual review format)
+  { rating: 4, location: 'AMLV', lang: 'en', demographic: '32yo Filipino-American female writer', scenario: 'en-footnote-style-review',
+    reviewer_name: 'Isabel Santos',
+    review_text: 'A genuinely transportive experience — the whale room alone was worth it. Note to self: arrive early. Note to venue: the food cart outside could be 3x better. Note to the world: yes this is a bit like the Tokyo teamLab but in the good way not the bad way. 4 stars only because one room was under maintenance.' },
+
+  // [Round 23] 한국어 — 임직원 단체 예약 매끄러움 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '45세 한국 기업 인사담당자', scenario: 'ko-corporate-group-booking-smooth',
+    reviewer_name: '손유진',
+    review_text: '임직원 30명 단체 예약을 진행했는데 담당자분이 매우 친절하게 안내해 주셨어요. 큰 그룹인데도 입장이 매끄러웠고, 일부 전시관은 단체 전용 입장 시간도 조율해주셨습니다. 직원들 사기 진작 행사로 완벽한 선택이었어요. 꼭 다시 이용할 것 같습니다.' },
+
+  // [Round 23] 영어 — 비장애인 친구 배려 없음 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (accessibility focus)
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '37yo American female, chronic pain', scenario: 'en-chronic-pain-standing',
+    reviewer_name: 'Amanda Pierce',
+    review_text: 'I have chronic back pain and standing for extended periods is very difficult. The complete lack of seating throughout the entire gallery made this experience genuinely painful. I had to cut the visit short after about 30 minutes. The art was stunning but the venue is simply not accessible to people with invisible disabilities. A few strategically placed benches would transform the experience.' },
+
+  // [Round 23] 일본어 — 재방문 충성 고객, 긍정 (★5, COMPLIMENT)
+  { rating: 5, location: 'AMDB', lang: 'ja', demographic: '28才 日本人女性, 3回目の訪問', scenario: 'ja-loyal-repeat-visitor',
+    reviewer_name: '鈴木花梨',
+    review_text: '3回目の訪問です！毎回来るたびに新しい発見があります。今回は特にFORESTの展示が更新されていてとても感動しました。スタッフも毎回親切で、おすすめのフォトスポットも教えてもらえます。ドバイに来るたびに必ず寄ります。' },
+
+  // [Round 23] 중국어 — VIP 패키지 불만 + 직원 태도 (★2, COMPLAINT)
+  // 기대: COMPLAINT
+  { rating: 2, location: 'AMNY', lang: 'zh', demographic: '39岁中国女性, VIP预订', scenario: 'zh-vip-package-complaint',
+    reviewer_name: '张美玲',
+    review_text: '购买了VIP套餐但完全名不副实。所谓的优先入场根本没有，和普通游客一起排了40分钟。工作人员态度很差，对我们的投诉置之不理。体验很差，完全不值VIP的价格。' },
+
+  // [Round 23] 한국어 — 짧은 날선 비판 (★1, COMPLAINT)
+  // 기대: COMPLAINT (★1 + 비판 키워드)
+  { rating: 1, location: 'AMLV', lang: 'ko', demographic: '33세 한국인 남성', scenario: 'ko-ultra-harsh-short',
+    reviewer_name: '권태호',
+    review_text: '완전 바가지요금에 내용도 없어요. 다시는 안 옵니다.' },
+
+  // [Round 23] 영어 — 뷰 전용 ★5 초단문 + 이모지
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '22yo American male', scenario: 'en-emoji-only-review',
+    reviewer_name: 'Jake Kim',
+    review_text: '🤯🤯🤯 literally unreal. 10/10 would recommend to everyone.' },
+
+  // [Round 23] 한국어 — 오해 기반 불만, 실제론 만족 (★3, AMBIGUOUS)
+  // 기대: AMBIGUOUS (긍정과 부정이 섞임)
+  { rating: 3, location: 'AMDB', lang: 'ko', demographic: '41세 한국인 여성', scenario: 'ko-misunderstood-satisfied',
+    reviewer_name: '허소영',
+    review_text: '처음엔 "그냥 영상만 보는 거잖아"라고 생각했는데 막상 들어가니 완전히 달랐어요. 몰입감이 엄청났습니다. 다만 예상보다 짧았고 가격 대비 아쉬움이 조금 있어요. 나쁘진 않았어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
   // [Round 21] — zh/ja/vi/en 패턴 보강 검증 + 신규 시나리오
   // ─────────────────────────────────────────────────────────────────
 
