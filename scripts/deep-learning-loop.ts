@@ -3084,6 +3084,52 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 4, location: 'AMDB', lang: 'fr', demographic: '31yo French female, solo traveler', scenario: 'fr-paris-solo-positive',
     reviewer_name: 'Camille Moreau',
     review_text: 'Une expérience vraiment immersive et originale. Les installations lumineuses sont à couper le souffle. J\'aurais aimé un peu plus de contenu en français, mais cela ne gâche pas l\'expérience. Je recommande vivement à tous les visiteurs de Dubaï.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 29] — 포맷 스트레스 테스트, 소셜미디어 위협, 신규 언어(cs/ro), ARTE룸 특정
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 29] 영어 — 전체 대문자 불만 (★1, COMPLAINT — ALL CAPS 스트레스 테스트)
+  // 기대: COMPLAINT (/i 플래그로 대소문자 무시)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '28yo American male, frustrated', scenario: 'en-allcaps-complaint',
+    reviewer_name: 'JOHN CARTER',
+    review_text: 'WORST MUSEUM EXPERIENCE I HAVE EVER HAD. STAFF WERE RUDE AND DISMISSIVE. THE AC WAS NOT WORKING. OVERPRICED FOR WHAT YOU GET. DO NOT WASTE YOUR MONEY.' },
+
+  // [Round 29] 한국어 — 띄어쓰기/구두점 없는 불만 (★1, COMPLAINT — 극단적 포맷 스트레스)
+  // 기대: COMPLAINT (불친절 패턴 직접 매칭)
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '22세 한국인 남성, 극단적 불만', scenario: 'ko-no-spacing-complaint',
+    reviewer_name: '홍길동',
+    review_text: '직원불친절에어컨고장화장실더럽가격최악돈낭비다시는안감' },
+
+  // [Round 29] 영어 — 소셜미디어 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY ([EN] media_threat 패턴 — filterService)
+  { rating: 1, location: 'AMLV', lang: 'en', demographic: '24yo American female, social media user', scenario: 'en-social-media-threat',
+    reviewer_name: 'Tiffany Banks',
+    review_text: 'Absolutely unacceptable service. I am going to post this on TikTok and Instagram. My followers deserve to know the truth. This place is a total ripoff and I will go viral with this story.' },
+
+  // [Round 29] 한국어 — WAVE룸 특정 긍정 (★5, COMPLIMENT — ARTE 룸 특정 시나리오)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '25세 한국인 여성, ARTE 팬', scenario: 'ko-wave-room-positive',
+    reviewer_name: '김나린',
+    review_text: 'WAVE 룸에서 보내는 시간이 정말 황홀했어요. 파도가 온몸을 감싸는 듯한 느낌이 너무 좋았습니다. FLOWER 룸도 마찬가지였어요. 두 룸 모두 각자의 색깔로 감동을 줬어요. 라스베가스에서 가장 기억에 남을 경험이 될 것 같아요!' },
+
+  // [Round 29] 체코어 — 실망 + 과대평가 (★2, COMPLAINT)
+  // 기대: COMPLAINT (zklamání + přeplněno 패턴 추가)
+  { rating: 2, location: 'AMDB', lang: 'cs', demographic: '35yo Czech female, tourist', scenario: 'cs-czech-disappointed',
+    reviewer_name: 'Jana Nováková',
+    review_text: 'Velké zklamání. Výstava byla příliš drahá na to, co nabízela. Bylo tam přeplněno lidmi a nešlo si nic pořádně prohlédnout. Personál byl nepříjemný. Rozhodně nedoporučuji.' },
+
+  // [Round 29] 루마니아어 — 가족 긍정 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMDB', lang: 'ro', demographic: '38yo Romanian female, family trip', scenario: 'ro-family-positive',
+    reviewer_name: 'Maria Ionescu',
+    review_text: 'O experiență absolut uimitoare pentru toată familia! Copiii au fost fascinați de instalații. Personalul a fost amabil și de ajutor. Recomand cu căldură tuturor vizitatorilor din Dubai. Vom reveni cu siguranță!' },
+
+  // [Round 29] 영어 — 향기 설치물 긍정 (★5, COMPLIMENT — ARTE 차별화 포인트 검증)
+  // 기대: COMPLIMENT
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '33yo American female, sensory experience', scenario: 'en-scent-positive',
+    reviewer_name: 'Natalie Kim',
+    review_text: 'What sets ARTE apart from every other immersive art experience I have visited is the scent. As you move through the rooms, the fragrance shifts to match the visuals. It creates a deeply multi-sensory experience that is truly unforgettable. Absolutely brilliant.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
