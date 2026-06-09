@@ -2986,6 +2986,52 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 3, location: 'AMDB', lang: 'zh', demographic: '68岁中国女性, 独自参观', scenario: 'zh-elderly-navigation',
     reviewer_name: '陈老太',
     review_text: '我独自来参观，工作人员非常热情地帮助了我，很感谢。但整个展览的导览标识不够清楚，我差点迷路。对于老年人来说，需要更清晰的指引和更多的工作人员引导。总体上是个不错的体验，但有改进空间。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 27] — 복합 불만 스트레스, 아랍어 긍정, 정중한 환불, 일본어 아이러니, ★4 혼재
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 27] 한국어 — 5가지 불만 복합 (★1, COMPLAINT — 다중 태그 테스트)
+  // 기대: COMPLAINT (불친절+에어컨+화장실+대기+가격 모두 매칭)
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '45세 한국인 남성, 최악의 경험', scenario: 'ko-compound-5-complaints',
+    reviewer_name: '황기철',
+    review_text: '직원은 불친절하고, 에어컨은 고장나서 땀이 줄줄 나고, 화장실은 더럽고 냄새까지 났어요. 입장까지 1시간 대기했는데 티켓 시스템이 고장났다고 그냥 기다리라더니 아무런 안내도 없었습니다. 이 모든 게 입장료 3만원이라니. 주변에 절대 추천 안 합니다.' },
+
+  // [Round 27] 아랍어 — 가족 방문 긍정 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT (★5 감정 레이어 or 긍정어 패턴)
+  { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'أسرة عربية من الإمارات', scenario: 'ar-family-positive',
+    reviewer_name: 'نورة المنصوري',
+    review_text: 'زيارة رائعة مع العائلة. الأطفال كانوا مفتونين بالتجارب البصرية والإضاءة الجميلة. الموظفون كانوا لطيفين ومساعدين للغاية. مكان استثنائي لا يُفوَّت. أنصح بشدة بزيارة هذا المتحف لجميع العائلات.' },
+
+  // [Round 27] 영어 — 정중한 환불 요청 (★2, EMERGENCY)
+  // 기대: EMERGENCY (refund 단어 → 관리자 승인 필요, 절대 환불 약속 금지)
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '38yo American female, polite refund request', scenario: 'en-polite-refund-request',
+    reviewer_name: 'Rachel Green',
+    review_text: 'The main exhibit we came for was closed on the day of our visit with no prior notice. The experience was significantly diminished. I would kindly appreciate it if you could consider issuing a partial refund for our tickets. Thank you for your understanding.' },
+
+  // [Round 27] 일본어 — 아이러니/비꼬는 긍정투 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (値段のわりに+見応えが少 패턴 매칭)
+  { rating: 2, location: 'AMNY', lang: 'ja', demographic: '38歳 日本人女性, アート愛好家', scenario: 'ja-ironic-complaint',
+    reviewer_name: '山田ひとみ',
+    review_text: 'さすがARTEミュージアムですね。入場料がかなり高い割には、展示の見応えが少なかったです。スタッフの対応も特に印象に残りませんでした。また来るかと言われれば...ちょっと考えてしまいますね。' },
+
+  // [Round 27] 독일어 — 단체 할인 거부 (★2, COMPLAINT)
+  // 기대: COMPLAINT (mehr Ausstellungen erwartet / Gruppenrabatt 거부)
+  { rating: 2, location: 'AMDB', lang: 'de', demographic: '52yo German male, school teacher with class', scenario: 'de-group-discount-refused',
+    reviewer_name: 'Klaus Werner',
+    review_text: 'Wir kamen als Schulklasse mit 25 Schülern. Der Gruppenrabatt wurde uns ohne Erklärung verweigert. Für den normalen Preis hätten wir mehr Ausstellungen und Führungen erwartet. Das Personal konnte unsere Fragen kaum beantworten. Für eine Schulgruppe ungeeignet.' },
+
+  // [Round 27] 한국어 — ★4 주로 긍정 + 작은 아쉬움 (COMPLIMENT, COMPLAINT 아님)
+  // 기대: COMPLIMENT (★4 + 긍정 시그널 우세, 작은 불만은 무시)
+  { rating: 4, location: 'AMNY', lang: 'ko', demographic: '28세 한국인 여성, 커플 데이트', scenario: 'ko-4star-mostly-positive',
+    reviewer_name: '오지수',
+    review_text: '데이트로 왔는데 정말 좋았어요! 웨이브룸에서 찍은 사진이 인생샷이 됐습니다. 전시 자체는 환상적이었어요. 굳이 아쉬운 점을 꼽자면 입장 전 대기가 약 20분 있었는데, 그 정도는 감수할 수 있어요. 재방문 의향 100%입니다.' },
+
+  // [Round 27] 영어 — 사회적 소외감 (★2, COMPLAINT — feel excluded 패턴)
+  // 기대: COMPLAINT (feel excluded / only in Korean 패턴)
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '41yo Australian female, non-Korean tourist', scenario: 'en-non-korean-excluded',
+    reviewer_name: 'Claire Thompson',
+    review_text: 'Many of the interactive prompts and informational panels were only available in Korean. As a non-Korean speaker I felt excluded from a significant part of the experience. Staff were unable to provide English explanations. For an internationally marketed venue, this is unacceptable.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
