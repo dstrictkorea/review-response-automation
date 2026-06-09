@@ -194,22 +194,22 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
 export function slotB_acknowledgment(lang: Language, idx = 0): string {
   const v: Record<Language, string[]> = {
     ko: [
-      // 0: 정중 검토 약속
-      '말씀해 주신 내용을 무겁게 받아들이며, 담당자가 신속히 확인하여 성심껏 안내드리겠습니다.',
+      // 0: 직접 수용
+      '말씀 주신 내용, 저희가 바로 확인하겠습니다.',
       // 1: 개선 약속 중심
-      '소중한 피드백을 바탕으로 개선 방안을 신속히 검토하겠습니다. 같은 불편이 반복되지 않도록 최선을 다하겠습니다.',
-      // 2: 검토 + 안내 약속
-      '담당자가 빠른 시간 내 내용을 검토하여 성실히 안내드리겠습니다.',
-      // 3: 서비스 개선 반영
-      '말씀해 주신 내용을 면밀히 검토하여 서비스 개선에 적극 반영하겠습니다.',
-      // 4: SHORT 직접 수용
-      '소중한 말씀 잘 받았습니다. 즉시 확인하겠습니다.',
-      // 5: 재발 방지 중심
-      '같은 불편이 반복되지 않도록 팀 전체가 확인하겠습니다.',
-      // 6: 피드백 가치 인정
-      '솔직한 말씀 덕분에 저희가 더 나아질 수 있습니다. 꼭 개선하겠습니다.',
-      // 7: 즉각 대응 강조
-      '말씀 주신 부분, 저희가 직접 챙기겠습니다.',
+      '이런 일이 다시 생기지 않도록 팀 전체가 내용을 공유하고 개선하겠습니다.',
+      // 2: 피드백 가치 인정
+      '솔직하게 말씀해 주셔서 감사합니다. 그 덕분에 저희가 발전할 수 있습니다.',
+      // 3: 빠른 대응 약속
+      '해당 내용을 현장 팀에 즉시 전달하겠습니다.',
+      // 4: 책임 강조
+      '이 부분은 저희 책임입니다. 반드시 개선하겠습니다.',
+      // 5: 재발 방지
+      '같은 불편이 반복되지 않도록 꼭 개선하겠습니다.',
+      // 6: 공감 + 행동
+      '말씀하신 상황을 저희도 심각하게 받아들이고 있습니다. 즉시 조치하겠습니다.',
+      // 7: SHORT 직접
+      '알겠습니다. 바로 처리하겠습니다.',
     ],
     en: [
       'We hear you, and this has been passed to our team for immediate review.',
@@ -632,17 +632,52 @@ export function slotD_peak_hours(lang: Language, idx = 0): string {
 export function slotE_positive(lang: Language, idx = 0, contextMirror?: string | null): string {
   // ── 맥락 거울 클로징 (KO 전용): 리뷰 감성에 맞는 재방문 권유 ───────────────────────
   if (contextMirror && lang === 'ko') {
-    const closeMap: Record<string, string> = {
-      '힐링': '{branch_name}가 언제나 힐링의 공간이 될 수 있도록 노력하겠습니다. 또 찾아주세요.',
-      '몰입': '더욱 깊은 몰입 경험으로 다시 뵐 수 있기를 기대합니다.',
-      '데이트': '다음 특별한 날에도 {branch_name}에서 만나요.',
-      '가족': '다음에도 소중한 가족과 함께 꼭 다시 찾아주세요.',
-      '친구': '다음에도 좋은 분들과 함께 찾아주세요.',
-      '사진': '다음에도 좋은 사진 많이 남겨 가세요.',
-      '감동': '또 다른 감동으로 다시 뵐 수 있기를 기대합니다.',
-      '분위기': '언제든지 {branch_name}에서 또 만나요.',
+    // idx를 활용해 동일 contextMirror 카테고리도 여러 변형으로 순환 (DUPLICATE 방지)
+    const closeVariants: Record<string, string[]> = {
+      '힐링': [
+        '{branch_name}가 언제나 힐링의 공간이 될 수 있도록 노력하겠습니다. 또 찾아주세요.',
+        '언제든지 {branch_name}에서 쉬어 가세요. 늘 그 자리에 있겠습니다.',
+        '힐링이 필요할 때 또 찾아주세요. 기다리고 있겠습니다.',
+        '다음에도 {branch_name}에서 잠깐 숨 돌려가세요.',
+      ],
+      '몰입': [
+        '더욱 깊은 몰입 경험으로 다시 뵐 수 있기를 기대합니다.',
+        '다음에는 더 새로운 몰입으로 맞이하겠습니다. 또 와주세요.',
+        '{branch_name}에서 다시 한번 깊이 빠져드시기를 바랍니다.',
+      ],
+      '데이트': [
+        '다음 특별한 날에도 {branch_name}에서 만나요.',
+        '좋은 분과 또 찾아주세요. 기다리고 있겠습니다.',
+        '{branch_name}은 언제든지 두 분을 환영합니다.',
+      ],
+      '가족': [
+        '다음에도 소중한 가족과 함께 꼭 다시 찾아주세요.',
+        '가족과 함께하는 특별한 순간을 {branch_name}이 더 많이 만들어 드리겠습니다.',
+        '또 좋은 가족 시간 함께 만들어요. 언제든지 환영합니다.',
+      ],
+      '친구': [
+        '다음에도 좋은 분들과 함께 찾아주세요.',
+        '또 새로운 친구와도 함께 와주세요. 기다리겠습니다.',
+        '{branch_name}에서 또 즐거운 시간 만들어가세요.',
+      ],
+      '사진': [
+        '다음에도 좋은 사진 많이 남겨 가세요.',
+        '더 예쁜 순간들이 기다리고 있습니다. 또 와주세요.',
+        '{branch_name}에 새로운 공간이 생기면 꼭 다시 와주세요.',
+      ],
+      '감동': [
+        '또 다른 감동으로 다시 뵐 수 있기를 기대합니다.',
+        '그 감동이 오래 남기를 바랍니다. 다음에 또 찾아주세요.',
+        '{branch_name}은 늘 새로운 감동으로 기다리겠습니다.',
+      ],
+      '분위기': [
+        '언제든지 {branch_name}에서 또 만나요.',
+        '{branch_name}의 분위기가 그리워질 때 다시 찾아주세요.',
+        '언제 오셔도 좋은 분위기로 맞이하겠습니다.',
+      ],
     }
-    if (closeMap[contextMirror]) return closeMap[contextMirror]
+    const variants = closeVariants[contextMirror]
+    if (variants) return variants[idx % variants.length]
   }
 
   const v: Record<Language, string[]> = {
@@ -665,10 +700,22 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
       '또 좋은 시간 함께 나눌 수 있기를 바랍니다.',
     ],
     en: [
-      'It would be our honor to welcome you back to {branch_name} for another unforgettable experience.',
-      'We hope to see you again soon at {branch_name} — there is always something new to discover.',
-      '{branch_name} looks forward to welcoming you back for an even more memorable visit.',
-      "We'd love to have you back at {branch_name}. Until next time!",
+      // 0
+      'We hope to see you again at {branch_name} soon — there is always something new to discover.',
+      // 1
+      "Come back anytime — {branch_name} keeps evolving and we'd love to share what's new.",
+      // 2
+      'Until next time at {branch_name}! We hope it stays with you.',
+      // 3
+      "We're glad this visit meant something. See you at {branch_name} again.",
+      // 4
+      '{branch_name} will be here whenever you need it. Come back soon.',
+      // 5
+      'Thank you for being part of what makes {branch_name} worth visiting. See you again!',
+      // 6
+      'Your visit means a lot to everyone here. Come find us again soon.',
+      // 7
+      "We'll be here. Bring someone new next time — we'd love to show them around.",
     ],
     ja: [
       'これからも忘れられない感動をお届けできる{branch_name}であり続けます。またお会いできる日を心よりお待ちしております。',
@@ -694,28 +741,40 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
 export function slotE_negative(lang: Language, idx = 0): string {
   const v: Record<Language, string[]> = {
     ko: [
-      // 0: 개선 약속 클래식
-      '소중한 의견 감사드리며, 더 나은 서비스로 보답드리겠습니다.',
+      // 0: 직접 약속
+      '더 잘하겠습니다. 솔직하게 말씀해 주셔서 감사합니다.',
       // 1: 재방문 기대 + 사과
-      '다시 한번 불편에 대해 사과드리며, 앞으로는 더 만족스러운 경험을 제공하겠습니다.',
+      '다시 한번 불편에 대해 사과드리며, 다음에는 더 만족스러운 시간이 되도록 하겠습니다.',
       // 2: 발전 감사
-      '말씀해 주신 덕분에 저희가 더 발전할 수 있습니다. 감사합니다.',
-      // 3: 지점 발전 약속
-      '소중한 피드백에 감사드리며, 더 나은 {branch_name}가 될 수 있도록 노력하겠습니다.',
+      '말씀해 주신 덕분에 저희가 더 나아질 수 있습니다. 감사합니다.',
+      // 3: 행동 약속
+      '이 경험을 발판 삼아 반드시 개선하겠습니다.',
       // 4: SHORT 다음 기대
       '다음 방문에서는 더 좋은 경험 드리겠습니다.',
-      // 5: SHORT 기억 약속
-      '소중한 말씀 잊지 않겠습니다.',
+      // 5: SHORT 직접
+      '말씀 잊지 않겠습니다. 바로 반영하겠습니다.',
       // 6: 개선 후 재방문 기대
       '개선된 {branch_name}에서 다시 뵐 수 있기를 바랍니다.',
-      // 7: SHORT 노력 약속
-      '더 나은 경험을 드릴 수 있도록 열심히 하겠습니다.',
+      // 7: 책임 + 약속
+      '이런 상황이 다시는 없도록 저희가 직접 챙기겠습니다.',
     ],
     en: [
-      'Thank you for your valuable feedback. We are committed to doing better.',
-      'We apologize once more for the inconvenience and look forward to providing a better experience next time.',
-      'Your feedback helps us improve. Thank you for letting us know.',
-      "Thank you for your candid input — it helps us make {branch_name} better for everyone.",
+      // 0: direct + action-forward
+      'We will do better. Thank you for holding us accountable.',
+      // 1: next-visit focused
+      'We hope to have the chance to give you a much better experience next time.',
+      // 2: specific improvement promise
+      'Your experience will be reviewed internally and used to make real improvements.',
+      // 3: candid and warm
+      'Honest feedback like yours is exactly how we get better. Thank you.',
+      // 4: accountability-first
+      "This isn't the standard we hold ourselves to, and we appreciate you telling us.",
+      // 5: concise / action
+      'We hear you — changes are being made.',
+      // 6: empathy-forward close
+      'We are sorry the visit fell short, and we are committed to getting it right.',
+      // 7: gratitude + intent
+      'Thank you for giving us the feedback we needed. We will act on it.',
     ],
     ja: [
       '貴重なご意見に感謝申し上げます。より良いサービスの提供に努めてまいります。',

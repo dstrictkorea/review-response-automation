@@ -58,8 +58,10 @@ export interface WaterfallResult {
 // ★ AMLV 'Strip' 오진단 수정: 비앵커 'trip'이 "Strip"(S+trip)을 매칭하던 결함 → \btrip.
 //   'sue'(issue/tissue), 'fell'(fellow) 등 짧은 영문도 \b 경계로 묶어 부분일치 오탐 제거.
 //   한국어 그룹은 부분일치 문제 없음. 'cop'(copy)은 노이즈로 제거.
+// ★ "field trip"(긍정 명사) 오탐 수정: trip→tripped/tripping만 (동사형 낙상 한정).
+//   "trip" 명사(field trip, business trip) 및 "trips" 오트리거 제거.
 const DEFAULT_EMERGENCY =
-  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불)|\b(?:hurt|injur\w*|fell|bleed\w*|hospital|paramedic|dizzy|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|sue|sued|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback)\b|\b911\b|\btrip(?:ped|ping|s)?\b|\b(?:lost|missing)\b/i
+  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불)|\b(?:hurt|injur\w*|fell|bleed\w*|hospital|paramedic|dizzy|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|sue|sued|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback)\b|\b911\b|\btrip(?:ped|ping)\b|\b(?:lost|missing)\b/i
 
 // 'bad'는 부정이지만 "not bad"(긍정 관용구)는 제외 (?<!not\s).
 const DEFAULT_COMPLAINT =
@@ -90,9 +92,9 @@ const DEFAULT_ARTWORK =
 // ── 현장 운영 중심 컴플레인 (복합 리뷰 의미 희석 방지: 1개라도 매칭 시 COMPLAINT 확정) ──
 // (?<!안\s) — "동선이 안 복잡"(부정) 등 회피. [^.!?\n]{0,N} — 문장 범위 내 근접 매칭.
 const DEFAULT_LAYOUT =
-  /(?<!안\s)동선[^.!?\n]{0,12}(복잡|불편|엉망|얽|헷갈)|표지판[^.!?\n]{0,8}(?:없|부족|안\s*보|미흡|제로)|안내[^.!?\n]{0,8}(?:없음|부족|미흡|미비)|길\s*(?:찾기|찾다)[^.!?\n]{0,10}(?:힘들|어렵|헷갈|못|30분|한참)|입구[^.!?\n]{0,10}(?:못\s*찾|안\s*보|헷갈)|hard\s*to\s*navigate|confusing\s*(layout|flow|path)|maze[-\s]?like|no\s*(?:signs?|signage)\b|signs?\s*(?:are\s*)?(?:missing|unclear|non[- ]?existent|nowhere)|couldn[''']?t\s*find\s*(?:the\s+)?(?:entrance|exit|way)/i
+  /(?<!안\s)동선[^.!?\n]{0,12}(복잡|불편|엉망|얽|헷갈)|표지판[^.!?\n]{0,8}(?:없|부족|안\s*보|미흡|제로)|안내[^.!?\n]{0,8}(?:없음|부족|미흡|미비)|길\s*(?:찾기|찾다)[^.!?\n]{0,10}(?:힘들|어렵|헷갈|못|30분|한참)|입구[^.!?\n]{0,10}(?:못\s*찾|안\s*보|헷갈)|指示牌|找不到(?:出口|入口|路)|找了很久|看不到出口|迷路了|hard\s*to\s*navigate|confusing\s*(layout|flow|path)|maze[-\s]?like|no\s*(?:signs?|signage)\b|signs?\s*(?:are\s*)?(?:missing|unclear|non[- ]?existent|nowhere)|couldn[''']?t\s*find\s*(?:the\s+)?(?:entrance|exit|way)/i
 const DEFAULT_DISPLAY =
-  /(?<!안\s)(영상[^.!?\n]{0,8}(흐릿|흐림|깨)|화질[^.!?\n]{0,6}(별로|구림|나쁨|저하|문제)|디스플레이[^.!?\n]{0,6}(고장|문제))|blurry|out\s*of\s*sync|low\s*resolution|projector[^.!?\n]{0,14}(blurry|broken|off|sync|issue)/i
+  /(?<!안\s)(영상[^.!?\n]{0,8}(흐릿|흐림|깨)|화질[^.!?\n]{0,8}(흐릿|번져|번짐|별로|구림|나쁨|저하|문제|안\s*좋)|프로젝터[^.!?\n]{0,10}(흐릿|이상|문제|안\s*됨)|디스플레이[^.!?\n]{0,6}(고장|문제))|blurry|out\s*of\s*sync|low\s*resolution|projector[^.!?\n]{0,14}(blurry|broken|off|sync|issue)/i
 const DEFAULT_DURATION =
   /(?<!안\s)(규모[^.!?\n]{0,6}작|금방\s*끝|너무\s*짧|관람\s*시간[^.!?\n]{0,8}짧)|shorter\s*than\s*advertised|too\s*short/i
 const DEFAULT_CROWD =

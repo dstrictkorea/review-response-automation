@@ -81,6 +81,7 @@ export function processReview(input: {
     reviewerName: input.reviewerName,
     reviewId: input.reviewId,
     rating: input.rating,
+    reviewTextLength: (input.reviewText ?? '').length,
   }
 
   if (classification.status === 'EMERGENCY') {

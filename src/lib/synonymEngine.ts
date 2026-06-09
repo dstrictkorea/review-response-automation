@@ -177,8 +177,9 @@ export function extractContextMirror(text: string): string | null {
   const t = text ?? ''
 
   // 힐링/치유 관련 — 가장 구체적이고 명확한 감성
-  // \s* 처리: "힐링 제대로", "힐링이 됐어", "힐링됐어" 모두 매칭
-  if (/힐링\s*(?:이\s*)?(?:됐|됩|되는|제대로|하고|돼|됩니다)/.test(t)) return '힐링'
+  // 힐링 단독으로도 매칭 (단, 바로 뒤에 부정 표현이 오는 경우 제외)
+  // "힐링 그 자체", "힐링됐어", "힐링이 됐어", "힐링 제대로" 모두 매칭
+  if (/힐링(?!\s*(?:이\s*)?(?:안|못|부족|없|별로|실망|사라))/.test(t)) return '힐링'
   if (/\bhealing\b|\brejuvenating\b|\btherapeutic\b/.test(t)) return '힐링'
 
   // 몰입감 관련

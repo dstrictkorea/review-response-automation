@@ -51,6 +51,8 @@ export interface StaticReplyContext {
   reviewId?: string | null
   /** 별점 — 향후 Slot B 감정 조절에 활용 가능 (현재는 참조만). */
   rating?: number | null
+  /** 원본 리뷰 텍스트 길이 — SHORT 모드 판단에 사용 (≤40자 단문이면 COMPLIMENT도 SHORT 적용). */
+  reviewTextLength?: number | null
 }
 
 // ── 소수 기반 독립 해시: 슬롯마다 다른 prime으로 초기화 → idx 분포 독립 보장 ──────────
@@ -117,10 +119,12 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
     // contextMirror가 있으면 슬롯 B가 리뷰 내용 반영 맞춤 응답 반환 (AI같은 답변)
     const b = slotB_appreciation(lang, idxB, mirror)
 
-    // SHORT 모드: SAFE(저·무평점) 단순 긍정 리뷰 + 작품미언급 + 피크미언급 + 맥락거울없음
-    //   → Slot C 생략 → A + B + E (3슬롯) = 답변 TMI 방지
+    // SHORT 모드: SAFE(저·무평점) + 단문 COMPLIMENT(≤40자) — Slot C 생략 → A + B + E
+    //   단문 리뷰에 ETERNAL NATURE 자랑 블록 붙이는 것 = TMI (사용자 피드백)
     // FULL 모드: COMPLIMENT(4-5★) 또는 작품 중심이거나 피크타임 언급이거나 맥락거울 있음
-    const useShortMode = result.status === 'SAFE' && !result.isArtworkFocused && !result.hasPeakHours && !mirror
+    const isVeryShortReview = (ctx.reviewTextLength ?? 999) <= 40
+    const useShortMode = (result.status === 'SAFE' || (result.status === 'COMPLIMENT' && isVeryShortReview))
+                         && !result.isArtworkFocused && !result.hasPeakHours && !mirror
     const c = useShortMode
               ? null
               : result.isArtworkFocused
