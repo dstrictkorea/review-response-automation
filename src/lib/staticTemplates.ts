@@ -131,6 +131,10 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
 //  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 응답 우선 반환 (AI같은 답변 구현)
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: string | null): string {
+  // ── 맥락 거울 응답 (EN 데이트/romantic 전용) ──────────────────────────────────────
+  if (contextMirror === '데이트' && lang === 'en') {
+    return 'We are so glad {branch_name} made for such a special evening together. That means a lot to us.'
+  }
   // ── 맥락 거울 응답 (KO 전용): 리뷰가 언급한 감성 키워드로 맞춤 응답 ───────────────
   if (contextMirror && lang === 'ko') {
     const echoMap: Record<string, string> = {
@@ -424,7 +428,7 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '디스플레이 오류로 관람에 불편을 드린 점 사과드립니다. 장비 모니터링을 강화하겠습니다.',
     ],
     en: [
-      'We sincerely apologize for the display quality issues you encountered. We will ensure more rigorous equipment checks and maintenance.',
+      'The AV and display issues you encountered are being escalated to our technical team for immediate action. We will enforce stricter equipment checks going forward.',
       'We are sorry about the display issues. Regular maintenance and equipment inspections are being strengthened.',
       'Thank you for the AV quality feedback. Our technical team will conduct an immediate inspection.',
       'We apologize for the display errors that affected your visit. We will enhance our equipment monitoring.',
@@ -547,6 +551,86 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '对于再次到访却未能充分满足您，我们真诚道歉。持续的内容更新和设施改善是我们的承诺。',
     ],
   },
+  // ── 법적·보상·처벌 요구 — EMERGENCY 전용, 관리자 승인 필수 ─────────────────────────
+  // 안전 규칙: 환불 약속 금지, 법적 책임 인정 금지, CCTV 검토 약속 금지, 처벌 약속 금지
+  LEGAL_THREAT: {
+    ko: [
+      '말씀하신 사안을 경영진에 즉시 보고하였습니다. 담당자가 빠른 시일 내 직접 연락드리겠습니다.',
+      '이 내용은 즉시 운영 책임자에게 전달되었습니다. 관련 담당자가 직접 연락드릴 것입니다.',
+      '고객님의 상황을 최우선으로 검토하겠습니다. 전담 담당자가 신속히 연락드리겠습니다.',
+      '이 사안은 경영진에 즉시 에스컬레이션되었습니다. 빠른 시일 내에 연락드리겠습니다.',
+    ],
+    en: [
+      'This matter has been escalated to our management team immediately. A dedicated representative will be in direct contact with you as soon as possible.',
+      'We have forwarded your concern to our operations director for immediate attention. You will hear from us directly.',
+      'Your situation has been flagged as a priority and escalated to management. Our team will reach out to you directly.',
+      'We take this very seriously. Our management team has been notified and will contact you promptly.',
+    ],
+    ja: [
+      'ご申告の内容を経営陣に即時報告いたしました。担当者より速やかにご連絡差し上げます。',
+      '本件を運営責任者に直接お伝えしました。担当者より改めてご連絡いたします。',
+      '優先案件として処理し、専任担当者より直接ご連絡申し上げます。',
+      'この件は最優先で経営陣へ報告いたしました。ご連絡をお待ちください。',
+    ],
+    zh: [
+      '您的情况已立即上报给管理团队，我们将尽快由专人直接与您联系。',
+      '此事已直接转交给运营负责人，我们会尽快与您取得联系。',
+      '您的情况已被列为优先事项，专属代表将直接联系您。',
+      '我们非常重视此事，管理团队已收到通知并将尽快与您联系。',
+    ],
+  },
+  COMPENSATION_DEMAND: {
+    ko: [
+      '불편하신 경험에 진심으로 사과드립니다. 고객님의 상황을 살펴볼 수 있도록 고객서비스팀이 별도로 연락드리겠습니다.',
+      '이번 경험에 대해 깊이 사과드립니다. 담당 팀이 고객님의 상황을 검토 후 직접 연락드리겠습니다.',
+      '이러한 경험을 드린 점 진심으로 사과드리며, 관련 담당자가 빠른 시일 내 연락드리겠습니다.',
+      '고객님의 상황을 확인하기 위해 고객서비스팀이 직접 연락드리겠습니다.',
+    ],
+    en: [
+      'We are truly sorry for the experience you had. Our guest experience team will reach out to you directly to review your situation.',
+      'We sincerely apologize for what you went through. A member of our team will contact you directly to discuss your case.',
+      'Your experience falls short of our standards. Our team will be in touch with you directly to determine the best course of action.',
+      'We are deeply sorry. Our customer service team will contact you individually to review your situation.',
+    ],
+    ja: [
+      'ご不便をおかけし、誠に申し訳ございません。お客様の状況をご確認するため、担当スタッフより改めてご連絡申し上げます。',
+      'この度のご経験を深くお詫び申し上げます。担当者よりお客様の状況を確認の上、ご連絡いたします。',
+      'ご期待に沿えなかったことを心よりお詫び申し上げます。担当チームより速やかにご連絡いたします。',
+      'お客様のご状況を確認するため、担当チームが直接ご連絡いたします。',
+    ],
+    zh: [
+      '对于您所遭遇的不便，我们深感抱歉。我们的宾客体验团队将直接与您联系，了解您的情况。',
+      '我们为您的经历深感遗憾。专属团队成员将直接与您联系，审核您的情况。',
+      '您的体验未达到我们的标准，我们深感抱歉。我们的团队将与您联系，探讨最佳处理方式。',
+      '我们对此深感歉意，客服团队将单独与您联系，了解您的情况。',
+    ],
+  },
+  PUNISHMENT_DEMAND: {
+    ko: [
+      '말씀하신 상황을 운영 책임자에게 직접 전달하였으며, 재발 방지를 위해 내부적으로 검토하겠습니다.',
+      '이번 건은 즉시 현장 운영팀에 공유되었습니다. 같은 상황이 반복되지 않도록 내부 조치를 취하겠습니다.',
+      '고객님의 경험을 팀 전체가 공유하고, 서비스 개선에 반드시 반영하겠습니다.',
+      '말씀하신 내용을 즉시 운영팀에 전달하였습니다. 적절한 내부 검토와 개선 조치를 약속드립니다.',
+    ],
+    en: [
+      'The situation you described has been forwarded directly to our operations director for internal review and appropriate action.',
+      'Your feedback has been escalated to our on-site management immediately. We will take the necessary steps to prevent a recurrence.',
+      'This situation has been shared with our team leadership for review. We are committed to taking appropriate internal action.',
+      'The experience you described has been reported to our operations team and will be reviewed internally.',
+    ],
+    ja: [
+      'ご指摘の内容を運営責任者に直接お伝えし、再発防止に向けて内部で対応いたします。',
+      '本件は現場マネジメントチームに速やかに共有されました。再発防止のため適切な対応を取ってまいります。',
+      'この件をチームリーダーシップに共有しました。適切な内部対応を行ってまいります。',
+      'ご経験内容を運営チームに報告し、内部審査を実施いたします。',
+    ],
+    zh: [
+      '您反映的情况已直接转达给运营负责人，我们将进行内部审查并采取相应措施。',
+      '您的反馈已立即升级至现场管理团队，我们将采取必要的措施，防止此类情况再次发生。',
+      '这一情况已与团队领导层共享，我们将采取适当的内部行动。',
+      '您描述的经历已向运营团队报告，将进行内部审查。',
+    ],
+  },
   STAFF_COMPLAINT: {
     ko: [
       '직원 응대에 불편을 드린 점 진심으로 사과드립니다. CS 매니저가 즉시 해당 내용을 확인하고, 서비스 교육을 강화하겠습니다.',
@@ -580,6 +664,9 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
  *  해당하는 태그가 없으면 빈 문자열 반환. */
 export function slotC_pivot(lang: Language, tags: string[], idx = 0): string {
   const PRIORITY = [
+    // EMERGENCY 전용 (관리자 승인 필수) — 가장 높은 우선순위
+    'LEGAL_THREAT', 'COMPENSATION_DEMAND', 'PUNISHMENT_DEMAND',
+    // COMPLAINT 운영 불만 (우선순위 내림차순)
     'STAFF_COMPLAINT', 'SYSTEM_COMPLAINT', 'ROOM_SPECIFIC_COMPLAINT',
     'INTERACTIVE_COMPLAINT', 'VALUE_COMPLAINT', 'CROWD_COMPLAINT',
     'LAYOUT_COMPLAINT', 'DISPLAY_ISSUE', 'DURATION_COMPLAINT', 'REVISIT_COMPLAINT',
@@ -630,6 +717,16 @@ export function slotD_peak_hours(lang: Language, idx = 0): string {
 //  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 클로징 우선 반환
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotE_positive(lang: Language, idx = 0, contextMirror?: string | null): string {
+  // ── 맥락 거울 클로징 (EN 데이트/romantic 전용) ────────────────────────────────────
+  if (contextMirror === '데이트' && lang === 'en') {
+    const dateClose = [
+      'We hope {branch_name} becomes your go-to spot for special evenings. See you next time.',
+      'Whether it\'s a date night or any other occasion, {branch_name} will always be here for you.',
+      'Special moments deserve the right setting. We look forward to being part of your next one.',
+      'We love being part of evenings that matter. Come back and make another memory with us.',
+    ]
+    return dateClose[idx % dateClose.length]
+  }
   // ── 맥락 거울 클로징 (KO 전용): 리뷰 감성에 맞는 재방문 권유 ───────────────────────
   if (contextMirror && lang === 'ko') {
     // idx를 활용해 동일 contextMirror 카테고리도 여러 변형으로 순환 (DUPLICATE 방지)
