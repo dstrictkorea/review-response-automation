@@ -2934,6 +2934,58 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMDB', lang: 'en', demographic: '29yo American male, misclick', scenario: 'en-star-misclick',
     reviewer_name: 'Jason Park',
     review_text: 'I accidentally clicked 5 stars and cannot edit. This should be 2 stars. The experience was mediocre — overpriced, crowded, and one room was shut. Not worth the 35 dollar ticket.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 26] — 향기 알레르기, 유모차 접근, 아이 분리, 간질 발작, 신규 언어
+  // ─────────────────────────────────────────────────────────────────
+
+  // [Round 26] 영어 — 향기 알레르기 반응 (★1, COMPLAINT/EMERGENCY 경계)
+  // 기대: COMPLAINT (allerg* + no fragrance warning 패턴)
+  { rating: 1, location: 'AMDB', lang: 'en', demographic: '34yo American female, fragrance allergy', scenario: 'en-fragrance-allergy',
+    reviewer_name: 'Amanda Torres',
+    review_text: 'I am highly allergic to synthetic fragrances. The scent installation in the main hall triggered a severe allergic reaction — my eyes were burning and I was struggling to breathe. There was no fragrance warning anywhere on the website or at the entrance. This is a serious safety failure.' },
+
+  // [Round 26] 영어 — 유모차 접근 불가 (★2, COMPLAINT)
+  // 기대: COMPLAINT (stroller + no access/ramp 패턴)
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '31yo American female, parent with infant', scenario: 'en-stroller-not-accessible',
+    reviewer_name: 'Brittany Walsh',
+    review_text: 'We brought our 14-month-old in a stroller. Two gallery rooms had raised thresholds the stroller could not pass and there was no lift between levels. We missed a large portion of the exhibit. Parents with strollers should be informed before purchasing tickets.' },
+
+  // [Round 26] 한국어 — 어두운 구간에서 아이 미아 (★1, EMERGENCY)
+  // 기대: EMERGENCY (아이 + 보이지 않아 패턴 추가)
+  { rating: 1, location: 'AMLV', lang: 'ko', demographic: '36세 한국인 여성, 6세 아이 동반', scenario: 'ko-child-separated',
+    reviewer_name: '박미란',
+    review_text: '어두운 통로 구간에서 아이가 보이지 않아 5분 이상 극도로 패닉 상태였습니다. 직원에게 알렸는데 "잠깐만요"라는 대답만 돌아왔어요. 다행히 아이는 근처에 있었지만, 비상 상황 대응 매뉴얼이 전혀 없는 것 같아 무서웠습니다.' },
+
+  // [Round 26] 영어 — 광과민성 간질 발작 트리거 (★1, EMERGENCY)
+  // 기대: EMERGENCY (epilepsy + seizure 패턴 기존 검증)
+  { rating: 1, location: 'AMDB', lang: 'en', demographic: '28yo British male, photosensitive epilepsy', scenario: 'en-epilepsy-triggered',
+    reviewer_name: 'James Hartley',
+    review_text: 'I have photosensitive epilepsy. The strobe-like lighting effects in the main gallery triggered a partial seizure. My partner had to help me exit. There were absolutely no warnings about photosensitive or strobe-effect content at the entrance or on the website. This could have been far more serious.' },
+
+  // [Round 26] 독일어 — 커플 기념일 긍정 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT (fantastisch, atemberaubend 긍정 신호)
+  { rating: 5, location: 'AMDB', lang: 'de', demographic: '42yo German female, wedding anniversary', scenario: 'de-couple-anniversary',
+    reviewer_name: 'Sabine Hoffmann',
+    review_text: 'Ein absolut magisches Erlebnis für unseren Hochzeitstag. Die Installationen waren atemberaubend — besonders das Wasserfall-Zimmer. Das Personal war sehr aufmerksam und freundlich. Wir sind so froh, diesen Ort für einen besonderen Abend gewählt zu haben. Wir kommen definitiv zurück.' },
+
+  // [Round 26] 네덜란드어 — 어둠 + 사진 문제 (★2, COMPLAINT)
+  // 기대: COMPLAINT (teleurstellend + te donker voor foto's 패턴)
+  { rating: 2, location: 'AMNY', lang: 'nl', demographic: '26yo Dutch female, photography enthusiast', scenario: 'nl-dark-photography',
+    reviewer_name: 'Fleur de Vries',
+    review_text: 'De installaties zijn mooi maar de verlichting is te donker voor goede foto\'s. Ik had specifiek mijn camera meegenomen. Bovendien was er geen wifi beschikbaar. Voor zo\'n hoge prijs vind ik dit teleurstellend. Verwacht meer van een internationaal museum.' },
+
+  // [Round 26] 터키어 — 군중 + 가격 실망 (★2, COMPLAINT)
+  // 기대: COMPLAINT (hayal kırıklığı, çok kalabalık 패턴 추가)
+  { rating: 2, location: 'AMLV', lang: 'tr', demographic: '33yo Turkish male, couple visit', scenario: 'tr-crowd-disappointed',
+    reviewer_name: 'Emre Yıldız',
+    review_text: 'Maalesef çok hayal kırıklığı yaşadık. İçerisi çok kalabalıktı ve hiçbir şeyi rahatça izleyemedik. Fiyat bu deneyime göre çok pahalı. Yetkililer kalabalık yönetimini iyileştirmeli.' },
+
+  // [Round 26] 중국어 — 고령 방문자 길 찾기 어려움 (★3, AMBIGUOUS)
+  // 기대: AMBIGUOUS (긍정+부정 혼재, ★3)
+  { rating: 3, location: 'AMDB', lang: 'zh', demographic: '68岁中国女性, 独自参观', scenario: 'zh-elderly-navigation',
+    reviewer_name: '陈老太',
+    review_text: '我独自来参观，工作人员非常热情地帮助了我，很感谢。但整个展览的导览标识不够清楚，我差点迷路。对于老年人来说，需要更清晰的指引和更多的工作人员引导。总体上是个不错的体验，但有改进空间。' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
