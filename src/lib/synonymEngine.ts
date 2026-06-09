@@ -157,6 +157,11 @@ export const LOW_RATING_NEGATIVE_BODY: RegExp = buildNgramPattern(
     '중간에 포기',
     '기저귀 갈 공간',
     '수유 공간이 없',
+    '준비가 안 됐',
+    '준비가 안 돼',
+    '아무것도 준비',
+    '예약했는데 없었',
+    '예약이 안 됐',
   ],
   [
     'below expectations',
