@@ -2139,6 +2139,125 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 1, location: 'AMLV', lang: 'es', demographic: 'Turista argentino 31 años', scenario: 'es-one-liner-negative',
     reviewer_name: 'Diego Martínez',
     review_text: 'Muy decepcionante. No vale la pena el precio.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 한국어 — VIP 멤버십 혜택 없음 + 직원 설명 불가
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '34세 한국인 여성, 멤버십 회원', scenario: 'ko-vip-member-complaint',
+    reviewer_name: '임지수',
+    review_text: '멤버십을 구매했는데 VIP 입장에서 아무런 혜택도 없었어요. 그냥 일반 입장권과 다를 게 없었고 직원한테 멤버십 혜택에 대해 물어봤더니 대답을 못 하더라고요. 그냥 모른다고만 했어요. 돈이 아깝다는 생각밖에 안 들었어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 영어 — 광과민성 간질 발작 유발 (EMERGENCY 최우선)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '29yo American female with photosensitive epilepsy', scenario: 'en-photosensitive-seizure',
+    reviewer_name: 'Melissa Grant',
+    review_text: 'The strobe light effects in Room 3 triggered a seizure. I fell to the ground and hit my head. Staff stood around and did nothing while my friend called 911. I had to go to the hospital. There is absolutely no warning for photosensitive visitors. This is extremely dangerous and irresponsible.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 베트남어 — 가격 사기 느낌 + 내용물 부실 (★1)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMLV', lang: 'vi', demographic: 'Du khách Việt Nam 27 tuổi', scenario: 'vi-scam-pricing',
+    reviewer_name: 'Nguyễn Thị Lan',
+    review_text: 'Giá vé quá đắt so với nội dung bên trong. Cảm giác như bị lừa. Chỉ có vài phòng nhỏ, đi trong 20 phút là xong hết. Không đáng đồng tiền bỏ ra. Nhân viên cũng không nhiệt tình hướng dẫn. Thất vọng hoàn toàn.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 아랍어 — 아랍어 사용자 직원 무시 + 차별 느낌 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ar', demographic: 'زوجان مصريان في الثلاثينيات', scenario: 'ar-staff-discrimination',
+    reviewer_name: 'محمد إبراهيم',
+    review_text: 'الموظفون كانوا غير مهذبين تماماً عندما تحدثنا بالعربية. تجاهلونا وأجابوا على أسئلة الزوار الآخرين أولاً. شعرنا بالتمييز الواضح. لم يساعدونا عند الحاجة ورفضوا تقديم أي إرشادات. تجربة مخيبة للآمال.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 독일어 — 폭염 + 에어컨 고장 + 긴 대기 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'de', demographic: 'Deutsches Paar, Mitte 40', scenario: 'de-heat-no-ac',
+    reviewer_name: 'Klaus Bauer',
+    review_text: 'Die Warteschlange vor dem Eingang war unerträglich lang bei dieser Hitze, kein Schatten und kein Wasser. Drinnen war die Klimaanlage kaputt – alles war stickig und schwül. Die Mitarbeiter haben auf unsere Beschwerden nicht reagiert und nur die Schultern gezuckt. Für den hohen Preis hätten wir mehr erwartet.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 프랑스어 — 사진 금지 과잉 단속 + 직원 굴욕적 태도 (★3)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'fr', demographic: 'Famille française avec deux enfants', scenario: 'fr-staff-photo-ban',
+    reviewer_name: 'Sophie Lefebvre',
+    review_text: 'L\'expérience visuelle était belle, mais le personnel était vraiment agressif concernant l\'interdiction de photos. On m\'a crié dessus devant tout le monde alors que je prenais juste une photo souvenir de mes enfants. C\'était humiliant et disproportionné. D\'autres musées gèrent ça avec beaucoup plus de tact.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 중국어(번체) — 여러 지점 비교 방문 (전반 긍정, ★4)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMLV', lang: 'zh', demographic: '台灣女性 32歲，曾參觀多地點', scenario: 'zh-tw-multisite-positive',
+    reviewer_name: '林怡君',
+    review_text: '這是我第三次參觀ARTE，之前去過首爾和杜拜。拉斯維加斯這個地點的燈光裝置非常壯觀，視覺效果令人印象深刻。不過這次服務人員的態度比較冷漠，和之前的親切體驗有些落差。整體來說還是很值得，推薦給喜歡沉浸式藝術的朋友。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 영어 — 10대 비공식 문체 (★5 긍정)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '17yo American teenager', scenario: 'en-teen-casual',
+    reviewer_name: 'Zoe Chen',
+    review_text: 'ok so this was actually lowkey one of the coolest things ive ever done??? the water room hit different and i literally cried lol. went w my bestie for her bday and we stayed for like 3 hrs. the staff were super chill and helped us find the best spots for photos (the ones that were allowed lol). honestly underrated 10/10 would go again' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 한국어 — 학교 단체 관람 교사, 교육 안내 부재 (★3)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'ko', demographic: '38세 초등학교 교사, 학교 단체 인솔', scenario: 'ko-school-fieldtrip',
+    reviewer_name: '박선영',
+    review_text: '초등학생 학급 전체를 데려갔는데 교육적인 설명이나 안내가 너무 부족했어요. 직원이 아이들한테 아무런 설명도 해주지 않았어요. 대형 학교 단체를 받으면서 최소한의 교육 가이드는 준비해야 하지 않을까요? 전시 자체는 아이들이 좋아했지만 교육 현장으로 활용하기엔 아쉬움이 컸습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 일본어 — 재방문객이 느낀 품질 저하 (★3)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMDB', lang: 'ja', demographic: '日本人男性 45歳、2回目の訪問', scenario: 'ja-quality-decline',
+    reviewer_name: '田中誠一',
+    review_text: '以前来たときはとても感動したのに、今回は作品数が前回より少なくて残念でした。いくつかの部屋は閉鎖されていて、全体的なボリュームが下がった印象です。スタッフの対応は丁寧でしたが、期待していた体験とはギャップがありました。次回の展示改善を期待します。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 영어 — 법인 행사 AV 실패 + 환불 요구 (EMERGENCY)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: 'Corporate event manager, 44yo American male', scenario: 'en-corporate-av-fail',
+    reviewer_name: 'Brian Walsh',
+    review_text: 'We booked a private corporate event for 50 people and the main projection system failed completely for 40 minutes. Staff had no contingency plan and our clients were left standing awkwardly in the dark. This was an embarrassing corporate disaster. We are requesting a partial refund and will be disputing the charge if this is not resolved.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 한국어 — 청각장애 동반, 오디오 기기 없음 + 자막 없음 (★3)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '29세 한국인 여성, 청각장애 친구 동반', scenario: 'ko-deaf-guide-missing',
+    reviewer_name: '이채원',
+    review_text: '청각 장애가 있는 친구와 함께 왔는데 오디오 가이드 기기를 요청했더니 재고가 없다고만 했어요. 대안도 안내해주지 않았고 한국어 자막도 없어서 친구가 내용을 거의 이해 못 했어요. 장애인 편의 시설을 갖추고 있다고 홍보하면서 실제로는 전혀 대비가 되어 있지 않았어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 포르투갈어 — 가족 방문, 매우 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'pt', demographic: 'Mãe brasileira 38 anos, com filho de 9 anos', scenario: 'pt-family-positive',
+    reviewer_name: 'Camila Oliveira',
+    review_text: 'Minha primeira visita ao ARTE foi absolutamente incrível! As instalações de luz e som são de tirar o fôlego. Fui com meu filho de 9 anos e ele ficou completamente encantado. A equipe foi muito atenciosa, nos ajudou a navegar pela exposição e indicou as melhores salas para crianças. Voltaremos com certeza!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 영어 — 솔로 여성 여행객 어두운 공간 불안 + 직원 무시 (★3)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMLV', lang: 'en', demographic: '31yo solo female traveler', scenario: 'en-solo-female-unsafe',
+    reviewer_name: 'Priya Nair',
+    review_text: 'As a solo female traveler, I felt genuinely unsafe in some of the darker isolated rooms — no staff visible and the space was too dark to see other visitors. When I raised this concern with a staff member, he told me it was "just part of the experience" and walked away without any acknowledgement. That dismissive attitude was completely unacceptable.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 한국어 — 현장 가격 불일치 + 직원 설명 불가 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '41세 한국인 남성, 가족 방문', scenario: 'ko-pricing-mismatch',
+    reviewer_name: '강동현',
+    review_text: '홈페이지에 표시된 가격이랑 현장 가격이 달랐어요. 직원한테 왜 다른지 물어봤더니 대답을 못 하고 그냥 모른다고만 했어요. 돈이 아까웠고 가격 안내를 제대로 못 해주니 신뢰가 안 갔어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 한국어 + 영어 — 언어 혼용 (재미교포), 직원 영어 차별 (★3)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: '26세 재미교포 여성', scenario: 'ko-en-codeswitching',
+    reviewer_name: '김서연',
+    review_text: '전시 퀄리티 자체는 진짜 좋았는데… honestly the staff attitude was really disappointing. 영어로 질문했더니 직원이 갑자기 불친절하게 대답하더라고요. 왜 영어 쓰는 손님한테 다르게 대하는지 모르겠어요. 차별을 받은 느낌이 들었어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 16] 독일어 — 디지털 아트 매니아, 긍정 심층 리뷰 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'de', demographic: 'Medienkunst-Enthusiast, 39 Jahre alt', scenario: 'de-media-art-enthusiast',
+    reviewer_name: 'Anna Fischer',
+    review_text: 'Als Medienkunst-Enthusiastin war ich von der technischen Qualität der Installationen begeistert. Das Projection-Mapping ist state-of-the-art und die räumliche Klanggestaltung schafft eine außergewöhnliche Atmosphäre. Das Team war kompetent und leidenschaftlich. Eine der besten immersiven Erfahrungen in Europa.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
