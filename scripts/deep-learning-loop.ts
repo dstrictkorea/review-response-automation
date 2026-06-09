@@ -2475,6 +2475,111 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMNY', lang: 'ko', demographic: '22세 한국인 여성, 팬덤 문화', scenario: 'ko-celebrity-sighting',
     reviewer_name: '박나영',
     review_text: '미술관 자체도 너무 예쁜데 유명 연예인이 촬영하러 왔더라고요! 직원분들이 팬들 안전하게 잘 통제해주시고 전시 관람에도 방해 안 되게 해주셔서 정말 감사했어요. 전시는 기본적으로 너무 아름답고 빛이 환상적이에요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 영어 — fell in love 긍정 (false positive 방어 테스트)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: '35yo British female creative director', scenario: 'en-fell-in-love',
+    reviewer_name: 'Charlotte Davies',
+    review_text: 'I completely fell in love with the ocean room. The bleeding edge technology behind the installations is extraordinary. I almost fell asleep in the final room it was so peaceful. I could sue the creators for making something so beautiful — absolute perfection.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 영어 — 병원 간호사 방문 긍정 (false positive 방어 테스트)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '33yo ER nurse, US female', scenario: 'en-hospital-nurse-positive',
+    reviewer_name: 'Lauren Mitchell',
+    review_text: 'As a hospital nurse who deals with stress and trauma daily, this was the most therapeutic experience I\'ve had in years. The calming visuals and sounds were healing. I was dizzy with delight walking through the flower room. Every hospital worker should have a space like this.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 한국어 — 점자 블록 없음 (★2, 접근성 불만)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'ko', demographic: '44세 한국인 남성, 시각장애 가족 동반', scenario: 'ko-braille-missing',
+    reviewer_name: '이동우',
+    review_text: '시각장애가 있는 어머니를 모시고 갔는데 입구부터 점자 안내판이 없었어요. 음성 안내도 없고 점자 블록도 없어서 혼자서는 이동이 불가능했어요. 시각장애인 안내 서비스가 전혀 없다는 게 너무 실망스러웠어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 영어 — ★4 반복 방문자, 전시 교체 요청
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 4, location: 'AMDB', lang: 'en', demographic: '40yo American female, 5th visit', scenario: 'en-repeat-visitor-feedback',
+    reviewer_name: 'Nicole Carter',
+    review_text: 'This is my fifth visit to ARTE Dubai. The experience remains consistently magical, though I notice the content hasn\'t changed much in two years. I\'d love to see new installations. Staff continue to be excellent and attentive. Still worth every visit but hoping for new content soon.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 중국어 — 긍정적인 커플 방문 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'zh', demographic: '中国情侣，女28岁', scenario: 'zh-couple-positive',
+    reviewer_name: '李美华',
+    review_text: '和男友一起来的，太美了！灯光秀和音乐配合得非常好，整个空间让人沉浸其中。工作人员非常热情，帮我们找了最佳拍照角度。值得再来！强烈推荐给所有来迪拜的朋友。' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 한국어 — 청소 상태 심각 불량 (★1 COMPLAINT)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '39세 한국인 여성, 강한 불만', scenario: 'ko-serious-hygiene',
+    reviewer_name: '정소영',
+    review_text: '바닥이 끈적끈적하고 화장실이 너무 더럽고 냄새가 심했어요. 쓰레기통도 넘쳐있고 구석구석 먼지가 가득했어요. 이런 위생 상태로 입장료를 받는 게 말이 되나요? 최악의 위생 관리였어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 일본어 — 긍정적인 커플 방문 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMNY', lang: 'ja', demographic: '日本人カップル、28才女性', scenario: 'ja-couple-positive',
+    reviewer_name: '中村さくら',
+    review_text: '彼氏と一緒に来ました。光と音楽のコラボレーションが本当に美しく、時間を忘れるほどでした。スタッフの方々もとても親切で、撮影のベストスポットを教えてくれました。ニューヨークに来たら絶対に訪れるべき場所です。また来たいです！' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 독일어 — 어린이와 함께, 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'de', demographic: 'Deutsche Familie mit drei Kindern', scenario: 'de-family-kids-positive',
+    reviewer_name: 'Sabine Hoffmann',
+    review_text: 'Mit unseren drei Kindern (6, 9, 12 Jahre) besucht und alle waren begeistert! Die Lichtinstallationen haben die Kinder absolut fasziniert. Das Personal war besonders kinderfreundlich und geduldig. Eine perfekte Familienaktivität in Dubai. Wir waren fast drei Stunden dort.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 러시아어 — 긍정적 커플 방문 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ru', demographic: 'Молодая пара из России, 29 лет', scenario: 'ru-couple-positive',
+    reviewer_name: 'Дмитрий Волков',
+    review_text: 'Посетили с девушкой, остались в полном восторге! Инсталляции невероятно красивые, особенно зал с волнами. Персонал очень дружелюбный и помогает с фотографиями. Провели там почти 2 часа. Это одно из лучших мест в Дубае — рекомендуем всем!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 영어 — PTSD 참전용사, 어두운 공간 트리거 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMLV', lang: 'en', demographic: '48yo US Army veteran with PTSD', scenario: 'en-ptsd-veteran',
+    reviewer_name: 'James Rodriguez',
+    review_text: 'I\'m a combat veteran with PTSD. The sudden loud sounds and darkness in several rooms triggered a severe anxiety response. There was no content warning about sudden audio spikes or pitch-black environments. Staff were understanding once I explained but there should be proper sensory warnings upfront for veterans and others with trauma responses.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 한국어 — 소그룹 기업 행사, 매우 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '43세 한국인 남성, 기업 행사 기획담당', scenario: 'ko-corporate-team-positive',
+    reviewer_name: '류상현',
+    review_text: '회사 팀빌딩 행사로 20명과 함께 방문했는데 정말 탁월한 선택이었어요. 직원분들이 단체 방문에 맞게 운영을 도와주셨고 모든 직원들이 너무 즐거워했어요. 창의적인 영감을 받기에 최고의 장소였습니다. 앞으로도 자주 이용할 것 같습니다.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 프랑스어 — ★2 전시 장비 고장 불만
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMNY', lang: 'fr', demographic: 'Touriste française, 44 ans', scenario: 'fr-broken-equipment',
+    reviewer_name: 'Isabelle Martin',
+    review_text: 'Plusieurs installations étaient en panne lors de notre visite. On nous a dit que c\'était "en maintenance" mais aucune réduction n\'a été proposée malgré le fait que la moitié de l\'expérience était inaccessible. Le personnel était indifférent à nos plaintes. Vraiment décevant pour le prix payé.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 베트남어 — 매우 긍정 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'vi', demographic: 'Du khách Việt Nam, cặp đôi 30 tuổi', scenario: 'vi-couple-positive',
+    reviewer_name: 'Hoàng Minh Tuấn',
+    review_text: 'Trải nghiệm tuyệt vời nhất trong chuyến đi Dubai! Ánh sáng và âm nhạc kết hợp hoàn hảo tạo nên một không gian huyền ảo. Nhân viên rất thân thiện và hỗ trợ tốt. Chúng tôi ở đó gần 2 tiếng mà vẫn không muốn về. Chắc chắn sẽ quay lại!' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 한국어 — 에어컨 고장 + 더위 호소 (★2)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 2, location: 'AMDB', lang: 'ko', demographic: '37세 한국인 여성, 여름 방문', scenario: 'ko-ac-broken-summer',
+    reviewer_name: '조현아',
+    review_text: '에어컨이 고장났는지 실내가 너무 더웠어요. 체감상 40도는 됐을 것 같아요. 직원한테 얘기했더니 관리팀에 전달하겠다고만 했고 아무것도 달라지지 않았어요. 오랫동안 있기가 힘들어서 일찍 나왔어요.' },
+
+  // ─────────────────────────────────────────────────────────────────
+  // [Round 19] 아랍어 — 긍정 솔로 방문자 (★5)
+  // ─────────────────────────────────────────────────────────────────
+  { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'شاب سعودي 26 عاماً، رحلة منفردة', scenario: 'ar-solo-positive',
+    reviewer_name: 'خالد العمري',
+    review_text: 'تجربة استثنائية بكل المقاييس. الألوان والأصوات تخلق عالماً سحرياً يصعب وصفه بالكلمات. الموظفون كانوا محترفين للغاية وودودين. قضيت ساعتين ونصف ولم أشعر بالوقت. أوصي بشدة لكل من يزور دبي.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
