@@ -93,7 +93,7 @@ function buildSlotIndices(reviewId: string | null | undefined): SlotIndices {
 export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContext): string {
   const lang   = ctx.language
   const name   = (ctx.reviewerName ?? '').trim()
-  const tokens = getBranchTokens(ctx.branchCode)
+  const tokens = getBranchTokens(ctx.branchCode, lang)
   const sig    = branchSignatureWork(ctx.branchCode, lang)
   const { idxA, idxB, idxC, idxD, idxE } = buildSlotIndices(ctx.reviewId)
 
@@ -142,7 +142,7 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
 
   // ── 토큰 치환 파이프라인 ───────────────────────────────────────────────────────
   // {branch_name}, {landmark}, {highlight_room}, {facility} → 실제 지점 메타데이터 값
-  return applyBranchTokens(rawReply, tokens)
+  return applyBranchTokens(rawReply, tokens, lang)
 }
 
 /** 정적 답변 안전성 보증 — 금칙어 미포함 확인(개발/런타임 가드). */

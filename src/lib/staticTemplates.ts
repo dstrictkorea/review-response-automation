@@ -78,7 +78,7 @@ export function slotA_greeting(lang: Language, name: string, idx = 0): string {
       `Muchas gracias${nm ? `, ${nm},` : ''} por visitar {branch_name}.`,
       `${nm ? `${nm}, g` : 'G'}racias por elegirnos. Es un placer tenerle en {branch_name} en {landmark}.`,
       `Agradecemos mucho su visita a {branch_name}${nm ? `, ${nm}` : ''}. Nos alegra tenerle aquí.`,
-      `${nm ? `Estimado/a ${nm}, t` : 'T'}hank you for visiting {branch_name} in {landmark}.`,
+      `${nm ? `Estimado/a ${nm}, g` : 'G'}racias por su visita a {branch_name} en {landmark}.`,
     ],
     ru: [
       `${nm ? `${nm}, б` : 'Б'}ольшое спасибо за визит в {branch_name}!`,

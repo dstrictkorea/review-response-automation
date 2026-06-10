@@ -61,7 +61,7 @@ export interface WaterfallResult {
 // ★ "field trip"(긍정 명사) 오탐 수정: trip→tripped/tripping만 (동사형 낙상 한정).
 //   "trip" 명사(field trip, business trip) 및 "trips" 오트리거 제거.
 const DEFAULT_EMERGENCY =
-  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불|해고해|처벌받아야|징계[^.!?\n]{0,5}내려|천식\s*발작|기도\s*막힘|호흡\s*곤란)|\b(?:hurt|injur\w*|paramedic|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback|asthma\s*attack|inhaler\s*urgently)\b|\bfell\b[^.!?\n]{0,25}(?:hit|hurt|injur\w*|floor|ground|stairs?|step\b|over\b|hard\b|down\b|on\s+(?:the\s+)?(?:floor|ground|steps?|stairs?))|\bbleed\w*\b(?!\s*[-\s]?edge\b|\s*heart\b)|\bhospital\b(?!\s*(?:nurse|worker|staff|doctor|physician|administrator|employee))|\bsue[d]?\b(?![^.!?\n]{0,30}for\s+(?:being|making|having|creating|how)\s*[^.!?\n]{0,20}(?:beautiful|amazing|gorgeous|incredible|stunning|wonderful|perfect|lovely|breathtaking|fantastic))|\bdizzy\b(?!\s+with\s+(?:delight|excitement|joy|wonder|awe|amazement))|\bdisput\w+[^.!?\n]{0,20}charge\b|\bcredit\s*card[^.!?\n]{0,15}disput\w*\b|\b911\b|\btrip(?:ped|ping)\b|\b(?:lost|missing)\b(?!\s+(?:one|a|two|three|\d+)\s*stars?|\s+(?:my|our|their|his|her)\s+(?:mother|father|mom|dad|mum|mam|parents?|husband|wife|partner|sibling|brother|sister|son|daughter|loved\s+one|grandm\w*|grandf\w*|spouse|fianc\w+)|\s+(?:a|an|the|your|our)\s+(?:major|big|huge|great|golden|important|key|potential|promotional|business|marketing|revenue|sale\w*|opportunity|chance|customer|client|deal|contract|subscriber|follower|fan)|\s+[^.!?\n]{0,25}(?:time[\s-]+)?(?:slot|reservation|booking|seat|ticket)\b)|\b(?:fire|fires)\s+(?:that|this|the)\s*(?:staff|employee|worker|guard|person)\b|staff\b[^.!?\n]{0,20}\bshould\s+be\s+fired\b|足をひねっ\w*|転倒して(?:怪我|しまい)|けが(?:をし|してしま)|怪我(?:をし|してしま)|아이[^.!?\n]{0,10}(?:보이지\s*않|없어\s*(?:서|요)|실종|찾을\s*수\s*없)|devrait\s+être\s+(?:renvoyé|viré|licencié)\w*|virez?\s+(?:cet?|ce|les)\s+(?:employé|agent|staff|personnel)\w*|sollte[^.!?\n]{0,15}(?:entlassen|gefeuert)\s+werden|müssen\s+(?:entlassen|gefeuert)\s+werden|debería\w*\s+(?:ser\s+)?despedid[ao]\w*|despidan\s+(?:a\s+)?(?:ese|al|este)\s+(?:empleado|personal|agente)\w*|зверн\S*\s+до\s+суд\S*|шахрайств\S*|\bchargeback\b|file\w*\s+a\s+(?:chargeback|dispute)|contact\w*\s+(?:the\s+)?(?:local\s+)?(?:news\b|media\b|press\b|journalist)|report\w*[^.!?\n]{0,15}health\s+(?:department|inspector|authority|official)|health\s+(?:code\s+)?(?:violation|hazard|safety\s+issue)|report\w*[^.!?\n]{0,15}(?:the\s+)?(?:authorities|regulat\w*|government\b)|rechtliche\s+Schritte\b|\bR\S*erstattung\b|弁護士[^.!？\n]{0,10}(?:相談|依頼)|法的\s*措置|محامي|رفع\s*(?:دعوى|قضية)|\bavvocato\b|azione\s+legale\b|\bquerela\b|(?:contacter|alerter|prévenir)\s+(?:les\s+)?(?:journalistes|médias|presse)\w*|porter\s+(?:une\s+)?plainte\b|acciones\s+legales\b|demanda\s+(?:judicial|legal)\b|medidas\s+legales\b|processo\s+(?:judicial|legal)\b|\badvogado\b|ação\s+(?:judicial|legal)\b|судебный\s+иск\S*|адвокат\S*|обращусь\s+(?:в\s+суд|к\s+(?:юристу|адвокату))|fire\s+(?:exit|escape)[^.!?\n]{0,30}(?:blocked|locked|shut|closed|inaccessible|missing)|पैसे\s*वापस|कोर्ट\s*(?:जाऊंगा|जाऊँगा|जाएंगे)|वकील\s*(?:करूंगा|करेंगे)|कानूनी\s*(?:कार्रवाई|नोटिस)/i
+  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불(?!\s*(?:했다(?:는|대|더|던|길래)|받았다(?:는|대|더|던)|얘기|이야기))|해고해|처벌받아야|징계[^.!?\n]{0,5}내려|천식\s*발작|기도\s*막힘|호흡\s*곤란)|\b(?:hurt|injur\w*|paramedic|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback|asthma\s*attack|inhaler\s*urgently)\b|\bfell\b[^.!?\n]{0,25}(?:hit|hurt|injur\w*|floor|ground|stairs?|step\b|over\b|hard\b|down\b|on\s+(?:the\s+)?(?:floor|ground|steps?|stairs?))|\bbleed\w*\b(?!\s*[-\s]?edge\b|\s*heart\b)|\bhospital\b(?!\s*(?:nurse|worker|staff|doctor|physician|administrator|employee))|\bsue[d]?\b(?![^.!?\n]{0,30}for\s+(?:being|making|having|creating|how)\s*[^.!?\n]{0,20}(?:beautiful|amazing|gorgeous|incredible|stunning|wonderful|perfect|lovely|breathtaking|fantastic))|\bdizzy\b(?!\s+with\s+(?:delight|excitement|joy|wonder|awe|amazement))|\bdisput\w+[^.!?\n]{0,20}charge\b|\bcredit\s*card[^.!?\n]{0,15}disput\w*\b|\b911\b|\btrip(?:ped|ping)\b|\b(?:lost|missing)\b(?!\s+(?:one|a|two|three|\d+)\s*stars?|\s+(?:my|our|their|his|her)\s+(?:mother|father|mom|dad|mum|mam|parents?|husband|wife|partner|sibling|brother|sister|son|daughter|loved\s+one|grandm\w*|grandf\w*|spouse|fianc\w+)|\s+(?:a|an|the|your|our)\s+(?:major|big|huge|great|golden|important|key|potential|promotional|business|marketing|revenue|sale\w*|opportunity|chance|customer|client|deal|contract|subscriber|follower|fan)|\s+[^.!?\n]{0,25}(?:time[\s-]+)?(?:slot|reservation|booking|seat|ticket)\b)|\b(?:fire|fires)\s+(?:that|this|the)\s*(?:staff|employee|worker|guard|person)\b|staff\b[^.!?\n]{0,20}\bshould\s+be\s+fired\b|足をひねっ\w*|転倒して(?:怪我|しまい)|けが(?:をし|してしま)|怪我(?:をし|してしま)|아이[^.!?\n]{0,10}(?:보이지\s*않|없어\s*(?:서|요)|실종|찾을\s*수\s*없)|devrait\s+être\s+(?:renvoyé|viré|licencié)\w*|virez?\s+(?:cet?|ce|les)\s+(?:employé|agent|staff|personnel)\w*|sollte[^.!?\n]{0,15}(?:entlassen|gefeuert)\s+werden|müssen\s+(?:entlassen|gefeuert)\s+werden|debería\w*\s+(?:ser\s+)?despedid[ao]\w*|despidan\s+(?:a\s+)?(?:ese|al|este)\s+(?:empleado|personal|agente)\w*|зверн\S*\s+до\s+суд\S*|шахрайств\S*|\bchargeback\b|file\w*\s+a\s+(?:chargeback|dispute)|contact\w*\s+(?:the\s+)?(?:local\s+)?(?:news\b|media\b|press\b|journalist)|report\w*[^.!?\n]{0,15}health\s+(?:department|inspector|authority|official)|health\s+(?:code\s+)?(?:violation|hazard|safety\s+issue)|report\w*[^.!?\n]{0,15}(?:the\s+)?(?:authorities|regulat\w*|government\b)|rechtliche\s+Schritte\b|\bR\S*erstattung\b|弁護士[^.!？\n]{0,10}(?:相談|依頼)|法的\s*措置|محامي|رفع\s*(?:دعوى|قضية)|\bavvocato\b|azione\s+legale\b|\bquerela\b|(?:contacter|alerter|prévenir)\s+(?:les\s+)?(?:journalistes|médias|presse)\w*|porter\s+(?:une\s+)?plainte\b|acciones\s+legales\b|demanda\s+(?:judicial|legal)\b|medidas\s+legales\b|processo\s+(?:judicial|legal)\b|\badvogado\b|ação\s+(?:judicial|legal)\b|судебный\s+иск\S*|адвокат\S*|обращусь\s+(?:в\s+суд|к\s+(?:юристу|адвокату))|fire\s+(?:exit|escape)[^.!?\n]{0,30}(?:blocked|locked|shut|closed|inaccessible|missing)|पैसे\s*वापस|कोर्ट\s*(?:जाऊंगा|जाऊँगा|जाएंगे)|वकील\s*(?:करूंगा|करेंगे)|कानूनी\s*(?:कार्रवाई|नोटिस)/i
 
 // 'bad'는 부정이지만 "not bad"(긍정 관용구)는 제외 (?<!not\s).
 const DEFAULT_COMPLAINT =
@@ -85,6 +85,11 @@ const DEFAULT_POSITIVE =
 
 const DEFAULT_QUESTION =
   /[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)/i
+
+// 서비스 질문(시설/운영 정보 문의) — 수사적 감탄("예쁘죠?")과 구분.
+// 매칭 시 고평점 COMPLIMENT 격상을 차단하고 사람/LLM 응대로 격리한다.
+const SERVICE_QUESTION =
+  /(되나요|있나요|가능한가요|가능할까요|가능해요|하나요|할까요|될까요|어떻게\s*(?:하나|해야|되|이용)|몇\s*시|얼마(?:인가요|예요|에요|죠|인지)|언제(?:부터|까지)|주차|유모차|휠체어|수유실|물품\s*보관|보관함|짐\s*맡|할인|재입장|예매|단체\s*(?:예약|관람)|반려동물|애완|입장\s*(?:연령|나이))|\bcan\s+(?:i|we|you)\b|\bdo\s+you\b|\bis\s+there\b|\bare\s+there\b|\bhow\s+(?:much|long|do|can|early)\b|\bwhat\s+time\b|\bwhen\s+(?:do|does|is)\b|\bwhere\s+(?:is|can|do)\b|\bstroller\b|\bwheelchair\b|\bparking\b|\bdiscount\b|\bre-?entry\b/i
 
 const DEFAULT_ARTWORK =
   /(작품|전시|몰입|미디어\s*아트|미디어아트|예술|아트)|(immersive|\bart(?:s|work)?\b|exhibition|installation|media\s*art)/i
@@ -263,7 +268,7 @@ export function analyzeReview(
     if (branchCode && !filterCritical) {
       const meta = getBranchTokens(branchCode)
       const lm = (meta.landmark ?? '').trim()
-      if (lm && lm !== 'our location') {
+      if (lm && lm !== 'the heart of the city') {  // EN DEFAULT 랜드마크 placeholder는 FP 검사 제외
         const escapedLm = lm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         const textWithoutLm = text.replace(new RegExp(escapedLm, 'ig'), ' ')
         if (!C.emergency.test(textWithoutLm)) {
@@ -418,12 +423,19 @@ export function analyzeReview(
 
   // ── 별점 기반 최후 보정 — AMBIGUOUS 상태에서만 동작 ─────────────────────────────
   // (긍정 패턴 미탐지 시 별점으로 추론, 파국적 오분류 방지)
+  // 단, 시설/운영 '서비스 질문'(유모차/주차/예약 등)은 답을 요구하는 리뷰이므로
+  // 고평점이어도 정적 COMPLIMENT로 격상하지 않는다 → 사람/LLM이 질문에 답하도록 격리.
+  const serviceQuestion = isQuestion && SERVICE_QUESTION.test(text)
+  if (serviceQuestion) tags.push('질문')
   if (status === 'AMBIGUOUS') {
-    if (ratingHigh && !isComplaint) {
+    if (ratingHigh && !isComplaint && !serviceQuestion) {
       // 5·4★ + 불만 없음 → COMPLIMENT 격상 (완벽/오아시스 등 신규 긍정어 미탐지 보정)
       status = 'COMPLIMENT'
       requiresLLM = false
       reason = '고평점(4·5점) 긍정 미탐지 → 별점 기반 COMPLIMENT 격상'
+    } else if (serviceQuestion && !isComplaint) {
+      requiresLLM = true
+      reason = '리뷰 내 시설/운영 질문 감지 → 답변 필요, LLM/사람 응대 격리'
     } else if (typeof rating === 'number' && rating <= 1 && !C.positive.test(text) && tags.length === 0) {
       // 1★ + 원문에 긍정 신호 전혀 없음 + 분류 태그 없음 → COMPLAINT 격상
       // !hasPositive 대신 원문(raw) 기준으로 판정: 필러 제거 후에만 긍정이 사라지는 경우(S3b) 방어
