@@ -3471,6 +3471,69 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 1, location: 'AMSG', lang: 'zh', demographic: '27세 중국인 여성, SNS 파워유저', scenario: 'zh-weibo-complaint',
     reviewer_name: '李晓雯',
     review_text: '整个体验非常令人失望。工作人员态度极差，设施有多处损坏，排队时间长达两小时。我会在微博上曝光这些问题，让更多人了解真实情况。' },
+
+  // ── Round 37: 생일/가족 contextMirror 검증 + 9개 핵심 언어 사카즘/AMBIGUOUS 다양성 ──
+
+  // [R37] en ★5 COMPLIMENT — 생일 방문 (contextMirror '생일' 검증 — SlotB/E birthday echo)
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '31yo American female, birthday celebration', scenario: 'en-birthday-context',
+    reviewer_name: 'Sophie Anderson',
+    review_text: 'We came to celebrate my birthday and it was absolutely perfect. The light rooms felt like they were made for a special occasion. I could not have asked for a better way to mark the day. Everyone here should bring someone they love for their birthday.' },
+
+  // [R37] ko ★5 COMPLAINT — 한국어 사카즘 (★5지만 돈낭비/대기 부정 신호)
+  // 기대: COMPLAINT 또는 AMBIGUOUS (★5 + 부정 컨텍스트 충돌)
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: '29세 한국인 남성, 비꼬는 리뷰어', scenario: 'ko-sarcasm-star5-v2',
+    reviewer_name: '신민호',
+    review_text: '와, 진짜 대단하네요. 40분이나 줄 서서 들어갔더니 10분 만에 다 끝나더라고요. 가격도 딱 돈 낭비하기 좋은 수준이었어요. 정말 최고의 경험이라는 거, 그렇죠?' },
+
+  // [R37] ja ★3 AMBIGUOUS — 정중한 간접 불만 (가격 대비 의구심, 혼잡)
+  { rating: 3, location: 'AMTK', lang: 'ja', demographic: '43세 일본인 여성, 아트 애호가', scenario: 'ja-polite-indirect-complaint',
+    reviewer_name: '中村幸子',
+    review_text: 'デジタルアートとしての試みは評価しますが、入場料に見合う体験かどうかは少し疑問を感じました。混雑していて、ゆっくり鑑賞できなかったのは残念でした。もう少しゆとりのある体験ができればと思いました。' },
+
+  // [R37] en ★4 AMBIGUOUS — 4성 미묘한 불만 (오디오 가이드 없음 + 기술 결함)
+  { rating: 4, location: 'AMDB', lang: 'en', demographic: '37yo British male, art enthusiast', scenario: 'en-4star-subtle-complaint',
+    reviewer_name: 'James Whitfield',
+    review_text: 'Genuinely impressive visual art and a strong curatorial concept. Four stars rather than five because the audio guide was unavailable and one of the main rooms had a noticeable technical glitch throughout. Would return for a full experience.' },
+
+  // [R37] es ★5 AMBIGUOUS — 스페인어 사카즘 (★5 표면, 실질 불만)
+  { rating: 5, location: 'AMDB', lang: 'es', demographic: '32세 스페인 여성, 비꼬는 리뷰어', scenario: 'es-sarcasm-star5',
+    reviewer_name: 'Isabel García',
+    review_text: 'Vaya experiencia tan "increíble". Esperar dos horas para ver pantallas que funcionan a medias y pagar 35 euros por ello… realmente memorable. Totalmente recomendable si buscas desperdiciar tu tarde.' },
+
+  // [R37] ar ★3 AMBIGUOUS — 아랍어 혼재 (비주얼 긍정 + 혼잡·가격 부정)
+  { rating: 3, location: 'AMDB', lang: 'ar', demographic: '35세 이집트인 여성, 솔로 방문', scenario: 'ar-mixed-3star',
+    reviewer_name: 'سارة إبراهيم',
+    review_text: 'التجربة البصرية جميلة ومثيرة للإعجاب، لكن الازدحام الشديد جعل الأمر محبطاً. الأسعار مرتفعة نسبياً مقارنة بما تقدمه. أتمنى لو كان هناك تنظيم أفضل للزوار.' },
+
+  // [R37] ru ★5 AMBIGUOUS — 러시아어 사카즘 (대기+가격 부정)
+  { rating: 5, location: 'AMTK', lang: 'ru', demographic: '38세 러시아인 남성, 비꼬기 리뷰', scenario: 'ru-sarcasm-star5',
+    reviewer_name: 'Сергей Иванов',
+    review_text: 'Отличное место, если вам нравится стоять в очереди два часа и потом за 20 минут "насладиться" искусством за 30 евро. Очень рекомендую тем, кто хочет расстаться с деньгами и временем.' },
+
+  // [R37] hi ★2 COMPLAINT — 힌디어 재방문 불만 (콘텐츠 변화 없음, 재방문 거부)
+  { rating: 2, location: 'AMSG', lang: 'hi', demographic: '33세 인도인 여성, 재방문자', scenario: 'hi-return-visitor-complaint',
+    reviewer_name: 'Neha Sharma',
+    review_text: 'दोबारा आई लेकिन कुछ नया नहीं था। वही प्रदर्शनी, वही कमरे, कुछ भी नहीं बदला। इतनी कीमत में कम से कम कुछ नया तो होना चाहिए था। शायद वापस नहीं आऊंगी।' },
+
+  // [R37] tl ★2 COMPLAINT — 필리핀어 단체 투어 불만 (할인 미적용 + 대기 + 직원 혼란)
+  { rating: 2, location: 'AMDB', lang: 'tl', demographic: '41세 필리핀인 여성, 그룹 투어 주최자', scenario: 'tl-group-tour-complaint',
+    reviewer_name: 'Rosario Dela Cruz',
+    review_text: 'Nag-organisa ako ng grupo ng 20 tao at ang karanasan ay lubhang nakabigo. Hindi inangkop ang group discount na ipinangako, walang malinaw na gabay mula sa staff, at matagal kaming naghintay nang higit sa isang oras. Hindi ito angkop para sa malalaking grupo.' },
+
+  // [R37] ja ★5 COMPLIMENT — 일본어 가족+아이 방문 (子供/家族 → contextMirror='가족' 검증)
+  { rating: 5, location: 'AMTK', lang: 'ja', demographic: '38세 일본인 여성, 아이 동반 가족', scenario: 'ja-family-with-kids',
+    reviewer_name: '田中愛子',
+    review_text: '子供たちも大喜びで、家族全員で最高の時間を過ごせました。光のシャワーに包まれながら、子供が目を輝かせている姿が忘れられません。また家族で来たいと思います！' },
+
+  // [R37] zh ★5 COMPLIMENT — 중국어 가족+아이 방문 (孩子/家人 → contextMirror='가족' 검증)
+  { rating: 5, location: 'AMSG', lang: 'zh', demographic: '36세 중국인 여성, 가족 방문', scenario: 'zh-family-visit',
+    reviewer_name: '张晓琳',
+    review_text: '带着孩子和家人一起来参观，大家都非常开心！孩子们看到那些光影装置时兴奋极了。整个体验温馨而美好，非常适合家庭出游。强烈推荐！' },
+
+  // [R37] zh ★5 AMBIGUOUS — 중국어 사카즘 (★5 표면, 대기+과금 부정)
+  { rating: 5, location: 'AMDB', lang: 'zh', demographic: '25세 중국인 여성, 비꼬기 리뷰어', scenario: 'zh-sarcasm-star5',
+    reviewer_name: '小红书用户',
+    review_text: '真是太"精彩"了！排了整整两个小时的队，花了不少钱，结果展览只有20分钟。工作人员的服务也是"一流"的，完全不理会游客的问题。强烈推荐给喜欢浪费时间和金钱的朋友们。' },
 ]
 
 // ═══════════════════════════════════════════════════════════════

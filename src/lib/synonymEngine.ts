@@ -202,8 +202,9 @@ export const LOW_RATING_NEGATIVE_BODY: RegExp = buildNgramPattern(
 //  추출된 키워드는 staticTemplates.ts의 slotB_appreciation/slotE_positive에서
 //  답변을 리뷰 내용에 맞춤 구성하는 데 사용된다 (→ "AI같지 않게" 답변 구현의 핵심).
 //
-//  우선순위: 힐링 > 몰입 > 데이트 > 가족 > 친구 > 사진 > 감동 > 분위기
+//  우선순위: 힐링 > 몰입 > 생일/기념일 > 데이트 > 가족 > 친구 > 사진 > 감동 > 분위기
 //  → 가장 강한 감성 신호를 하나만 반환.
+//  생일/기념일은 데이트보다 우선: 더 구체적인 특별한 날 맥락.
 // ════════════════════════════════════════════════════════════════════════════════
 export function extractContextMirror(text: string): string | null {
   const t = text ?? ''
@@ -218,16 +219,44 @@ export function extractContextMirror(text: string): string | null {
   if (/몰입(?:감|이\s*최고|되는|형|돼|됩니다)/.test(t)) return '몰입'
   if (/\bimmersive?\b|\bwas\s+(?:so\s+)?immersed?\b/.test(t)) return '몰입'
 
-  // 데이트 관련 — 커플/연인 맥락
-  if (/데이트|연인과/.test(t)) return '데이트'
-  if (/\bdate\s*(?:night|spot|place)\b|\bromantic\b/.test(t)) return '데이트'
+  // 생일/기념일 관련 — 특별한 날 방문 맥락 (가장 구체적 → 우선 검사)
+  if (/생일|기념일|생일\s*파티/.test(t)) return '생일'
+  if (/\bbirthday\b|\banniversar\w*\b/.test(t)) return '생일'
+  if (/誕生日|記念日|誕生|お祝い/.test(t)) return '생일'
+  if (/生日|纪念日|庆祝/.test(t)) return '생일'
+  if (/जन्मदिन|सालगिरह|वर्षगांठ/.test(t)) return '생일'
+  if (/عيد\s*ميلاد|يوم\s*الميلاد|ذكرى\s*سنوية/.test(t)) return '생일'
+  if (/\bkumpleanos\b|\bcumpleaños\b|\baniversario\b/.test(t)) return '생일'
+  if (/\bkaarawan\b|\banibersaryo\b/.test(t)) return '생일'
+  if (/день\s*рождения|годовщин\S*/.test(t)) return '생일'
 
-  // 가족 관련 — 아이/부모/가족 맥락
+  // 데이트 관련 — 커플/연인 맥락
+  if (/데이트|연인과|파트너와/.test(t)) return '데이트'
+  if (/\bdate\s*(?:night|spot|place)\b|\bromantic\b/.test(t)) return '데이트'
+  if (/パートナー|彼氏|彼女|カップル|デート/.test(t)) return '데이트'
+  if (/伴侣|男朋友|女朋友|约会|情侣/.test(t)) return '데이트'
+  if (/पार्टनर|प्रेमी|प्रेमिका/.test(t)) return '데이트'
+  if (/романтич\S*|с\s*(?:партнёром|любимым|любимой)/.test(t)) return '데이트'
+
+  // 가족 관련 — 아이/부모/가족 맥락 (다국어)
   if (/(?:아이|아들|딸|아기|어린이)(?:랑|이랑|과\s*함께|들과|와\s*함께)/.test(t)) return '가족'
   if (/가족(?:이랑|과\s*함께|끼리|들과|과\s*방문)/.test(t)) return '가족'
+  if (/\b(?:kids?|children|child|son|daughter|toddler|baby|grandkids?)\b/.test(t)) return '가족'
+  if (/\bmy\s+(?:son|daughter|child|kids?|family)\b/.test(t)) return '가족'
+  if (/子供|家族|お子|娘|息子|お子様|お子さん/.test(t)) return '가족'
+  if (/孩子|家人|家庭|儿子|女儿|宝宝|小朋友/.test(t)) return '가족'
+  if (/परिवार|बच्च\S*/.test(t)) return '가족'
+  if (/\bpamilya\b|\bmga\s+bata\b|\bbata\b/.test(t)) return '가족'
+  if (/\bfamilia\b|\bniños\b|\bhijos?\b/.test(t)) return '가족'
+  if (/семь[яей]|детей|ребёнок|дочь|сын|дети/.test(t)) return '가족'
 
   // 친구 관련
   if (/친구(?:랑|이랑|들과|와\s*함께)/.test(t)) return '친구'
+  if (/\bfriend(?:s)?\b/.test(t)) return '친구'
+  if (/友達|友人|仲間/.test(t)) return '친구'
+  if (/朋友|好友/.test(t)) return '친구'
+  if (/दोस्त|मित्र/.test(t)) return '친구'
+  if (/с\s*друзьями|друг|подруга/.test(t)) return '친구'
 
   // 사진/인생샷 관련
   if (/인생\s*샷|포토\s*스팟|사진\s*찍기/.test(t)) return '사진'

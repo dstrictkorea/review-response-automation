@@ -96,16 +96,16 @@ const DEFAULT_LAYOUT =
 const DEFAULT_DISPLAY =
   /(?<!안\s)(영상[^.!?\n]{0,8}(흐릿|흐림|깨)|화질[^.!?\n]{0,8}(흐릿|번져|번짐|별로|구림|나쁨|저하|문제|안\s*좋)|프로젝터[^.!?\n]{0,10}(흐릿|이상|문제|안\s*됨)|디스플레이[^.!?\n]{0,6}(고장|문제)|공사\s*(?:소음|중)[^.!?\n]{0,12}(?:시끄|소음|방해|시끄러)|(?:공사|리모델링)\s*(?:때문|소리)[^.!?\n]{0,10}(?:시끄|소음|방해|집중)|工事[^.!?\n]{0,8}(?:騒音|うるさ|ひどく)|騒音[^.!?\n]{0,8}(?:工事|ひどく|壊れ|邪魔))|blurry|out\s*of\s*sync|low\s*resolution|projector[^.!?\n]{0,14}(blurry|broken|off|sync|issue)|construction\s*(?:noise|sounds?|work)|scaffolding|under\s*(?:renovation|construction)\b/i
 const DEFAULT_DURATION =
-  /(?<!안\s)(규모[^.!?\n]{0,6}작|금방\s*끝|너무\s*짧|관람\s*시간[^.!?\n]{0,8}짧)|shorter\s*than\s*advertised|too\s*short/i
+  /(?<!안\s)(규모[^.!?\n]{0,6}작|금방\s*끝|너무\s*짧|관람\s*시간[^.!?\n]{0,8}짧|\d+분\s*만에\s*(?:다\s*)?끝)|shorter\s*than\s*advertised|too\s*short|只有[^.!?\n]{0,3}\d+\s*(?:分钟|分钟)\b/i
 const DEFAULT_CROWD =
-  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡|입장\s*대기[^.!?\n]{0,10}(?:길|오래|너무|줄|지쳤|힘들|불편)|대기\s*(?:시간이|가)\s*(?:길었|오래|너무|길어|좀)|줄이?\s*(?:너무\s*)?길(?:어서|었)|오래\s*기다(?:렸|려야)|통로[^.!?\n]{0,12}(?:막|서서|지나갈\s*수\s*없)|틱톡\s*(?:춤|촬영|찍)|관람객\s*통제[^.!?\n]{0,8}(?:안\s*됨|전혀|없음|불가|안\s*되)|플래시[^.!?\n]{0,10}(?:터(?:트|뜨)|남발|막지|통제))|overcrowded|too\s*crowded|packed\s*with\s*people|crowd\s*(?:management|control)\s*(?:(?:is|was|totally|completely|absolutely)\s*)?(?:non[- ]?existent|terrible|absent|lacking|poor|nowhere|awful)|people\s*(?:were\s*)?(?:push|pushing|bumping|shoving)|no\s*crowd\s*control/i
+  /(?<!안\s)(사람[^.!?\n]{0,4}(너무\s*)?많|제대로\s*감상[^.!?\n]{0,8}힘들|북적|혼잡|입장\s*대기[^.!?\n]{0,10}(?:길|오래|너무|줄|지쳤|힘들|불편)|대기\s*(?:시간이|가)\s*(?:길었|오래|너무|길어|좀)|줄이?\s*(?:너무\s*)?길(?:어서|었)|오래\s*기다(?:렸|려야)|\d+분이나\s*줄\s*서서|통로[^.!?\n]{0,12}(?:막|서서|지나갈\s*수\s*없)|틱톡\s*(?:춤|촬영|찍)|관람객\s*통제[^.!?\n]{0,8}(?:안\s*됨|전혀|없음|불가|안\s*되)|플래시[^.!?\n]{0,10}(?:터(?:트|뜨)|남발|막지|통제))|overcrowded|too\s*crowded|packed\s*with\s*people|crowd\s*(?:management|control)\s*(?:(?:is|was|totally|completely|absolutely)\s*)?(?:non[- ]?existent|terrible|absent|lacking|poor|nowhere|awful)|people\s*(?:were\s*)?(?:push|pushing|bumping|shoving)|no\s*crowd\s*control|排[了]{0,1}[^.!?\n]{0,5}(?:两|一|三|几)\s*(?:个\s*)?小时[^.!?\n]{0,5}队|esperar\S{0,2}[^.!?\n]{0,15}hora\w*\b|стоять[^.!?\n]{0,10}(?:в\s+)?очереди/i
 
 // AMLV 보강: 인터랙티브 부족 (센서/체험 불만) + 가격 불만
 const DEFAULT_INTERACTIVE =
   /\bnot\s+(?:very\s+)?interactive\b|\bexpected\s+more\s+interaction\b|\black\s+of\s+interaction\b/i
 
 const DEFAULT_VALUE =
-  /\b(?:ticket\s+)?price\b|\bexpected\s+more\s+for\s+the\s+money\b|\btoo\s+expensive\b|\bnot\s+worth\s+(?:the\s+)?(?:money|price)\b|가격\s*대비[^.!?\n]{0,15}(?:아쉬|별로|좀|부족|실망|않)|가성비[^.!?\n]{0,10}(?:아쉬|별로|좀|부족|나쁨|떨어|않)|가격에\s*비해\s*(?:좀|많이|너무)?\s*(?:아쉬|별로|실망)|(?:입장료|티켓값|요금)[^.!?\n]{0,8}(?:비싸|아깝|부담|높)/i
+  /\b(?:ticket\s+)?price\b|\bexpected\s+more\s+for\s+the\s+money\b|\btoo\s+expensive\b|\bnot\s+worth\s+(?:the\s+)?(?:money|price)\b|가격\s*대비[^.!?\n]{0,15}(?:아쉬|별로|좀|부족|실망|않)|가성비[^.!?\n]{0,10}(?:아쉬|별로|좀|부족|나쁨|떨어|않)|가격에\s*비해\s*(?:좀|많이|너무)?\s*(?:아쉬|별로|실망)|(?:입장료|티켓값|요금)[^.!?\n]{0,8}(?:비싸|아깝|부담|높)|돈\s*낭비|desperdici\S+|расстаться[^.!?\n]{0,10}(?:с\s+)?деньг\S*/i
 
 // Rating 1-2 노이즈 필터: 저평점 리뷰에서 아이러니하게 붙는 필러 추천 문장 → 무시
 // synonymEngine.FILLER_PATTERN으로 고도화 (기존 영문 2패턴 → 한/영 N-gram 17패턴으로 확장)
@@ -129,7 +129,7 @@ const DEFAULT_REVISIT_COMPLAINT =
 // STAFF_COMPLAINT: 직원 태도/응대 불만 (위험도 medium 격상 — processReviewById의 COMPLAINT → medium이 자동 처리)
 // 싸가지없음/직원최악 등 슬랭 포함: Tier 1 sanitizer와 협력 — 탐지는 여기서, 순화는 sanitizeAndScoreRisk
 const DEFAULT_STAFF_COMPLAINT =
-  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증|싸가지|ㅂ[ㅅ이]\s*짓|개\s*같|폰\s*만\s*봄|핸드폰[^.!?\n]{0,6}봄))|(?:직원|스태프)\s*(?:최악|꼰대|개판)|직원[^.!?\n]{0,15}(?:질문|대답|말)[^.!?\n]{0,8}(?:안\s*하|무시|없이|모르쇠|제대로\s*안|제대로\s*못)|직원[^.!?\n]{0,50}도와주지|도와주지[^.!?\n]{0,3}(?:않았|않아|안\s*했)|안내[^.!?\n]{0,10}제대로\s*(?:안|못)|모르겠다고\s*(?:했|하더|하면서)|(?:직원|스태프)[^.!?\n]{0,20}(?:아무도\s*제지|제지를?\s*(?:안\s*했|안\s*하)|제지하지\s*않았)|(?:staff|employee|worker|guard|host|cashier|server)[^.!?\n]{0,30}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|unprepared|untrained|had\s+(?:an?\s+)?attitude|(?:told|asked|made)\s+(?:us|me)\s+(?:to\s+)?(?:move|keep\s+moving|leave|hurry|rush)|rushed?\s+(?:us|me)|threw?\s+(?:our|my|the)\s+(?:cups?|drinks?|items?|things?)|could\s+not\s+(?:tell|answer|help|inform)|did\s+nothing\s+to\s+(?:help|manage|control|stop|address)|stood\s+(?:by|around)\s+and\s+(?:watched|did\s+nothing))|(?:tea\s*bar)[^.!?\n]{0,20}(?:rude|불친절|무례|unfriendly)|スタッフ[^.!?\n]{0,20}(?:対応できない|対応してもらえなかった|知らないと言われた|わかりませんと言われた)/i
+  /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증|싸가지|ㅂ[ㅅ이]\s*짓|개\s*같|폰\s*만\s*봄|핸드폰[^.!?\n]{0,6}봄))|(?:직원|스태프)\s*(?:최악|꼰대|개판)|직원[^.!?\n]{0,15}(?:질문|대답|말)[^.!?\n]{0,8}(?:안\s*하|무시|없이|모르쇠|제대로\s*안|제대로\s*못)|직원[^.!?\n]{0,50}도와주지|도와주지[^.!?\n]{0,3}(?:않았|않아|안\s*했)|안내[^.!?\n]{0,10}제대로\s*(?:안|못)|모르겠다고\s*(?:했|하더|하면서)|(?:직원|스태프)[^.!?\n]{0,20}(?:아무도\s*제지|제지를?\s*(?:안\s*했|안\s*하)|제지하지\s*않았)|(?:staff|employee|worker|guard|host|cashier|server)[^.!?\n]{0,30}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|unprepared|untrained|had\s+(?:an?\s+)?attitude|(?:told|asked|made)\s+(?:us|me)\s+(?:to\s+)?(?:move|keep\s+moving|leave|hurry|rush)|rushed?\s+(?:us|me)|threw?\s+(?:our|my|the)\s+(?:cups?|drinks?|items?|things?)|could\s+not\s+(?:tell|answer|help|inform)|did\s+nothing\s+to\s+(?:help|manage|control|stop|address)|stood\s+(?:by|around)\s+and\s+(?:watched|did\s+nothing))|(?:tea\s*bar)[^.!?\n]{0,20}(?:rude|불친절|무례|unfriendly)|スタッフ[^.!?\n]{0,20}(?:対応できない|対応してもらえなかった|知らないと言われた|わかりませんと言われた)|不理会[^.!?\n]{0,8}(?:游客|顾客|访客|参观者)/i
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
@@ -380,10 +380,16 @@ export function analyzeReview(
   // ratingHigh는 Layer 3.5에서 이미 선언됨
 
   if (isComplaint) {
-    if (ratingHigh) {
+    // 고평점(4·5점) 단일 경미 불만 → 건설적 피드백으로 완화(정적 응대)
+    // 예외: 2개 이상 불만 태그 = 별점·본문 강한 충돌 → 잠재 사캐즘/복합 불만 → LLM 위임
+    if (ratingHigh && tags.length < 2) {
       status = 'COMPLIMENT'
       requiresLLM = false
       reason = '고평점(4·5점) 건설적 피드백 — Rating Override로 완화(정적 응대)'
+    } else if (ratingHigh && tags.length >= 2) {
+      status = 'AMBIGUOUS'
+      requiresLLM = true
+      reason = '고평점(4·5점) + 복합 불만 신호 — 잠재 사캐즘/강한 충돌 → LLM 위임'
     } else {
       status = 'COMPLAINT'
       requiresLLM = true

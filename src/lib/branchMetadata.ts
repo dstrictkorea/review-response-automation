@@ -60,6 +60,42 @@ export const BRANCH_METADATA: Record<string, BranchTokens> = {
     highlight_room: 'GARDEN',
     facility:       'CAFE',
   },
+  AMTK: {
+    branch_name:    'ARTE MUSEUM TOKYO',
+    landmark:       'Shibuya',
+    highlight_room: 'FLOWER',
+    facility:       'CAFE',
+  },
+  AMSG: {
+    branch_name:    'ARTE MUSEUM SINGAPORE',
+    landmark:       'Marina Bay',
+    highlight_room: 'GARDEN',
+    facility:       'CAFE',
+  },
+  AMSE: {
+    branch_name:    'ARTE MUSEUM SEOUL',
+    landmark:       '강남',
+    highlight_room: 'COSMOS',
+    facility:       'CAFE',
+  },
+  AMHE: {
+    branch_name:    'ARTE MUSEUM HELSINKI',
+    landmark:       'City Centre',
+    highlight_room: 'AURORA',
+    facility:       'CAFE',
+  },
+  AMPA: {
+    branch_name:    'ARTE MUSEUM PARIS',
+    landmark:       'Le Marais',
+    highlight_room: 'GARDEN',
+    facility:       'CAFE',
+  },
+  AMRO: {
+    branch_name:    'ARTE MUSEUM ROME',
+    landmark:       'EUR',
+    highlight_room: 'FOREST',
+    facility:       'CAFE',
+  },
   // ── 국내 지점 (모든 branch_name 영문 종성 보장 — 한국어 조사 '를/가/는' 하드코딩 전제) ──
   AMGN: {
     branch_name:    'ARTE MUSEUM GANGNEUNG',

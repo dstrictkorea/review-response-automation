@@ -131,26 +131,122 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
 //  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 응답 우선 반환 (AI같은 답변 구현)
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: string | null): string {
-  // ── 맥락 거울 응답 (EN 전용: 힐링·데이트) ────────────────────────────────────────
+  // ── 맥락 거울 응답 (EN 전용: 힐링·데이트·생일) ──────────────────────────────────
   if (contextMirror === '힐링' && lang === 'en') {
     return 'We are so glad {branch_name} offered you that sense of healing and calm. That truly means a great deal to us.'
   }
   if (contextMirror === '데이트' && lang === 'en') {
     return 'We are so glad {branch_name} made for such a special evening together. That means a lot to us.'
   }
+  if (contextMirror === '생일' && lang === 'en') {
+    const birthdayEcho = [
+      'We are so glad you chose to celebrate at {branch_name}. Knowing it was a special occasion makes every part of this review mean even more to us.',
+      'Celebrating a birthday or anniversary here is something we take to heart. We hope the day felt truly special.',
+      'It warms us to know {branch_name} was part of your celebration. These are the moments that stay with us.',
+      'We love being part of milestone moments. Thank you for letting us share in your special day.',
+    ]
+    return birthdayEcho[idx % birthdayEcho.length]
+  }
   // ── 맥락 거울 응답 (KO 전용): 리뷰가 언급한 감성 키워드로 맞춤 응답 ───────────────
   if (contextMirror && lang === 'ko') {
-    const echoMap: Record<string, string> = {
-      '힐링': '힐링이 되셨다니 저희도 정말 기쁩니다. 이런 후기가 저희에게 큰 힘이 돼요.',
-      '몰입': '몰입감 있는 경험이 되셨다니 스태프 모두 정말 보람차네요.',
-      '데이트': '특별한 데이트 장소로 {branch_name}를 선택해 주셔서 감사합니다.',
-      '가족': '소중한 가족과의 시간을 {branch_name}에서 함께해 주셔서 더욱 기쁩니다.',
-      '친구': '좋은 분들과 함께 즐거운 시간 보내셨다니 저희도 행복합니다.',
-      '사진': '사진 찍기 좋은 공간으로 기억해 주셔서 감사합니다.',
-      '감동': '감동을 받으셨다니 저희도 뭉클해지네요. 그런 경험을 드릴 수 있어 영광입니다.',
-      '분위기': '분위기가 마음에 드셨다니 정말 기쁩니다.',
+    const echoMap: Record<string, string[]> = {
+      '생일': [
+        '생일(또는 기념일)을 {branch_name}에서 함께해 주셔서 더없이 영광이었습니다.',
+        '특별한 날을 {branch_name}에서 보내주셔서 진심으로 감사드립니다. 그 날이 소중한 추억으로 남기를 바랍니다.',
+        '기념일에 저희를 선택해 주신 것, 스태프 모두 정말 뜻깊게 생각합니다.',
+        '소중한 축하 자리에 {branch_name}이 함께할 수 있어 진심으로 기쁩니다.',
+      ],
+      '힐링': [
+        '힐링이 되셨다니 저희도 정말 기쁩니다. 이런 후기가 저희에게 큰 힘이 돼요.',
+        '힐링이 되셨다니 정말 다행입니다. 또 필요할 때 찾아주세요.',
+        '힐링의 시간이 되었다니 스태프 모두 큰 보람을 느낍니다.',
+      ],
+      '몰입': [
+        '몰입감 있는 경험이 되셨다니 스태프 모두 정말 보람차네요.',
+        '깊이 빠져드셨다니 저희도 기쁩니다. 그게 저희가 원하는 경험이에요.',
+        '몰입형 전시를 만든 보람이 있네요. 감사합니다.',
+      ],
+      '데이트': [
+        '특별한 데이트 장소로 {branch_name}를 선택해 주셔서 감사합니다.',
+        '데이트 코스로 {branch_name}을 선택해 주셔서 더욱 기쁩니다.',
+        '두 분의 소중한 데이트에 함께할 수 있어 영광입니다.',
+      ],
+      '가족': [
+        '소중한 가족과의 시간을 {branch_name}에서 함께해 주셔서 더욱 기쁩니다.',
+        '가족과 함께 찾아주셔서 감사합니다. 모두 즐거우셨기를 바랍니다.',
+        '가족 모두 좋은 시간 보내셨다니 저희도 행복합니다.',
+      ],
+      '친구': [
+        '좋은 분들과 함께 즐거운 시간 보내셨다니 저희도 행복합니다.',
+        '친구분들과 즐거운 추억을 만드셨다니 기쁩니다.',
+        '또 좋은 분들과 함께 와주세요.',
+      ],
+      '사진': [
+        '사진 찍기 좋은 공간으로 기억해 주셔서 감사합니다.',
+        '인생샷 남기셨기를 바랍니다!',
+        '좋은 사진 많이 남기셨기를 바라요.',
+      ],
+      '감동': [
+        '감동을 받으셨다니 저희도 뭉클해지네요. 그런 경험을 드릴 수 있어 영광입니다.',
+        '그 감동이 오래 남기를 진심으로 바랍니다.',
+        '감동을 전해주셔서 저희가 더 힘이 납니다.',
+      ],
+      '분위기': [
+        '분위기가 마음에 드셨다니 정말 기쁩니다.',
+        '분위기로 기억해 주셔서 감사해요.',
+        '저희가 공들인 공간을 알아봐 주셔서 감사합니다.',
+      ],
     }
-    if (echoMap[contextMirror]) return echoMap[contextMirror]
+    const variants = echoMap[contextMirror]
+    if (variants) return variants[idx % variants.length]
+  }
+  // ── 맥락 거울 응답 (JA): 가족·생일·데이트·힐링 ─────────────────────────────────
+  if (contextMirror && lang === 'ja') {
+    const jaEcho: Record<string, string[]> = {
+      '가족': [
+        'ご家族みなさまで楽しんでいただけたとのこと、私どもも大変嬉しく思います。',
+        'お子様も一緒に喜んでいただけたようで、スタッフ一同とても嬉しく思っております。',
+        'ご家族揃ってのご来館、誠にありがとうございます。みなさまに楽しんでいただけて光栄です。',
+      ],
+      '생일': [
+        '特別な記念日に{branch_name}をお選びいただき、誠にありがとうございます。',
+        'お誕生日という大切な日に私どもをお選びいただき、スタッフ一同大変光栄に思っております。',
+      ],
+      '데이트': [
+        '大切なデートに{branch_name}をお選びいただき、誠にありがとうございます。',
+        '素敵なデートのひとときをお過ごしいただけたとのこと、大変嬉しく存じます。',
+      ],
+      '힐링': [
+        '心の癒しになったとのこと、スタッフ一同とても嬉しく思っております。',
+        'お疲れが取れたとのこと、私どもも大変嬉しく思います。',
+      ],
+    }
+    const jaVariants = jaEcho[contextMirror]
+    if (jaVariants) return jaVariants[idx % jaVariants.length]
+  }
+  // ── 맥락 거울 응답 (ZH): 가족·생일·데이트·힐링 ─────────────────────────────────
+  if (contextMirror && lang === 'zh') {
+    const zhEcho: Record<string, string[]> = {
+      '가족': [
+        '很高兴您与家人一同前来，希望大家都度过了美好的时光。',
+        '听说孩子们也非常开心，这对我们来说是最大的欣慰！',
+        '能与您和您的家人共同度过这段时光，我们感到非常荣幸。',
+      ],
+      '생일': [
+        '感谢您在这个特别的纪念日选择了{branch_name}，我们倍感荣幸。',
+        '能与您共同庆祝生日，是我们的荣耀。祝愿这段美好的回忆永远珍藏。',
+      ],
+      '데이트': [
+        '感谢您将{branch_name}作为约会的地方，希望这段时光令您们难忘。',
+        '很高兴能成为您们约会故事的一部分，感谢您的到来。',
+      ],
+      '힐링': [
+        '听说您感受到了心灵的治愈，这是我们最大的欣慰。',
+        '能为您带来一份宁静和放松，全体员工都感到非常高兴。',
+      ],
+    }
+    const zhVariants = zhEcho[contextMirror]
+    if (zhVariants) return zhVariants[idx % zhVariants.length]
   }
 
   const v: Record<Language, string[]> = {
@@ -720,7 +816,7 @@ export function slotD_peak_hours(lang: Language, idx = 0): string {
 //  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 클로징 우선 반환
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotE_positive(lang: Language, idx = 0, contextMirror?: string | null): string {
-  // ── 맥락 거울 클로징 (EN 전용: 힐링·데이트) ─────────────────────────────────────
+  // ── 맥락 거울 클로징 (EN 전용: 힐링·데이트·생일) ───────────────────────────────
   if (contextMirror === '힐링' && lang === 'en') {
     const healClose = [
       'Whenever you need a moment to breathe and restore, {branch_name} will be here for you.',
@@ -739,13 +835,28 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
     ]
     return dateClose[idx % dateClose.length]
   }
+  if (contextMirror === '생일' && lang === 'en') {
+    const birthdayClose = [
+      'We are honored to have been part of a milestone. Come back and celebrate with us again someday.',
+      'Birthdays and anniversaries deserve the best settings. We hope {branch_name} delivered — see you for the next one!',
+      'Thank you for sharing your special occasion with us. {branch_name} will be here whenever there is something worth celebrating.',
+      'Every celebration deserves a memorable backdrop. We hope we got it right — until next time!',
+    ]
+    return birthdayClose[idx % birthdayClose.length]
+  }
   // ── 맥락 거울 클로징 (KO 전용): 리뷰 감성에 맞는 재방문 권유 ───────────────────────
   if (contextMirror && lang === 'ko') {
     // idx를 활용해 동일 contextMirror 카테고리도 여러 변형으로 순환 (DUPLICATE 방지)
     const closeVariants: Record<string, string[]> = {
+      '생일': [
+        '다음 특별한 날에도 {branch_name}에서 함께해 주세요. 기다리고 있겠습니다.',
+        '또 기념할 날이 생기면 꼭 다시 찾아주세요.',
+        '{branch_name}이 앞으로도 특별한 날의 추억 장소가 되기를 바랍니다.',
+        '또 다른 축하 자리에 저희를 불러주세요. 영광이겠습니다.',
+      ],
       '힐링': [
         '{branch_name}가 언제나 힐링의 공간이 될 수 있도록 노력하겠습니다. 또 찾아주세요.',
-        '언제든지 {branch_name}에서 쉬어 가세요. 늘 그 자리에 있겠습니다.',
+        '힐링이 필요할 때 언제든지 {branch_name}을 찾아주세요. 늘 그 자리에 있겠습니다.',
         '힐링이 필요할 때 또 찾아주세요. 기다리고 있겠습니다.',
         '다음에도 {branch_name}에서 잠깐 숨 돌려가세요.',
       ],
@@ -755,9 +866,9 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
         '{branch_name}에서 다시 한번 깊이 빠져드시기를 바랍니다.',
       ],
       '데이트': [
-        '다음 특별한 날에도 {branch_name}에서 만나요.',
-        '좋은 분과 또 찾아주세요. 기다리고 있겠습니다.',
-        '{branch_name}은 언제든지 두 분을 환영합니다.',
+        '다음 데이트도 {branch_name}에서 함께해요.',
+        '데이트 장소로 또 찾아주세요. 기다리고 있겠습니다.',
+        '{branch_name}에서 두 분의 다음 데이트도 기대하고 있겠습니다.',
       ],
       '가족': [
         '다음에도 소중한 가족과 함께 꼭 다시 찾아주세요.',
@@ -787,6 +898,54 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
     }
     const variants = closeVariants[contextMirror]
     if (variants) return variants[idx % variants.length]
+  }
+  // ── 맥락 거울 클로징 (JA): 가족·생일·데이트·힐링 ─────────────────────────────────
+  if (contextMirror && lang === 'ja') {
+    const jaClose: Record<string, string[]> = {
+      '가족': [
+        'またご家族でぜひ遊びにいらしてください。皆様のご来館を心よりお待ちしております。',
+        'お子様やご家族と一緒に、またいつでもお越しください。お待ちしております。',
+        '次回もご家族揃ってのご来館を心よりお待ちしております。',
+      ],
+      '생일': [
+        '次の記念日にもぜひ{branch_name}をご利用ください。',
+        'また大切な日に{branch_name}でお祝いいただけると嬉しいです。',
+      ],
+      '데이트': [
+        '次の素敵なデートにもぜひ{branch_name}にお越しください。',
+        'またいつでもデートのひとときを{branch_name}でお楽しみください。',
+      ],
+      '힐링': [
+        '心が疲れたときはいつでも{branch_name}にお越しください。いつでもお待ちしております。',
+        'またいつでも{branch_name}で癒しのひとときをお過ごしください。',
+      ],
+    }
+    const jaCloseV = jaClose[contextMirror]
+    if (jaCloseV) return jaCloseV[idx % jaCloseV.length]
+  }
+  // ── 맥락 거울 클로징 (ZH): 가족·생일·데이트·힐링 ─────────────────────────────────
+  if (contextMirror && lang === 'zh') {
+    const zhClose: Record<string, string[]> = {
+      '가족': [
+        '期待您和家人再次光临，随时欢迎您的到来！',
+        '希望下次还能和家人一起来，我们期待再次为您服务。',
+        '欢迎您与家人再次来访，{branch_name}随时为您敞开大门。',
+      ],
+      '생일': [
+        '下次有特别的纪念日，欢迎再次选择{branch_name}。',
+        '期待下次的庆祝与您同在，随时欢迎光临！',
+      ],
+      '데이트': [
+        '期待您下次约会再次光临{branch_name}。',
+        '随时欢迎您们前来，{branch_name}将是您约会的最佳选择。',
+      ],
+      '힐링': [
+        '每当需要放松心情，欢迎随时来{branch_name}。',
+        '期待再次为您带来心灵的宁静与治愈。',
+      ],
+    }
+    const zhCloseV = zhClose[contextMirror]
+    if (zhCloseV) return zhCloseV[idx % zhCloseV.length]
   }
 
   const v: Record<Language, string[]> = {
