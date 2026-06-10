@@ -3270,6 +3270,56 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 3, location: 'AMNY', lang: 'en', demographic: '52yo American male, museum professional', scenario: 'en-museum-pro-3star',
     reviewer_name: 'David Kim',
     review_text: 'As a museum professional, I appreciate the ambition behind ARTE. The light and sound installations are genuinely impressive. However, the visitor flow management needs serious improvement — queuing inside the exhibits ruins the experience. Add timed entry slots or capacity limits per room. The potential is enormous if these operational issues are resolved.' },
+
+  // ── Round 34: 병원 입원 중 리뷰·보건부 신고·추위 불만·웹사이트 오류·이모지·독어 복합위협 ──
+
+  // [Round 34] 영어 — 병원 입원 중 리뷰 (★1, EMERGENCY)
+  // 기대: EMERGENCY (hospital → [EN] injury_accident via filterService)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '55yo American male, injury victim', scenario: 'en-injury-hospital-review',
+    reviewer_name: 'Thomas Bradley',
+    review_text: 'I am writing this review from the hospital. I slipped on the wet unmarked floor in the main corridor and fractured my wrist. There were no wet floor signs anywhere. This is a serious safety failure.' },
+
+  // [Round 34] 영어 — 보건부 신고 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (report to health department → regulatory threat)
+  { rating: 1, location: 'AMLA', lang: 'en', demographic: '49yo American female, consumer rights advocate', scenario: 'en-health-dept-report',
+    reviewer_name: 'Patricia Moore',
+    review_text: 'I am reporting this venue to the health department. The ventilation was nonexistent, the temperature was dangerously hot, and there were no emergency exits visible. These conditions are completely unsafe and constitute a health code violation.' },
+
+  // [Round 34] 영어 — 이모지 중심 불만 (★1, COMPLAINT)
+  // 기대: COMPLAINT (이모지 + 텍스트 불만 조합, 실망/과금 키워드)
+  { rating: 1, location: 'AMDB', lang: 'en', demographic: '21yo American female, Gen Z casual reviewer', scenario: 'en-emoji-overpriced',
+    reviewer_name: 'Emma Thompson',
+    review_text: '🤢🤢🤢 Way too crowded and overpriced. Really disappointing experience. Not worth the money at all. 👎' },
+
+  // [Round 34] 영어 — 추위 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (freezing cold 패턴 추가)
+  { rating: 2, location: 'AMSG', lang: 'en', demographic: '32yo British female, winter visitor', scenario: 'en-cold-temperature',
+    reviewer_name: 'Sophie Clarke',
+    review_text: 'The exhibition hall was freezing cold on the day we visited. My children were shivering within 15 minutes and we had to cut the visit short. The air conditioning was blasting at full power in the middle of winter. There was no way to adjust or escape it.' },
+
+  // [Round 34] 영어 — 예약 웹사이트 오류 (★2, COMPLAINT)
+  // 기대: COMPLAINT (booking website broken 패턴 추가)
+  { rating: 2, location: 'AMSE', lang: 'en', demographic: '38yo American male, tech-savvy planner', scenario: 'en-website-booking-fail',
+    reviewer_name: 'Jason Park',
+    review_text: 'The booking website was completely broken for over an hour. I lost my preferred time slot because of constant timeout errors. Eventually managed to book by phone but was told there were no more slots. Totally unacceptable digital infrastructure for a modern venue.' },
+
+  // [Round 34] 독일어 — 법적 조치 + 환불 요구 복합 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (rechtliche Schritte = LEGAL_THREAT + Rückerstattung = COMPENSATION_DEMAND)
+  { rating: 1, location: 'AMDB', lang: 'de', demographic: '44yo German male, assertive consumer', scenario: 'de-legal-plus-refund',
+    reviewer_name: 'Markus Bauer',
+    review_text: 'Ich werde rechtliche Schritte einleiten und erwarte eine vollständige Rückerstattung. Das Erlebnis war weit entfernt von dem, was beworben wurde. Der Service war katastrophal.' },
+
+  // [Round 34] 한국어 ★5 — 카페·굿즈샵 특별 칭찬 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT (★5 긍정 + 구체적 굿즈/카페 칭찬)
+  { rating: 5, location: 'AMSE', lang: 'ko', demographic: '26대 한국인 여성, 카페 매니아', scenario: 'ko-cafe-goods-compliment',
+    reviewer_name: '정유나',
+    review_text: '전시도 너무 좋았지만 카페랑 굿즈샵이 정말 특별해요! 시그니처 음료가 전시 테마와 딱 맞고, 굿즈도 퀄리티가 높아서 선물용으로 여러 개 샀어요. 다음에도 꼭 다시 올게요!' },
+
+  // [Round 34] 영어 ★2 — 진짜 모호한 혼합 리뷰 (★2, AMBIGUOUS)
+  // 기대: AMBIGUOUS (칭찬 + 불만이 균형, ★2로 묘하게 낮음)
+  { rating: 2, location: 'AMNY', lang: 'en', demographic: '41yo American female, nuanced reviewer', scenario: 'en-2star-genuine-ambiguous',
+    reviewer_name: 'Rachel Foster',
+    review_text: 'The art itself was genuinely beautiful and I understand what they are going for. But the experience around it — the pricing, the crowds, the rigid photography rules — ruined it for me. I wanted to love this. I really did. But two stars feels about right.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
