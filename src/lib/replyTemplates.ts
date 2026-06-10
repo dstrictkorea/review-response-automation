@@ -26,7 +26,10 @@
  * Kill-Switch(불변): isEmergency || isComplaint → ETERNAL NATURE 찬양 차단.
  */
 
-import type { Language } from '@/lib/i18n'
+// Reply-engine language set — broader than UI Language ('ko'|'en'|'ja'|'zh')
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Language as _UILang } from '@/lib/i18n'
+type Language = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'ru' | 'ar' | 'hi' | 'tl'
 import { branchSignatureWork } from '@/lib/branches'
 import { getBranchTokens, applyBranchTokens } from '@/lib/branchMetadata'
 import {

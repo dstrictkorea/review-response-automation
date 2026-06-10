@@ -19,7 +19,9 @@ import { processReview } from '@/lib/reviewProcessor'
 import { scanForbidden, refreshEngineFromDB } from '@/lib/waterfallRegexEngine'
 import { buildStaticReply } from '@/lib/replyTemplates'
 import { branchOfficialName } from '@/lib/branches'
-import type { Language } from '@/lib/i18n'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Language as _UILang } from '@/lib/i18n'
+type Language = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'ru' | 'ar' | 'hi' | 'tl'
 
 const PROVIDER_BASE_URLS: Record<string, string> = {
   groq:   'https://api.groq.com/openai/v1',
@@ -34,7 +36,7 @@ function floorRisk(...levels: Array<string | null | undefined>): string {
 }
 
 function langKeyOf(l: string | null | undefined): Language {
-  return (['ko', 'en', 'ja', 'zh'].includes(l ?? '') ? l : 'ko') as Language
+  return (['ko', 'en', 'ja', 'zh', 'es', 'ru', 'ar', 'hi', 'tl'].includes(l ?? '') ? l : 'ko') as Language
 }
 
 const FORBIDDEN_FLAGS_CLEAN = { refund_promise: false, legal_admission: false, cctv_mention: false, staff_discipline: false }
