@@ -3220,6 +3220,56 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 2, location: 'AMSE', lang: 'ko', demographic: '31yo Korean-American female, bilingual reviewer', scenario: 'ko-en-bilingual-complaint',
     reviewer_name: '박지은',
     review_text: '정말 disappointing했어요. 줄이 너무 길고 staff도 not helpful at all. 가격 대비 퀄리티가 너무 별로였어요. 다음엔 안 올 것 같아요.' },
+
+  // ── Round 33: 금융 위협·언론 위협·아나필락시스·새 언어(hu/fa)·그룹 관광 실패 ──
+
+  // [Round 33] 영어 — 카드사 차지백 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (\bchargeback\b 패턴 추가)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '48yo American male, assertive consumer', scenario: 'en-chargeback-threat',
+    reviewer_name: 'Kevin Marshall',
+    review_text: 'I am filing a chargeback with my credit card company. This was a total waste of money and nothing as advertised. Absolute scam.' },
+
+  // [Round 33] 영어 — 아나필락시스 응급 (★1, EMERGENCY)
+  // 기대: EMERGENCY (ambulance → [EN] injury_accident → filterService)
+  { rating: 1, location: 'AMSG', lang: 'en', demographic: '41yo American female, mother of allergic child', scenario: 'en-anaphylaxis-emergency',
+    reviewer_name: 'Jennifer Collins',
+    review_text: 'My daughter had an anaphylactic reaction to the fragrance used throughout the museum. We called an ambulance. This is an extremely dangerous environment for allergy sufferers and there was zero warning.' },
+
+  // [Round 33] 영어 — 언론·뉴스 미디어 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (contact\w*\s+(?:the\s+)?(?:local\s+)?news\b 패턴 추가)
+  { rating: 1, location: 'AMLA', lang: 'en', demographic: '37yo American female, influential blogger', scenario: 'en-media-threat',
+    reviewer_name: 'Ashley Nguyen',
+    review_text: 'I am going to contact the local news and several journalists about this terrible experience. This level of mismanagement deserves to be made public.' },
+
+  // [Round 33] 헝가리어 — 실망·비싼 가격 (★2, COMPLAINT)
+  // 기대: COMPLAINT (★2 별점 폴백 또는 헝가리어 패턴)
+  { rating: 2, location: 'AMDB', lang: 'hu', demographic: '34yo Hungarian female, budget traveler', scenario: 'hu-disappointed-price',
+    reviewer_name: 'Kovács Anna',
+    review_text: 'Nagyon csalódtam. Túl drága volt és tele volt emberekkel. Az élmény nem érte meg az árat, és a személyzet sem volt segítőkész. Nem ajánlom senkinek.' },
+
+  // [Round 33] 페르시아어(파르시) — 혼잡·가격 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (★2 별점 폴백)
+  { rating: 2, location: 'AMDB', lang: 'fa', demographic: '30yo Iranian female, tourist', scenario: 'fa-crowd-price-complaint',
+    reviewer_name: 'زهرا احمدی',
+    review_text: 'شلوغی بیش از حد بود و ارزش قیمت را نداشت. خیلی ناامید شدم. صف ورود بیشتر از یک ساعت طول کشید و تجربه اصلاً ارزش این قیمت را نداشت.' },
+
+  // [Round 33] 영어 — 기업 단체 투어 혼란 (★2, COMPLAINT)
+  // 기대: COMPLAINT (단체 투어 실패, 약속된 단체 할인 미제공)
+  { rating: 2, location: 'AMSE', lang: 'en', demographic: '45yo American male, HR manager organizing team event', scenario: 'en-group-tour-chaos',
+    reviewer_name: 'Robert Chen',
+    review_text: 'I organized a corporate team visit for 30 people and the experience was completely chaotic. The group pricing that was promised during booking was not honored at the door, the audio guides ran out, and staff had no idea how to handle a group.' },
+
+  // [Round 33] 한국어 — 연간회원권 실망 (★2, COMPLAINT)
+  // 기대: COMPLAINT (연간회원권 기대 vs 현실 격차)
+  { rating: 2, location: 'AMSE', lang: 'ko', demographic: '29yo Korean female, annual pass holder', scenario: 'ko-annual-pass-complaint',
+    reviewer_name: '이수민',
+    review_text: '연간회원권을 구매했는데 몇 달째 콘텐츠가 똑같아요. 돈이 아깝다는 생각이 들어요. 처음 왔을 때랑 달라진 게 없어서 재방문 이유를 모르겠어요.' },
+
+  // [Round 33] 영어 ★3 — 건설적 개선 제안 (★3, AMBIGUOUS)
+  // 기대: AMBIGUOUS (균형 잡힌 피드백, 개선 제안 포함)
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: '52yo American male, museum professional', scenario: 'en-museum-pro-3star',
+    reviewer_name: 'David Kim',
+    review_text: 'As a museum professional, I appreciate the ambition behind ARTE. The light and sound installations are genuinely impressive. However, the visitor flow management needs serious improvement — queuing inside the exhibits ruins the experience. Add timed entry slots or capacity limits per room. The potential is enormous if these operational issues are resolved.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
