@@ -3320,6 +3320,68 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 2, location: 'AMNY', lang: 'en', demographic: '41yo American female, nuanced reviewer', scenario: 'en-2star-genuine-ambiguous',
     reviewer_name: 'Rachel Foster',
     review_text: 'The art itself was genuinely beautiful and I understand what they are going for. But the experience around it — the pricing, the crowds, the rigid photography rules — ruined it for me. I wanted to love this. I really did. But two stars feels about right.' },
+
+  // ── Round 35: 법적위협(일어·아랍어·이탈리아어·프랑스어)·말레이어·접근성·경쟁사 비교 ──
+
+  // [Round 35] 일본어 — 변호사 상담 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (弁護士に相談 → new ja-legal pattern)
+  { rating: 1, location: 'AMTK', lang: 'ja', demographic: '47세 일본인 남성, 법률 전문가', scenario: 'ja-lawyer-consultation',
+    reviewer_name: '田中健一',
+    review_text: 'スタッフの対応が非常に不誠実でした。弁護士に相談することにしました。このような消費者を軽視した対応は許せません。' },
+
+  // [Round 35] 아랍어 — 소송 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (رفع دعوى → new ar-legal pattern)
+  { rating: 1, location: 'AMDB', lang: 'ar', demographic: '39세 아랍에미리트 남성', scenario: 'ar-lawsuit-threat',
+    reviewer_name: 'محمد عبدالله',
+    review_text: 'خدمة سيئة جداً وموظفون غير محترمين. سأرفع دعوى قضائية بسبب هذه المعاملة المهينة. لن أتوقف عن ذلك.' },
+
+  // [Round 35] 프랑스어 — 언론 제보 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (contacter les journalistes → new fr-media pattern)
+  { rating: 1, location: 'AMPA', lang: 'fr', demographic: '52세 프랑스인 여성', scenario: 'fr-journalist-threat',
+    reviewer_name: 'Isabelle Dubois',
+    review_text: "Je suis scandalisée par la façon dont nous avons été traités. Je vais contacter les journalistes pour exposer vos pratiques. Ce niveau de service est inacceptable en 2026." },
+
+  // [Round 35] 이탈리아어 — 법적 조치 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (avvocato + azione legale → new it-legal pattern)
+  { rating: 1, location: 'AMRO', lang: 'it', demographic: '44세 이탈리아인 남성', scenario: 'it-legal-action',
+    reviewer_name: 'Marco Bianchi',
+    review_text: "Ho subito un danno reale a causa della vostra negligenza. Contatterò un avvocato e intraprenderò un'azione legale se non ricevo una risposta adeguata entro 48 ore." },
+
+  // [Round 35] 말레이어 — 일반 불만 (★2, COMPLAINT) — 새 언어 #30
+  // 기대: COMPLAINT (mengecewakan + tidak berbaloi → new ms-complaint pattern)
+  { rating: 2, location: 'AMSG', lang: 'ms', demographic: '31세 말레이시아 여성', scenario: 'ms-general-complaint',
+    reviewer_name: 'Nur Aisha',
+    review_text: 'Sangat mengecewakan. Tiket mahal sangat tetapi pengalaman tidak sepadan. Tempat terlalu sesak dan tidak berbaloi langsung. Tidak akan datang lagi.' },
+
+  // [Round 35] 영어 — 소셜미디어 인플루언서 협박 (★1, COMPLAINT)
+  // 기대: COMPLAINT (queue, staff, price complaints — SNS 협박은 COMPLAINT, EMERGENCY 아님)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '24세 미국 인플루언서', scenario: 'en-influencer-snsthreat',
+    reviewer_name: 'Madison Lee',
+    review_text: 'I have 200,000 followers on Instagram and TikTok. This experience was so bad I am going to post a detailed exposé. The staff completely ignored us, the queue was 90 minutes with zero explanation, and the ticket price is daylight robbery. My followers will know.' },
+
+  // [Round 35] 한국어 — 어르신 접근성 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (휠체어, 계단, 직원 안내 불만)
+  { rating: 2, location: 'AMSE', lang: 'ko', demographic: '55세 한국인 여성, 부모 동반', scenario: 'ko-senior-accessibility',
+    reviewer_name: '김미경',
+    review_text: '부모님 모시고 갔다가 많이 실망했어요. 어머니가 다리가 불편하신데 휠체어 대여도 안 되고 계단이 너무 많고 직원들도 안내를 제대로 못 해줬어요. 노인 분들 배려가 전혀 없어요.' },
+
+  // [Round 35] 영어 — 광과민성 간질 경고 누락 (★2, EMERGENCY)
+  // 기대: EMERGENCY (epilepsy 키워드 → 기존 EMERGENCY 패턴)
+  { rating: 2, location: 'AMLA', lang: 'en', demographic: '36세 미국인 여성, 광과민성 간질 환자', scenario: 'en-epilepsy-warning',
+    reviewer_name: 'Jennifer Walsh',
+    review_text: 'I have photosensitive epilepsy and there was absolutely no warning at the entrance about the strobe lighting used throughout. I had to leave immediately once inside. Failing to display such warnings is a serious health and safety omission.' },
+
+  // [Round 35] 독일어 — 경쟁사 비교 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (enttäuschend + nicht empfehlenswert → new de-complaint patterns)
+  { rating: 2, location: 'AMDB', lang: 'de', demographic: '38세 독일인 남성, TeamLab 경험자', scenario: 'de-competitor-comparison',
+    reviewer_name: 'Thomas Müller',
+    review_text: 'Im Vergleich zu teamLab in Japan war ARTE sehr enttäuschend. Die Installationen sind weniger interaktiv und das Erlebnis viel kürzer für denselben Preis. Nicht wirklich empfehlenswert.' },
+
+  // [Round 35] 일본어 ★5 — 완전 몰입 체험 극찬 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT (★5 긍정)
+  { rating: 5, location: 'AMTK', lang: 'ja', demographic: '28세 일본인 여성, 디지털아트 팬', scenario: 'ja-immersive-5star',
+    reviewer_name: '鈴木花子',
+    review_text: '素晴らしい体験でした！光と音が完璧に調和していて、まるで別世界に迷い込んだようでした。特に花のインスタレーションが美しく、何度も行ったり来たりしてしまいました。スタッフも親切で、また必ず来たいと思います。' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
