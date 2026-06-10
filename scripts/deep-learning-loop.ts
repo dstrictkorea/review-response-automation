@@ -3534,6 +3534,32 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMDB', lang: 'zh', demographic: '25세 중국인 여성, 비꼬기 리뷰어', scenario: 'zh-sarcasm-star5',
     reviewer_name: '小红书用户',
     review_text: '真是太"精彩"了！排了整整两个小时的队，花了不少钱，结果展览只有20分钟。工作人员的服务也是"一流"的，完全不理会游客的问题。强烈推荐给喜欢浪费时间和金钱的朋友们。' },
+
+  // ── Round 40: ES/RU/AR/HI/TL SLOT_C_PIVOT 언어 검증 — 특정 불만 태그 다국어 ──
+  { rating: 2, location: 'AMLV', lang: 'es', demographic: '34yo Mexican male, first-time visitor', scenario: 'es-staff-rude',
+    reviewer_name: 'Carlos Méndez',
+    review_text: 'Las instalaciones están bien pero el staff fue muy rude con nosotros. The guard ignored us completely when we asked for help and was dismissive. No volveré.' },
+  { rating: 2, location: 'AMNY', lang: 'ru', demographic: '42yo Russian female, tourist', scenario: 'ru-value-complaint',
+    reviewer_name: 'Марина Козлова',
+    review_text: 'Хорошие световые инсталляции, но цена слишком высокая. The ticket price was too expensive for a 30-minute experience. Not worth the money at all. Разочарована.' },
+  { rating: 2, location: 'AMDB', lang: 'ar', demographic: '37세 사우디 남성, 가족 관광', scenario: 'ar-staff-complaint',
+    reviewer_name: 'خالد العمري',
+    review_text: 'التجربة البصرية رائعة لكن الموظفين كانوا غير متعاونين. The staff ignored our questions completely and was unfriendly throughout the visit. نأمل أن يتحسن مستوى الخدمة.' },
+  { rating: 2, location: 'AMDB', lang: 'hi', demographic: '29세 인도인 여성, 단체 관광', scenario: 'hi-crowd-overcrowded',
+    reviewer_name: 'प्रिया वर्मा',
+    review_text: 'कलाकृतियाँ बहुत सुंदर थीं लेकिन जगह overcrowded थी। बहुत भीड़ थी और लोग एक-दूसरे को धक्का दे रहे थे। The place was packed with people and crowd management was non-existent.' },
+  { rating: 2, location: 'AMSG', lang: 'tl', demographic: '31yo Filipino female, traveler', scenario: 'tl-display-broken',
+    reviewer_name: 'Ana Reyes',
+    review_text: 'Maganda ang konsepto pero maraming screen ay sira. Several display screens were broken and one AV system failed completely during our visit. Nakakalungkot na hindi maayos ang mga kagamitan.' },
+  { rating: 2, location: 'AMTK', lang: 'es', demographic: '28yo Spanish female, backpacker', scenario: 'es-crowd-complaint',
+    reviewer_name: 'Isabel García',
+    review_text: 'El arte digital es impresionante pero el museo estaba demasiado lleno. Way overcrowded — no se podía disfrutar nada y la gestión de aforo era inexistente. Esperamos más de este lugar.' },
+  { rating: 2, location: 'AMSG', lang: 'ru', demographic: '38yo Russian male, business traveler', scenario: 'ru-staff-rude',
+    reviewer_name: 'Дмитрий Орлов',
+    review_text: 'Световые проекции интересные, но персонал вёл себя грубо. The staff member was rude and dismissive when I asked about accessibility options. Такое отношение недопустимо.' },
+  { rating: 2, location: 'AMHE', lang: 'ar', demographic: '44세 UAE 여성, 재방문', scenario: 'ar-value-complaint',
+    reviewer_name: 'نورة الكعبي',
+    review_text: 'زرت المتحف للمرة الثانية ولكن الأسعار مرتفعة جداً مقارنة بالمحتوى. The ticket price is too expensive and not worth the money considering the exhibition hasn\'t changed. توقعت أفضل من ذلك.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════

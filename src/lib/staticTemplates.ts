@@ -16,7 +16,10 @@
  * ※ 보상/환불/법적책임/CCTV/직원징계 등 금칙 표현은 어떤 블록에도 포함하지 않는다.
  */
 
-import type { Language } from '@/lib/i18n'
+// Reply-engine language set — broader than UI Language ('ko'|'en'|'ja'|'zh')
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { Language as _UILang } from '@/lib/i18n'
+type Language = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'ru' | 'ar' | 'hi' | 'tl'
 
 // ── 한국어 조사 헬퍼 (받침 유무 판별) ─────────────────────────────────────────────
 function hasJong(word: string): boolean {
@@ -73,6 +76,36 @@ export function slotA_greeting(lang: Language, name: string, idx = 0): string {
       `${nm ? nm + '，' : ''}非常感谢您来到{branch_name}与我们共度宝贵时光。`,
       `您好${nm ? `，${nm}` : ''}！感谢您光临{branch_name}，您的到来令我们倍感荣幸。`,
     ],
+    es: [
+      `Muchas gracias${nm ? `, ${nm},` : ''} por visitar {branch_name}.`,
+      `${nm ? `${nm}, g` : 'G'}racias por elegirnos. Es un placer tenerle en {branch_name} en {landmark}.`,
+      `Agradecemos mucho su visita a {branch_name}${nm ? `, ${nm}` : ''}. Nos alegra tenerle aquí.`,
+      `${nm ? `Estimado/a ${nm}, t` : 'T'}hank you for visiting {branch_name} in {landmark}.`,
+    ],
+    ru: [
+      `${nm ? `${nm}, б` : 'Б'}ольшое спасибо за визит в {branch_name}!`,
+      `Благодарим Вас за посещение {branch_name} в {landmark}${nm ? `, ${nm}` : ''}.`,
+      `${nm ? `${nm}, м` : 'М'}ы рады, что Вы выбрали {branch_name} для своего визита.`,
+      `Добро пожаловать в {branch_name}${nm ? `, ${nm}` : ''}! Спасибо за ваш отзыв.`,
+    ],
+    ar: [
+      `${nm ? `${nm}، ` : ''}شكراً جزيلاً على زيارتكم {branch_name}.`,
+      `نشكركم على اختياركم {branch_name} في {landmark}${nm ? `، ${nm}` : ''}. يسعدنا استقبالكم.`,
+      `${nm ? `${nm}، ` : ''}يسعدنا أن تكونوا بيننا في {branch_name}. شكراً على تشريفكم.`,
+      `مرحباً${nm ? ` ${nm}` : ''}، نشكركم على زيارة {branch_name} وعلى وقتكم الثمين.`,
+    ],
+    hi: [
+      `${nm ? `${nm}जी, ` : ''}{branch_name} में पधारने के लिए हार्दिक धन्यवाद!`,
+      `{landmark} स्थित {branch_name} में आपका स्वागत है${nm ? `, ${nm}जी` : ''}। पधारने के लिए धन्यवाद।`,
+      `${nm ? `${nm}जी, ` : ''}आपने {branch_name} को चुना, इसके लिए हम आभारी हैं।`,
+      `{branch_name} में आपका पधारना हमारे लिए सौभाग्य की बात है${nm ? `, ${nm}जी` : ''}।`,
+    ],
+    tl: [
+      `${nm ? `${nm}, m` : 'M'}araming salamat sa pagbisita sa {branch_name}!`,
+      `Nagpapasalamat kami sa inyong pagpili ng {branch_name} sa {landmark}${nm ? `, ${nm}` : ''}.`,
+      `${nm ? `${nm}, ` : ''}Natutuwa kami na pinili ninyo ang {branch_name} para sa inyong pagbisita.`,
+      `Maligayang pagdating sa {branch_name}${nm ? `, ${nm}` : ''}. Salamat sa inyong pagbisita!`,
+    ],
   }
   const arr = v[lang] ?? v.ko
   return arr[idx % arr.length]
@@ -120,6 +153,36 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
       `${nm ? nm + '，' : ''}对于您在{branch_name}的不愉快体验，我们深感抱歉。`,
       `您好${nm ? `，${nm}` : ''}，对于您的体验未能达到预期，我们真诚地道歉。`,
       `${nm ? nm + '，' : ''}感谢您分享在{branch_name}的体验，对于给您带来的不便，我们深表歉意。`,
+    ],
+    es: [
+      `${nm ? `Estimado/a ${nm}, ` : ''}lamentamos los inconvenientes durante su visita a {branch_name}.`,
+      `${nm ? `${nm}, s` : 'S'}entimos mucho que su experiencia en {branch_name} no cumpliera sus expectativas.`,
+      `Le pedimos disculpas${nm ? `, ${nm},` : ''} por los inconvenientes que tuvo en {branch_name}.`,
+      `${nm ? `${nm}, g` : 'G'}racias por su comentario. Nos disculpamos sinceramente por cualquier molestia en {branch_name}.`,
+    ],
+    ru: [
+      `${nm ? `${nm}, м` : 'М'}ы искренне сожалеем о неудобствах во время вашего визита в {branch_name}.`,
+      `Приносим свои извинения${nm ? `, ${nm},` : ''} за то, что ваш визит в {branch_name} не соответствовал ожиданиям.`,
+      `${nm ? `${nm}, с` : 'С'}пасибо за ваш отзыв. Мы глубоко сожалеем о доставленных неудобствах в {branch_name}.`,
+      `Нам очень жаль, что визит в {branch_name} не оправдал ваших ожиданий${nm ? `, ${nm}` : ''}.`,
+    ],
+    ar: [
+      `${nm ? `${nm}، ` : ''}نعتذر بصدق عن أي إزعاج واجهتموه خلال زيارتكم {branch_name}.`,
+      `${nm ? `${nm}، ` : ''}يؤسفنا أن تجربتكم في {branch_name} لم ترق إلى مستوى توقعاتكم.`,
+      `نشكركم على ملاحظاتكم${nm ? `، ${nm}` : ''}. نعتذر بصدق عن أي إزعاج في {branch_name}.`,
+      `${nm ? `${nm}، ` : ''}نأسف لما واجهتموه في {branch_name} ونتعهد بالعمل على تحسين تجربتكم.`,
+    ],
+    hi: [
+      `${nm ? `${nm}जी, ` : ''}{branch_name} में हुई असुविधा के लिए हम हार्दिक क्षमाप्रार्थी हैं।`,
+      `${nm ? `${nm}जी, ` : ''}{branch_name} में आपका अनुभव अपेक्षाओं पर खरा नहीं उतरा, इसके लिए हम खेद व्यक्त करते हैं।`,
+      `आपकी प्रतिक्रिया के लिए धन्यवाद${nm ? `, ${nm}जी` : ''}। {branch_name} में हुई किसी असुविधा के लिए हम क्षमाप्रार्थी हैं।`,
+      `${nm ? `${nm}जी, ` : ''}{branch_name} में आपको कोई कठिनाई हुई, यह जानकर हमें अत्यंत खेद है।`,
+    ],
+    tl: [
+      `${nm ? `${nm}, h` : 'H'}umihingi kami ng paumanhin sa anumang abala na inyong naranasan sa {branch_name}.`,
+      `${nm ? `${nm}, n` : 'N'}agpapaumanhin kami dahil hindi natugunan ng {branch_name} ang inyong mga inaasahan.`,
+      `Salamat sa inyong feedback${nm ? `, ${nm}` : ''}. Humihingi kami ng paumanhin sa anumang abala sa {branch_name}.`,
+      `${nm ? `${nm}, ` : ''}Ikinalulungkot namin ang inyong karanasan sa {branch_name} at nangangako kaming mapabuti ito.`,
     ],
   }
   const arr = v[lang] ?? v.ko
@@ -286,6 +349,36 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
       '您的美好评价对我们来说是莫大的鼓励，感谢您的认可与支持。',
       '感谢您留下如此温暖的评价，这是我们不断进步的最大动力。',
     ],
+    es: [
+      'Sus amables palabras son una gran motivación para todo nuestro equipo. ¡Muchas gracias!',
+      'Nos alegra mucho saber que disfrutó de su visita. Sus palabras nos inspiran a seguir mejorando.',
+      'Su generosa valoración es el mayor reconocimiento para nuestro equipo. Gracias de corazón.',
+      'Recibir comentarios tan positivos como el suyo es lo que nos impulsa a dar siempre lo mejor.',
+    ],
+    ru: [
+      'Ваши тёплые слова очень много значат для всей нашей команды. Большое спасибо!',
+      'Мы рады, что ваш визит оставил такие приятные впечатления. Ваши слова вдохновляют нас.',
+      'Ваш добрый отзыв — лучшая награда для нашей команды. Искренне благодарим вас.',
+      'Такие отзывы, как ваш, помогают нам становиться лучше с каждым днём. Спасибо!',
+    ],
+    ar: [
+      'كلماتكم الطيبة تُلهم فريقنا بأكمله وتمنحنا القوة للاستمرار. شكراً جزيلاً!',
+      'يسعدنا أن زيارتكم تركت هذا الأثر الجميل. تعليقاتكم مصدر إلهام كبير لنا.',
+      'تقييمكم الكريم هو أكبر مكافأة لفريقنا. نشكركم من أعماق قلوبنا.',
+      'مثل هذه التعليقات هي ما يدفعنا للسعي نحو التميز دائماً. شكراً لكم.',
+    ],
+    hi: [
+      'आपकी सराहना हमारी पूरी टीम के लिए प्रेरणा का स्रोत है। हार्दिक धन्यवाद!',
+      'यह जानकर खुशी हुई कि आपकी यात्रा सुखद रही। आपके शब्द हमें आगे बढ़ने की प्रेरणा देते हैं।',
+      'आपकी उदार प्रतिक्रिया हमारी टीम के लिए सबसे बड़ा पुरस्कार है। धन्यवाद।',
+      'ऐसी सकारात्मक प्रतिक्रिया ही हमें बेहतर बनाती है। आपका आभार।',
+    ],
+    tl: [
+      'Ang inyong magagandang salita ay nagbibigay ng inspirasyon sa aming buong koponan. Maraming salamat!',
+      'Natutuwa kami na nag-enjoy kayo sa inyong pagbisita. Ang inyong mga salita ay nagbibigay sa amin ng lakas.',
+      'Ang inyong mainit na pagtanggap ay ang pinakamahalagang gantimpala para sa aming koponan.',
+      'Ang mga ganitong positibong feedback ang nagtutulak sa amin na laging magbigay ng pinakamahusay.',
+    ],
   }
   const arr = v[lang] ?? v.ko
   return arr[idx % arr.length]
@@ -336,6 +429,36 @@ export function slotB_acknowledgment(lang: Language, idx = 0): string {
       '我们重视您的每一条反馈，并将积极采取措施改善体验。',
       '我们将认真审查您的反馈，确保在服务改善中得到切实体现。',
     ],
+    es: [
+      'Hemos tomado nota de sus comentarios y actuaremos de inmediato para resolver el problema.',
+      'Su experiencia ha sido registrada y nuestro equipo la revisará para evitar que se repita.',
+      'Nos comprometemos a investigar lo ocurrido y mejorar para que esto no vuelva a suceder.',
+      'Sus comentarios son muy valiosos. Los transmitiremos a nuestro equipo para que se actúe de forma inmediata.',
+    ],
+    ru: [
+      'Мы приняли ваш отзыв к сведению и незамедлительно примем необходимые меры.',
+      'Ваше мнение зафиксировано. Наша команда немедленно займётся решением этого вопроса.',
+      'Мы обязуемся разобраться в ситуации и сделать всё, чтобы это не повторилось.',
+      'Благодарим за честный отзыв. Он будет передан нашей команде для немедленной проработки.',
+    ],
+    ar: [
+      'لقد وصلت ملاحظاتكم إلينا وسنتخذ الإجراءات اللازمة فوراً لمعالجة المشكلة.',
+      'تم تسجيل تعليقاتكم وسيتابع فريقنا الأمر على الفور لمنع تكراره.',
+      'نلتزم بالتحقيق في ما حدث واتخاذ الإجراءات التصحيحية اللازمة.',
+      'ملاحظاتكم القيّمة ستُحال مباشرةً إلى فريقنا للتعامل معها بجدية تامة.',
+    ],
+    hi: [
+      'आपकी प्रतिक्रिया हम तक पहुँच गई है और हम तत्काल कार्रवाई करेंगे।',
+      'आपकी राय दर्ज कर ली गई है। हमारी टीम इसे तुरंत संबोधित करेगी।',
+      'हम इस विषय की जाँच करेंगे और सुनिश्चित करेंगे कि यह दोबारा न हो।',
+      'आपकी ईमानदार राय हमारे लिए बहुमूल्य है। इसे तुरंत हमारी टीम को भेजा जाएगा।',
+    ],
+    tl: [
+      'Natanggap na namin ang inyong feedback at agad kaming kikilos para tugunan ang isyu.',
+      'Naitala na ang inyong karanasan at susuriin ito ng aming koponan upang maiwasan ang paulit-ulit na pagkakamali.',
+      'Nangako kaming imbestigahan ang nangyari at gumawa ng mga hakbang upang mapabuti ang aming serbisyo.',
+      'Ang inyong komento ay ipapasa sa aming koponan para sa agarang aksyon.',
+    ],
   }
   const arr = v[lang] ?? v.ko
   return arr[idx % arr.length]
@@ -367,6 +490,31 @@ export function slotC_artwork(lang: Language, signature: string | null, idx = 0)
       `尤其令我们欣喜的是，以"ETERNAL NATURE（永恒自然）"为主题的沉浸式媒体艺术${sig ? `，特别是代表作${sig}` : ''}，能让您深受触动。`,
       `得知我们的"ETERNAL NATURE"展览${sig ? `，尤其是${sig}，` : ''}给您留下了深刻印象，我们全体员工倍感欣慰。`,
       `您对我们沉浸式媒体艺术${sig ? `，特别是${sig}` : ''}的喜爱是对我们最大的肯定，感谢您的分享。`,
+    ],
+    es: [
+      `Nos alegra especialmente que el arte multimedia inmersivo de "ETERNAL NATURE"${sig ? `, especialmente ${sig},` : ''} haya resonado tan profundamente con usted.`,
+      `Saber que nuestra exposición "ETERNAL NATURE"${sig ? `, especialmente ${sig},` : ''} le ha dejado una impresión tan duradera nos llena de alegría.`,
+      `Su aprecio por nuestras instalaciones${sig ? `, y especialmente por ${sig},` : ''} es el mayor reconocimiento para nuestro equipo creativo.`,
+    ],
+    ru: [
+      `Нас особенно радует, что наше иммерсивное медиаарт "ETERNAL NATURE"${sig ? `, и в особенности ${sig},` : ''} так глубоко тронуло вас.`,
+      `Узнать, что наша выставка "ETERNAL NATURE"${sig ? `, особенно ${sig},` : ''} оставила такое сильное впечатление — для нас огромная радость.`,
+      `Ваши слова о наших иммерсивных инсталляциях${sig ? `, и особенно о ${sig},` : ''} очень много значат для всей нашей творческой команды.`,
+    ],
+    ar: [
+      `يسعدنا بشكل خاص أن فن الميديا الغامر "ETERNAL NATURE"${sig ? `، وبخاصة ${sig}،` : ''} قد ترك هذا الأثر العميق فيكم.`,
+      `معرفة أن معرضنا "ETERNAL NATURE"${sig ? `، وخاصة ${sig}،` : ''} قد أحدث هذا الانطباع الدائم لديكم تملأنا بالسعادة.`,
+      `تقديركم لمنشآتنا الغامرة${sig ? `، وخاصة ${sig}،` : ''} هو أكبر مكافأة لفريقنا الإبداعي.`,
+    ],
+    hi: [
+      `हमें विशेष खुशी है कि "ETERNAL NATURE" की हमारी इमर्सिव मीडिया आर्ट${sig ? `, विशेषकर ${sig},` : ''} आपके दिल को छू गई।`,
+      `यह जानकर बहुत प्रसन्नता हुई कि "ETERNAL NATURE" प्रदर्शनी${sig ? `, विशेष रूप से ${sig},` : ''} ने आप पर इतनी गहरी छाप छोड़ी।`,
+      `हमारी इमर्सिव इंस्टॉलेशन${sig ? ` और विशेष रूप से ${sig}` : ''} के प्रति आपकी सराहना हमारी रचनात्मक टीम के लिए सर्वोच्च पुरस्कार है।`,
+    ],
+    tl: [
+      `Lubos kaming nagagalak na ang aming immersive media art na "ETERNAL NATURE"${sig ? `, lalo na ang ${sig},` : ''} ay tumawid sa inyong puso.`,
+      `Ang pagkaalam na ang aming eksibisyon na "ETERNAL NATURE"${sig ? `, lalo na ang ${sig},` : ''} ay nag-iwan ng pangmatagalang impresyon ay nagpapasaya sa amin.`,
+      `Ang inyong pagpapahalaga sa aming mga immersive installation${sig ? `, lalo na ang ${sig},` : ''} ay napakahalaga para sa aming creative team.`,
     ],
   }
   const arr = v[lang] ?? v.ko
@@ -402,6 +550,36 @@ export function slotC_general(lang: Language, idx = 0): string {
       '我们希望{highlight_room}成为您此次参观的亮点之一。',
       '下次到访时，期待您体验{highlight_room}等定期更新的季节性内容。',
       '希望{highlight_room}等沉浸式展区为您带来了真正难忘的体验。',
+    ],
+    es: [
+      'Esperamos que {highlight_room} y nuestros otros espacios inmersivos le hayan dejado un recuerdo especial.',
+      'Nos alegra que haya podido disfrutar de {highlight_room} y las demás instalaciones de nuestra exposición.',
+      'En su próxima visita, le invitamos a descubrir {highlight_room} y otros contenidos renovados de temporada.',
+      'Esperamos que {highlight_room} y el resto de nuestros espacios le hayan brindado una experiencia verdaderamente memorable.',
+    ],
+    ru: [
+      'Надеемся, что {highlight_room} и другие наши иммерсивные пространства оставили у вас незабываемые впечатления.',
+      'Мы рады, что вы смогли насладиться {highlight_room} и другими нашими инсталляциями.',
+      'При следующем визите обязательно загляните на обновлённые сезонные экспозиции, включая {highlight_room}.',
+      'Надеемся, что {highlight_room} подарил вам по-настоящему яркие и глубокие впечатления.',
+    ],
+    ar: [
+      'نأمل أن {highlight_room} وسائر مساحاتنا الغامرة قد تركت لديكم ذكرى لا تُنسى.',
+      'يسعدنا أن استمتعتم بـ{highlight_room} وسائر معروضاتنا الفنية.',
+      'في زيارتكم القادمة، ندعوكم لاستكشاف {highlight_room} والمحتويات المتجددة موسمياً.',
+      'نأمل أن {highlight_room} وسائر مساحاتنا قد قدّمت لكم تجربة لا تُنسى حقاً.',
+    ],
+    hi: [
+      'हमें आशा है कि {highlight_room} सहित हमारे इमर्सिव स्थानों ने आपके मन में एक विशेष छाप छोड़ी होगी।',
+      'यह जानकर प्रसन्नता हुई कि आप {highlight_room} और हमारे अन्य प्रदर्शनों का आनंद उठा सके।',
+      'अगली बार {highlight_room} सहित हमारी नए सत्र की प्रदर्शनियाँ भी जरूर देखें।',
+      'हमें उम्मीद है कि {highlight_room} ने आपको एक यादगार अनुभव दिया होगा।',
+    ],
+    tl: [
+      'Umaasa kami na ang {highlight_room} at aming iba pang immersive na espasyo ay nag-iwan ng espesyal na alaala sa inyo.',
+      'Natutuwa kami na natamasa ninyo ang {highlight_room} at aming iba pang mga eksibisyon.',
+      'Sa inyong susunod na pagbisita, huwag palampasin ang {highlight_room} at aming mga bagong seasonal na nilalaman.',
+      'Umaasa kami na ang {highlight_room} ay nagbigay sa inyo ng tunay na hindi malilimutang karanasan.',
     ],
   }
   const arr = v[lang] ?? v.ko
@@ -440,6 +618,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '对于互动体验未达预期，我们深感遗憾。将积极开发新的互动方式，提升您的体验。',
       '感谢您对互动内容的详细反馈。我们将对互动展项进行全面检查和改善。',
     ],
+    es: [
+      'Gracias por su sincero comentario sobre la experiencia interactiva. Trabajamos continuamente en mejorar la capacidad de respuesta de los sensores y los elementos interactivos.',
+      'Agradecemos su opinión sobre la interactividad. Mejorar el rendimiento de los sensores y ampliar las funciones interactivas es una prioridad.',
+      'Entendemos su expectativa de una experiencia más interactiva y estamos desarrollando activamente nuevas formas de mejorar la participación del visitante.',
+      'Gracias por sus comentarios detallados sobre la interactividad. Realizaremos una revisión completa del contenido interactivo para mejorar continuamente.',
+    ],
+    ru: [
+      'Благодарим за честный отзыв об интерактивной части экспозиции. Мы продолжаем работу над улучшением чувствительности сенсоров и интерактивных элементов.',
+      'Мы ценим ваше мнение о функциях взаимодействия. Совершенствование датчиков и расширение интерактивных возможностей остаются нашим приоритетом.',
+      'Понимаем ваши ожидания более насыщенного интерактивного опыта и активно ищем новые способы улучшить вовлечённость гостей.',
+      'Спасибо за подробный отзыв об интерактивности. Мы проведём полный обзор нашего интерактивного контента.',
+    ],
+    ar: [
+      'شكراً لملاحظاتكم الصريحة حول تجربة التفاعل. نعمل باستمرار على تحسين استجابة أجهزة الاستشعار والعناصر التفاعلية.',
+      'نقدر آراءكم حول مستوى التفاعل. تحسين أداء أجهزة الاستشعار وتوسيع المميزات التفاعلية من أولوياتنا.',
+      'ندرك توقعاتكم بتجربة تفاعلية أكثر ثراءً ونعمل بنشاط على تطوير طرق جديدة لتحسين مشاركة الزوار.',
+      'شكراً لملاحظاتكم التفصيلية حول التفاعلية. سنقوم بمراجعة شاملة للمحتوى التفاعلي لدينا.',
+    ],
+    hi: [
+      'इंटरएक्टिव अनुभव के बारे में आपकी ईमानदार राय के लिए धन्यवाद। हम सेंसर की प्रतिक्रिया और इंटरएक्टिव तत्वों को बेहतर बनाने के लिए निरंतर काम कर रहे हैं।',
+      'इंटरएक्टिविटी के बारे में आपकी राय हमारे लिए मूल्यवान है। सेंसर प्रदर्शन में सुधार और इंटरएक्टिव सुविधाओं का विस्तार हमारी प्राथमिकता है।',
+      'हम आपकी अधिक इंटरएक्टिव अनुभव की उम्मीद समझते हैं और आगंतुक सहभागिता बेहतर करने के लिए नए तरीके विकसित कर रहे हैं।',
+      'इंटरएक्टिविटी पर विस्तृत प्रतिक्रिया के लिए धन्यवाद। हम अपने इंटरएक्टिव कंटेंट की पूरी समीक्षा करेंगे।',
+    ],
+    tl: [
+      'Salamat sa inyong matapat na puna tungkol sa interactive na karanasan. Patuloy naming pinapabuti ang pagtugon ng mga sensor at mga interactive na elemento.',
+      'Pinahahalagahan namin ang inyong opinyon ukol sa interactivity. Ang pagpapahusay ng performance ng sensor at pagpapalawak ng mga interactive na feature ay pangunahing priyoridad namin.',
+      'Nauunawaan namin ang inyong inaasahan para sa mas mayamang interactive na karanasan at aktibo kaming nagde-develop ng mga bagong paraan upang mapabuti ang pakikilahok ng bisita.',
+      'Salamat sa detalyadong feedback tungkol sa interactivity. Magsasagawa kami ng buong pagsusuri ng aming interactive na nilalaman.',
+    ],
   },
   VALUE_COMPLAINT: {
     ko: [
@@ -465,6 +673,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '感谢您对票价的坦诚反馈。扩充展览内容、提升展览品质是我们重要的改进方向。',
       '对于您觉得价值未达期待，我们深感遗憾。将持续升级内容，提供更好的体验。',
       '感谢您关于性价比的诚挚意见。我们将持续改善内容，争取提供更出色的观展价值。',
+    ],
+    es: [
+      'Escuchamos sus inquietudes sobre el valor del precio de la entrada. Trabajamos continuamente para enriquecer nuestro contenido y nuestra exposición.',
+      'Gracias por compartir sus impresiones sobre el precio. Mejorar la profundidad y calidad de nuestras exposiciones es un compromiso fundamental.',
+      'Apreciamos su sincera opinión. Ampliar nuestra oferta de contenido y mejorar la experiencia en general es una prioridad continua.',
+      'Gracias por su comentario honesto sobre el valor. Continuaremos actualizando nuestro contenido para ofrecer una experiencia aún mejor.',
+    ],
+    ru: [
+      'Мы принимаем к сведению ваше мнение о соотношении цены и качества. Постоянная работа над обогащением контента и экспозиции — наш приоритет.',
+      'Благодарим за отзыв о стоимости билета. Повышение глубины и качества наших выставок остаётся ключевым обязательством.',
+      'Ценим вашу откровенность. Расширение контентных предложений и улучшение общего впечатления — постоянный приоритет.',
+      'Спасибо за честное мнение о ценности посещения. Мы продолжим обновлять контент для улучшения опыта.',
+    ],
+    ar: [
+      'نتلقى بجدية ملاحظاتكم حول القيمة مقابل سعر التذكرة. نعمل باستمرار على إثراء محتوانا ومعروضاتنا.',
+      'شكراً لمشاركتكم آراءكم حول الأسعار. تعزيز عمق وجودة معارضنا التزام جوهري لنا.',
+      'نقدر صراحتكم. توسيع عروض المحتوى وتحسين التجربة الشاملة أولوية مستمرة.',
+      'شكراً لرأيكم الصريح حول القيمة. سنواصل تطوير محتوانا لتقديم تجربة أفضل.',
+    ],
+    hi: [
+      'टिकट मूल्य के संदर्भ में आपकी चिंताओं को हम गंभीरता से लेते हैं। हम अपनी सामग्री और प्रदर्शनी को समृद्ध करने के लिए निरंतर काम कर रहे हैं।',
+      'मूल्य निर्धारण के बारे में आपके विचार साझा करने के लिए धन्यवाद। हमारी प्रदर्शनियों की गहराई और गुणवत्ता में सुधार करना हमारी प्रमुख प्रतिबद्धता है।',
+      'आपकी ईमानदार राय की हम सराहना करते हैं। सामग्री का विस्तार और समग्र अनुभव में सुधार करना हमारी निरंतर प्राथमिकता है।',
+      'मूल्य के बारे में आपकी ईमानदार प्रतिक्रिया के लिए धन्यवाद। हम बेहतर अनुभव प्रदान करने के लिए अपनी सामग्री को अपडेट करते रहेंगे।',
+    ],
+    tl: [
+      'Naririnig namin ang inyong alalahanin tungkol sa halaga ng tiket. Patuloy kaming nagtatrabaho upang mapayaman ang aming nilalaman at eksibisyon.',
+      'Salamat sa pagbabahagi ng inyong mga saloobin tungkol sa presyo. Ang pagpapabuti ng lalim at kalidad ng aming mga eksibisyon ay isang pangunahing pangako.',
+      'Pinahahalagahan namin ang inyong matapat na opinyon. Ang pagpapalawak ng aming mga alok sa nilalaman at pagpapabuti ng kabuuang karanasan ay isang patuloy na priyoridad.',
+      'Salamat sa inyong tapat na puna tungkol sa halaga. Patuloy naming ia-update ang aming nilalaman upang makapagbigay ng mas mahusay na karanasan.',
     ],
   },
   CROWD_COMPLAINT: {
@@ -492,6 +730,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '我们理解过度拥挤会影响体验，正积极改善人流分布和参观舒适度。',
       '感谢您对拥挤问题的坦诚反馈。我们将加强预约系统和弹性入场管理。',
     ],
+    es: [
+      'Lamentamos sinceramente que la afluencia de público afectara su disfrute. Estamos mejorando continuamente la gestión del aforo.',
+      'Disculpamos que la aglomeración dificultara disfrutar plenamente la exposición. Mejorar el flujo de visitantes y la gestión de la afluencia es una prioridad.',
+      'Entendemos cómo el exceso de público puede restar calidad a la experiencia y estamos trabajando activamente para mejorar la distribución de visitantes.',
+      'Gracias por su candoroso comentario sobre la aglomeración. Reforzaremos nuestro sistema de reservas y las operaciones de entrada flexibles.',
+    ],
+    ru: [
+      'Искренне сожалеем, что переполненность залов повлияла на ваше впечатление. Мы постоянно совершенствуем управление потоком посетителей.',
+      'Приносим извинения за то, что толпа не позволила вам в полной мере насладиться выставкой. Улучшение распределения посетителей — наш приоритет.',
+      'Понимаем, что переполненность снижает качество опыта, и активно работаем над распределением гостей.',
+      'Благодарим за откровенный отзыв о переполненности. Усилим систему бронирования и гибкий вход.',
+    ],
+    ar: [
+      'نعتذر بصدق عن الإزعاج الذي سببته الازدحامات لتجربتكم. نعمل باستمرار على تطوير إدارة طاقة الاستيعاب.',
+      'نأسف لأن الاكتظاظ أعاق استمتاعكم الكامل بالمعرض. تحسين تدفق الزوار وإدارة الحشود أولوية لدينا.',
+      'ندرك كيف يؤثر الاكتظاظ على التجربة ونعمل بنشاط على تحسين توزيع الزوار.',
+      'شكراً لملاحظاتكم الصريحة حول الازدحام. سنعزز نظام الحجز وعمليات الدخول المرنة.',
+    ],
+    hi: [
+      'हमें ईमानदारी से खेद है कि भीड़ ने आपके आनंद को प्रभावित किया। हम निरंतर क्षमता प्रबंधन में सुधार कर रहे हैं।',
+      'हमें खेद है कि भीड़ ने प्रदर्शनी का पूरी तरह आनंद लेना कठिन बना दिया। आगंतुक प्रवाह और भीड़ प्रबंधन में सुधार हमारी प्राथमिकता है।',
+      'हम समझते हैं कि भीड़भाड़ अनुभव को कम कर सकती है और हम आगंतुक वितरण में सुधार के लिए सक्रिय रूप से काम कर रहे हैं।',
+      'भीड़ के बारे में आपकी ईमानदार प्रतिक्रिया के लिए धन्यवाद। हम अपनी बुकिंग प्रणाली और लचीली प्रवेश प्रक्रिया को मजबूत करेंगे।',
+    ],
+    tl: [
+      'Taos-pusong humihingi kami ng paumanhin na naapektuhan ng pagdagsa ng mga bisita ang inyong kasiyahan. Patuloy naming pinipino ang pamamahala ng kapasidad.',
+      'Ipinagpaumanhin namin na nahirapan kayong mag-enjoy ng eksibisyon dahil sa dami ng tao. Ang pagpapabuti ng daloy ng bisita at pamamahala ng karamihan ay isang priyoridad.',
+      'Nauunawaan namin kung paano maaaring makabawas ang matinding siksikan sa karanasan at aktibo kaming nagtatrabaho upang mapabuti ang pamamahagi ng bisita.',
+      'Salamat sa inyong tapat na feedback tungkol sa siksikan. Palakasin namin ang aming sistema ng reserbasyon at mga flexible na operasyon ng pagpasok.',
+    ],
   },
   LAYOUT_COMPLAINT: {
     ko: [
@@ -517,6 +785,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '感谢您指出导览问题。改善动线标识是我们正在积极推进的工作。',
       '对于动线混乱给您带来的不便，我们深感抱歉。我们将立即着手重新设计更直观的参观流线。',
       '感谢您对动线的反馈。我们将对整体导览系统进行审查，使参观更加顺畅。',
+    ],
+    es: [
+      'Lamentamos que el trazado resultara confuso. Seguiremos mejorando nuestra señalización y guía de recorridos.',
+      'Gracias por destacar la dificultad de orientación. Mejorar el flujo del recorrido y la señalización es algo en lo que trabajamos activamente.',
+      'Nos disculpamos por el diseño confuso. Tomaremos medidas inmediatas para rediseñar un recorrido más intuitivo.',
+      'Gracias por sus comentarios sobre el trazado. Revisaremos el recorrido general para facilitar la orientación.',
+    ],
+    ru: [
+      'Сожалеем, что планировка оказалась запутанной. Продолжим улучшать навигационные указатели и схемы движения.',
+      'Благодарим за указание на трудности с навигацией. Мы активно работаем над улучшением маршрутов и указателей.',
+      'Приносим извинения за неудобную планировку. Немедленно приступим к разработке более интуитивной схемы движения.',
+      'Спасибо за отзыв о планировке. Мы пересмотрим общую схему маршрутов для удобства ориентирования.',
+    ],
+    ar: [
+      'نأسف لوجود الارتباك في التخطيط. سنواصل تحسين لافتات الإرشاد وتوجيه مسارات الزيارة.',
+      'شكراً لإبرازكم صعوبة الإرشاد. تحسين تدفق المسار والإشارات موضع اهتمامنا المستمر.',
+      'نعتذر عن التخطيط المربك. سنتخذ إجراءات فورية لإعادة تصميم مسار أكثر وضوحاً وسهولة.',
+      'شكراً لملاحظاتكم حول التخطيط. سنراجع المسار العام لتسهيل التنقل.',
+    ],
+    hi: [
+      'हमें खेद है कि लेआउट भ्रमित करने वाला था। हम अपनी वेफाइंडिंग साइनेज और प्रवाह मार्गदर्शन में सुधार जारी रखेंगे।',
+      'नेविगेशन की कठिनाई को उजागर करने के लिए धन्यवाद। हमारे लेआउट प्रवाह और साइनेज में सुधार करना हमारी सक्रिय प्राथमिकता है।',
+      'भ्रामक लेआउट के लिए हम क्षमा चाहते हैं। हम एक अधिक सहज प्रवाह को फिर से डिजाइन करने के लिए तत्काल कार्रवाई करेंगे।',
+      'लेआउट पर आपकी प्रतिक्रिया के लिए धन्यवाद। हम नेविगेशन को आसान बनाने के लिए समग्र प्रवाह की समीक्षा करेंगे।',
+    ],
+    tl: [
+      'Ipinagpaumanhin namin na nakalito ang layout. Patuloy naming pagbubutihin ang aming mga wayfinding signage at gabay sa daloy.',
+      'Salamat sa pagpunta ng kahirapan sa pag-navigate. Ang pagpapabuti ng daloy ng aming layout at signage ay isang bagay na aktibo naming tinatrabaho.',
+      'Humihingi kami ng paumanhin para sa nakakalitong layout. Magsasagawa kami ng agarang hakbang upang muling idisenyo ang mas intuitive na daloy.',
+      'Salamat sa inyong feedback tungkol sa layout. Susuriin namin ang pangkalahatang daloy upang gawing mas madali ang pag-navigate.',
     ],
   },
   DISPLAY_ISSUE: {
@@ -544,6 +842,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '感谢您对视听质量的反馈。我们的技术团队将立即进行检查。',
       '对于显示错误影响您的参观，我们深感抱歉。将加强设备监控。',
     ],
+    es: [
+      'Pedimos disculpas por los problemas de visualización y audio que experimentó. Los reportaremos a nuestro equipo técnico para su resolución inmediata y reforzaremos los controles de equipos.',
+      'Lamentamos los problemas con las pantallas. Estamos reforzando el mantenimiento regular y las inspecciones de equipos.',
+      'Gracias por el comentario sobre la calidad audiovisual. Nuestro equipo técnico realizará una inspección inmediata.',
+      'Nos disculpamos por los errores de pantalla que afectaron su visita. Mejoraremos el monitoreo de equipos.',
+    ],
+    ru: [
+      'Приносим извинения за проблемы с аудио-визуальным оборудованием. Мы немедленно передадим это нашей технической команде и усилим проверки оборудования.',
+      'Сожалеем о проблемах с дисплеями. Регулярное техническое обслуживание и проверки оборудования усиливаются.',
+      'Благодарим за отзыв о качестве AV. Наша техническая команда немедленно проведёт проверку.',
+      'Приносим извинения за ошибки дисплея, повлиявшие на вашу прогулку. Усилим мониторинг оборудования.',
+    ],
+    ar: [
+      'نعتذر عن مشكلات العرض والصوتيات التي واجهتموها. سنحيل هذا فوراً إلى فريقنا التقني مع تعزيز فحوصات المعدات.',
+      'نأسف لمشكلات شاشات العرض. نعمل على تعزيز الصيانة الدورية وفحص المعدات.',
+      'شكراً لملاحظاتكم حول جودة الصوت والصورة. سيقوم فريقنا التقني بإجراء فحص فوري.',
+      'نعتذر عن أخطاء العرض التي أثّرت على زيارتكم. سنعزز مراقبة المعدات.',
+    ],
+    hi: [
+      'आपके द्वारा अनुभव की गई दृश्य-श्रव्य और डिस्प्ले समस्याओं के लिए हम क्षमा चाहते हैं। हम इसे तुरंत हमारी तकनीकी टीम को रिपोर्ट करेंगे और उपकरण जांच को मजबूत करेंगे।',
+      'डिस्प्ले समस्याओं के लिए हम खेद व्यक्त करते हैं। नियमित रखरखाव और उपकरण निरीक्षण को मजबूत किया जा रहा है।',
+      'दृश्य-श्रव्य गुणवत्ता पर आपकी प्रतिक्रिया के लिए धन्यवाद। हमारी तकनीकी टीम तुरंत निरीक्षण करेगी।',
+      'आपकी यात्रा को प्रभावित करने वाली डिस्प्ले त्रुटियों के लिए हम माफी चाहते हैं। हम उपकरण निगरानी को बढ़ाएंगे।',
+    ],
+    tl: [
+      'Humihingi kami ng paumanhin para sa mga isyung AV at display na inyong naranasan. Irereport namin ito agad sa aming teknikal na koponan para sa agarang aksyon at palakasin ang mga tseke ng kagamitan.',
+      'Ipinagpaumanhin namin ang mga isyu sa display. Pinahuhusay ang regular na pagpapanatili at inspeksyon ng kagamitan.',
+      'Salamat sa feedback tungkol sa kalidad ng AV. Magsasagawa ang aming teknikal na koponan ng agarang inspeksyon.',
+      'Humihingi kami ng paumanhin para sa mga error sa display na nakaapekto sa inyong pagbisita. Palakasin namin ang pagmamatyag sa kagamitan.',
+    ],
   },
   DURATION_COMPLAINT: {
     ko: [
@@ -569,6 +897,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '对于展览规模和时间的遗憾，我们真诚接受。将以更多样、丰富的内容回馈您。',
       '感谢您对内容量的坦诚反馈。我们将持续推进内容扩充计划。',
       '我们重视您关于展览体量的意见，将逐步扩充体验内容。',
+    ],
+    es: [
+      'Le escuchamos — la exposición se sintió más corta de lo esperado para el precio de la entrada. Estamos ampliando activamente nuestras zonas de experiencia para ofrecer más durante su visita.',
+      'Gracias por su sincero comentario sobre el volumen de contenido. Continuaremos añadiendo nuevas zonas y elementos interactivos para que cada visita se sienta más completa.',
+      'Apreciamos su perspectiva honesta sobre la duración de la exposición. Ampliar nuestras propuestas de contenido es una prioridad y esperamos ofrecerle una experiencia más completa en su próxima visita.',
+      'Tomamos sus comentarios sobre el volumen de la exposición en serio y ampliaremos el contenido experimental de manera incremental.',
+    ],
+    ru: [
+      'Понимаем — выставка показалась короче ожидаемого для такой цены билета. Мы активно расширяем зоны опыта, чтобы предложить больше в каждом посещении.',
+      'Благодарим за откровенный отзыв об объёме контента. Продолжим добавлять новые зоны и интерактивные элементы, чтобы каждое посещение было более насыщенным.',
+      'Ценим вашу честную оценку продолжительности выставки. Расширение предложений — ключевой приоритет.',
+      'Принимаем ваши комментарии об объёме экспозиции серьёзно и будем расширять контент поэтапно.',
+    ],
+    ar: [
+      'نسمع ما تقولون — بدت المعرض أقصر مما هو متوقع مقابل سعر التذكرة. نعمل بنشاط على توسيع مناطق التجربة لتقديم المزيد في كل زيارة.',
+      'شكراً على ملاحظاتكم الصريحة حول حجم المحتوى. سنواصل إضافة مناطق جديدة وعناصر تفاعلية لجعل كل زيارة أكثر اكتمالاً.',
+      'نقدر رأيكم الصادق حول مدة المعرض. توسيع عروض محتوانا أولوية رئيسية ونأمل في تقديم تجربة أكمل في المرة القادمة.',
+      'نأخذ تعليقاتكم على حجم المعرض بجدية وسنوسع المحتوى التجريبي بصورة تدريجية.',
+    ],
+    hi: [
+      'हम समझते हैं — प्रदर्शनी टिकट के मूल्य के लिए अपेक्षा से छोटी लगी। हम प्रत्येक यात्रा के लिए अधिक प्रदान करने के लिए अपने अनुभव क्षेत्रों का सक्रिय रूप से विस्तार कर रहे हैं।',
+      'सामग्री की मात्रा पर आपकी ईमानदार प्रतिक्रिया के लिए धन्यवाद। हम नई जोन और इंटरएक्टिव तत्व जोड़ते रहेंगे।',
+      'प्रदर्शनी की अवधि पर आपकी ईमानदार राय की हम सराहना करते हैं। सामग्री विस्तार हमारी प्रमुख प्राथमिकता है।',
+      'हम प्रदर्शनी की मात्रा पर आपकी टिप्पणियों को गंभीरता से लेते हैं और धीरे-धीरे अनुभव सामग्री का विस्तार करेंगे।',
+    ],
+    tl: [
+      'Naririnig namin kayo — ang eksibisyon ay naging mas maikli kaysa inaasahan para sa presyo ng tiket. Aktibo kaming nagpapalawak ng aming mga experiential zone upang makapag-alok ng higit pa sa inyong pagbisita.',
+      'Salamat sa inyong tapat na feedback tungkol sa dami ng nilalaman. Patuloy kaming magdadagdag ng mga bagong zone at interactive na elemento upang maging mas kumpleto ang bawat pagbisita.',
+      'Pinahahalagahan namin ang inyong tapat na pananaw tungkol sa haba ng eksibisyon. Ang pagpapalawak ng aming mga alok sa nilalaman ay isang pangunahing priyoridad.',
+      'Sineseryoso namin ang inyong mga komento tungkol sa dami ng eksibisyon at palawakin namin ang experiential na nilalaman nang unti-unti.',
     ],
   },
   // ── PHASE 3: 4 Niche Tags ──────────────────────────────────────────────────────
@@ -597,6 +955,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '您对各展览区域的宝贵反馈对我们非常重要。我们将尽快检查{highlight_room}等所有区域的运营情况。',
       '感谢您指出展区的具体问题。改善这些区域是我们的当务之急。',
     ],
+    es: [
+      'Gracias por sus comentarios específicos sobre nuestros espacios de galería. Realizaremos una revisión inmediata de la experiencia en cada área, incluido {highlight_room}.',
+      'Apreciamos sus comentarios detallados sobre áreas específicas como {highlight_room}. Priorizaremos la mejora de esos espacios.',
+      'Sus comentarios sobre las áreas individuales de la galería son invaluables. Revisaremos las operaciones en {highlight_room} y todas las demás zonas a la brevedad.',
+      'Gracias por señalar las preocupaciones específicas en nuestros espacios de galería. Abordar estas áreas es nuestra prioridad inmediata.',
+    ],
+    ru: [
+      'Благодарим за конкретные замечания по нашим галерейным пространствам. Мы немедленно проведём проверку в каждой зоне, включая {highlight_room}.',
+      'Ценим ваши подробные комментарии об отдельных пространствах, таких как {highlight_room}. Улучшение этих зон — наш приоритет.',
+      'Ваши отзывы об отдельных залах галереи бесценны. Мы оперативно проверим работу {highlight_room} и всех остальных зон.',
+      'Спасибо за указание конкретных проблем в наших галерейных пространствах. Устранение этих недостатков — наш немедленный приоритет.',
+    ],
+    ar: [
+      'شكراً لملاحظاتكم التفصيلية حول مساحات المعرض. سنقوم بمراجعة فورية للتجربة في كل منطقة بما في ذلك {highlight_room}.',
+      'نقدر تعليقاتكم التفصيلية حول مناطق محددة مثل {highlight_room}. سنعطي الأولوية لتحسين تلك المساحات.',
+      'ملاحظاتكم حول مناطق المعرض الفردية ذات قيمة كبيرة. سنراجع عمليات {highlight_room} وجميع المناطق الأخرى بسرعة.',
+      'شكراً لإشارتكم إلى المخاوف المحددة في مساحات معرضنا. معالجة هذه المناطق أولويتنا الفورية.',
+    ],
+    hi: [
+      'हमारी गैलरी स्थानों पर आपकी विशिष्ट प्रतिक्रिया के लिए धन्यवाद। हम {highlight_room} सहित प्रत्येक क्षेत्र में अनुभव की तत्काल समीक्षा करेंगे।',
+      '{highlight_room} जैसे विशिष्ट क्षेत्रों पर आपकी विस्तृत टिप्पणी की हम सराहना करते हैं। उन स्थानों में सुधार को प्राथमिकता देंगे।',
+      'व्यक्तिगत गैलरी क्षेत्रों पर आपकी प्रतिक्रिया अमूल्य है। हम शीघ्र ही {highlight_room} और अन्य सभी क्षेत्रों में संचालन की समीक्षा करेंगे।',
+      'हमारी गैलरी स्थानों में विशिष्ट चिंताओं को इंगित करने के लिए धन्यवाद। इन क्षेत्रों को संबोधित करना हमारी तत्काल प्राथमिकता है।',
+    ],
+    tl: [
+      'Salamat sa inyong partikular na feedback tungkol sa aming mga gallery space. Magsasagawa kami ng agarang pagsusuri ng karanasan sa bawat lugar, kabilang ang {highlight_room}.',
+      'Pinahahalagahan namin ang inyong detalyadong mga komento sa mga partikular na lugar tulad ng {highlight_room}. Uunahin namin ang pagpapabuti ng mga espasyong iyon.',
+      'Napakahalaga ng inyong feedback tungkol sa mga indibidwal na lugar ng gallery. Susuriin namin ang mga operasyon sa {highlight_room} at lahat ng iba pang zone agad-agad.',
+      'Salamat sa pagpunta ng mga partikular na alalahanin sa aming mga gallery space. Ang pagtugon sa mga lugar na ito ay ang aming agarang priyoridad.',
+    ],
   },
   SYSTEM_COMPLAINT: {
     ko: [
@@ -623,6 +1011,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '对于数字系统故障造成的不便，我们深表歉意。技术团队将立即处理。',
       '对于自助机或应用故障在参观前给您带来的不便，我们深感抱歉。系统稳定化是我们的首要任务。',
     ],
+    es: [
+      'Lamentamos sinceramente los problemas con los quioscos y sistemas que encontró. Nuestro equipo técnico investigará y los resolverá de inmediato.',
+      'Nos disculpamos por los problemas causados por el sistema de reservas o de entrada. Priorizaremos las comprobaciones del sistema para evitar que se repita.',
+      'Pedimos disculpas por los errores del sistema digital. Nuestro equipo técnico abordará el problema de inmediato.',
+      'Lamentamos que los problemas con los quioscos o la aplicación interrumpieran su visita. Estabilizar nuestros sistemas es nuestra máxima prioridad.',
+    ],
+    ru: [
+      'Искренне сожалеем о проблемах с киосками и системами. Наша техническая команда немедленно исследует и устранит их.',
+      'Приносим извинения за проблемы с системой бронирования или входа. Приоритет — проверка систем для предотвращения повторения.',
+      'Извиняемся за ошибки цифровой системы. Техническая команда немедленно займётся этим вопросом.',
+      'Сожалеем, что проблемы с киоском или приложением нарушили ваш визит. Стабилизация систем — наш главный приоритет.',
+    ],
+    ar: [
+      'نعتذر بصدق عن مشكلات الأكشاك والأنظمة التي واجهتموها. سيقوم فريقنا التقني بالتحقيق وحلها فوراً.',
+      'نأسف لمشكلات نظام الحجز أو الدخول. سنعطي الأولوية لفحوصات النظام لمنع التكرار.',
+      'نعتذر عن أعطال النظام الرقمي. سيتولى فريقنا التقني معالجة المشكلة فوراً.',
+      'نأسف لأن مشكلات الأكشاك أو التطبيق أعاقت زيارتكم. استقرار أنظمتنا أولويتنا القصوى.',
+    ],
+    hi: [
+      'आपके द्वारा किओस्क और सिस्टम समस्याओं का अनुभव करने के लिए हम ईमानदारी से माफी चाहते हैं। हमारी तकनीकी टीम तुरंत जांच और समाधान करेगी।',
+      'बुकिंग या प्रवेश प्रणाली में समस्याओं के लिए हम क्षमाप्रार्थी हैं। पुनरावृत्ति रोकने के लिए सिस्टम जांच को प्राथमिकता देंगे।',
+      'डिजिटल सिस्टम की त्रुटियों के लिए हम माफी चाहते हैं। हमारी तकनीकी टीम तुरंत समस्या का समाधान करेगी।',
+      'हमें खेद है कि किओस्क या ऐप की समस्याओं ने आपकी यात्रा को बाधित किया। हमारे सिस्टम को स्थिर करना हमारी सर्वोच्च प्राथमिकता है।',
+    ],
+    tl: [
+      'Taos-pusong humihingi kami ng paumanhin para sa mga isyung kiosk at sistema na inyong naranasan. Mangangasiwa ang aming teknikal na koponan at ayusin ang mga ito agad.',
+      'Humihingi kami ng paumanhin sa mga problemang dulot ng sistema ng booking o pagpasok. Uunahin namin ang mga tseke ng sistema upang maiwasan ang pagbabalik.',
+      'Humihingi kami ng paumanhin para sa mga error ng digital na sistema. Haharapin ng aming teknikal na koponan ang isyung ito agad.',
+      'Ipinagpaumanhin namin na ang mga isyung kiosk o app ay naabala ang inyong pagbisita. Ang pag-stabilize ng aming mga sistema ay ang aming pinakamataas na priyoridad.',
+    ],
   },
   REVISIT_COMPLAINT: {
     ko: [
@@ -648,6 +1066,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '对于再次到访却未能满足您的期待，我们深感抱歉。通过全球巡展和季节性更新，我们力求每次访问都有新的惊喜。',
       '对于再访体验未能达到前次水准，我们深感遗憾。将加强内容更新计划，每季带来全新体验。',
       '对于再次到访却未能充分满足您，我们真诚道歉。持续的内容更新和设施改善是我们的承诺。',
+    ],
+    es: [
+      'Pedimos sinceras disculpas porque esta visita no estuvo a la altura de su experiencia anterior. Estamos introduciendo continuamente nuevo contenido estacional para que cada visita ofrezca algo fresco.',
+      'Lamentamos que su visita de retorno resultara decepcionante. A través de nuestras exposiciones itinerantes globales y actualizaciones estacionales, nos esforzamos por hacer que cada visita sea nueva.',
+      'Lamentamos que su revisita no cumpliera las expectativas. Estamos reforzando nuestro calendario de actualización de contenidos para ofrecer nuevas experiencias cada temporada.',
+      'Nos disculpamos por no haber brindado la experiencia que merecía en su visita de retorno. La renovación continua de contenidos es nuestro compromiso.',
+    ],
+    ru: [
+      'Искренне сожалеем, что этот визит не оправдал ваших предыдущих ожиданий. Мы постоянно внедряем новый сезонный контент для обновления впечатлений.',
+      'Сожалеем, что повторный визит разочаровал. Через наши глобальные гастрольные выставки и сезонные обновления мы стремимся делать каждый визит новым.',
+      'Сожалеем, что повторное посещение не оправдало ожиданий. Усиливаем план обновления контента для новых впечатлений каждый сезон.',
+      'Приносим извинения за то, что не обеспечили заслуженный опыт при повторном посещении. Непрерывное обновление контента — наше обязательство.',
+    ],
+    ar: [
+      'نعتذر بصدق لأن هذه الزيارة لم ترقَ إلى مستوى تجربتكم السابقة. نواصل استحداث محتوى موسمي جديد لضمان أن كل زيارة تحمل شيئاً جديداً.',
+      'نأسف لخيبة أملكم في زيارتكم العائدة. من خلال معارضنا الجولية العالمية والتحديثات الموسمية، نسعى لجعل كل زيارة متجددة.',
+      'نأسف لعدم تلبية توقعاتكم في الزيارة المتكررة. نعمل على تقوية جدول تحديث المحتوى لتقديم تجارب جديدة كل موسم.',
+      'نعتذر عن عدم تقديم التجربة التي تستحقونها في زيارتكم العائدة. التجديد المستمر للمحتوى هو التزامنا.',
+    ],
+    hi: [
+      'हमें ईमानदारी से खेद है कि यह यात्रा आपके पिछले अनुभव के अनुरूप नहीं थी। हम प्रत्येक यात्रा को नया बनाने के लिए निरंतर नई मौसमी सामग्री पेश कर रहे हैं।',
+      'हमें खेद है कि आपकी वापसी यात्रा निराशाजनक रही। हमारी वैश्विक दौरे की प्रदर्शनियों और मौसमी अपडेट के माध्यम से, हम प्रत्येक यात्रा को नया बनाने का प्रयास करते हैं।',
+      'हमें खेद है कि आपकी पुनर्यात्रा अपेक्षाओं पर खरी नहीं उतरी। हम प्रत्येक मौसम में नए अनुभव प्रदान करने के लिए अपनी सामग्री ताजगी योजना को मजबूत कर रहे हैं।',
+      'आपकी वापसी यात्रा पर उचित अनुभव न प्रदान करने के लिए हम क्षमाप्रार्थी हैं। निरंतर सामग्री नवीनीकरण हमारी प्रतिबद्धता है।',
+    ],
+    tl: [
+      'Taos-pusong humihingi kami ng paumanhin na ang pagbisitang ito ay hindi naabot ang inyong nakaraang karanasan. Patuloy kaming nagpapakilala ng bagong pana-panahong nilalaman upang matiyak na nag-aalok ang bawat pagbisita ng bagay na sariwa.',
+      'Ipinagpaumanhin namin na nabigo ang inyong pagbabalik na pagbisita. Sa pamamagitan ng aming mga pandaigdigang touring na eksibisyon at pana-panahong update, nagsusumikap kaming gawing bago ang bawat pagbisita.',
+      'Nagsisisi kami na hindi natugunan ng inyong muling pagbisita ang mga inaasahan. Pinapatibay namin ang aming iskedyul ng pag-refresh ng nilalaman upang makapaghatid ng bagong karanasan bawat season.',
+      'Humihingi kami ng paumanhin para sa hindi pagbibigay ng karanasang nararapat sa inyo sa inyong pagbabalik na pagbisita. Ang patuloy na pag-renew ng nilalaman ay ang aming pangako.',
     ],
   },
   // ── 법적·보상·처벌 요구 — EMERGENCY 전용, 관리자 승인 필수 ─────────────────────────
@@ -677,6 +1125,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '您的情况已被列为优先事项，专属代表将直接联系您。',
       '我们非常重视此事，管理团队已收到通知并将尽快与您联系。',
     ],
+    es: [
+      'Este asunto ha sido escalado inmediatamente a nuestro equipo directivo. Un representante dedicado se comunicará directamente con usted a la mayor brevedad posible.',
+      'Hemos informado de su situación a nuestro director de operaciones para atención inmediata. Recibirá noticias nuestras directamente.',
+      'Su situación ha sido marcada como prioritaria y escalada a la dirección. Nuestro equipo se pondrá en contacto con usted directamente.',
+      'Nos tomamos esto muy en serio. Nuestro equipo directivo ha sido notificado y se pondrá en contacto con usted con prontitud.',
+    ],
+    ru: [
+      'Этот вопрос немедленно передан нашей управленческой команде. Специальный представитель свяжется с вами напрямую в кратчайшие сроки.',
+      'Мы передали вашу ситуацию нашему директору по операциям для немедленного рассмотрения. Вы получите ответ от нас напрямую.',
+      'Ваша ситуация отмечена как приоритетная и эскалирована руководству. Наша команда свяжется с вами напрямую.',
+      'Мы относимся к этому очень серьёзно. Наша управленческая команда уведомлена и свяжется с вами незамедлительно.',
+    ],
+    ar: [
+      'تم رفع هذه المسألة فوراً إلى فريق الإدارة لدينا. سيتواصل معكم مندوب مخصص مباشرةً في أقرب وقت ممكن.',
+      'قمنا بإحالة وضعكم إلى مدير العمليات لدينا للاهتمام الفوري. ستتلقون ردنا مباشرة.',
+      'تم تحديد وضعكم كأولوية ورفعه إلى الإدارة. سيتواصل فريقنا معكم مباشرة.',
+      'نأخذ هذا الأمر بجدية بالغة. تم إخطار فريق الإدارة وسيتواصل معكم في أقرب وقت.',
+    ],
+    hi: [
+      'इस मामले को तुरंत हमारी प्रबंधन टीम को एस्केलेट कर दिया गया है। एक समर्पित प्रतिनिधि जल्द से जल्द आपसे सीधे संपर्क करेगा।',
+      'हमने आपकी स्थिति को तत्काल ध्यान के लिए हमारे संचालन निदेशक को अग्रेषित किया है। आप हमसे सीधे सुनेंगे।',
+      'आपकी स्थिति को प्राथमिकता के रूप में चिह्नित किया गया है और प्रबंधन को एस्केलेट किया गया है। हमारी टीम आपसे सीधे संपर्क करेगी।',
+      'हम इसे बहुत गंभीरता से लेते हैं। हमारी प्रबंधन टीम को सूचित किया गया है और वे जल्दी आपसे संपर्क करेंगे।',
+    ],
+    tl: [
+      'Ang bagay na ito ay agad na na-escalate sa aming management team. Isang dedikadong kinatawan ay direktang makikipag-ugnayan sa inyo sa lalong madaling panahon.',
+      'Inilipat namin ang inyong sitwasyon sa aming direktor ng operasyon para sa agarang atensyon. Maririnig ninyo mula sa amin nang direkta.',
+      'Ang inyong sitwasyon ay naka-flag bilang priyoridad at na-escalate sa pamamahala. Ang aming koponan ay direktang makikipag-ugnayan sa inyo.',
+      'Sineseryoso namin ito nang husto. Ang aming management team ay naabisuhan at makikipag-ugnayan sa inyo agad.',
+    ],
   },
   COMPENSATION_DEMAND: {
     ko: [
@@ -702,6 +1180,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '我们为您的经历深感遗憾。专属团队成员将直接与您联系，审核您的情况。',
       '您的体验未达到我们的标准，我们深感抱歉。我们的团队将与您联系，探讨最佳处理方式。',
       '我们对此深感歉意，客服团队将单独与您联系，了解您的情况。',
+    ],
+    es: [
+      'Lo sentimos profundamente por la experiencia que tuvo. Nuestro equipo de experiencia de huéspedes se pondrá en contacto directo con usted para revisar su situación.',
+      'Le pedimos sinceras disculpas por lo que vivió. Un miembro de nuestro equipo se pondrá en contacto directo con usted para hablar de su caso.',
+      'Su experiencia está por debajo de nuestros estándares. Nuestro equipo se comunicará con usted directamente para determinar el mejor camino a seguir.',
+      'Lo sentimos profundamente. Nuestro equipo de atención al cliente se pondrá en contacto con usted individualmente para revisar su situación.',
+    ],
+    ru: [
+      'Нам очень жаль о вашем опыте. Наша команда по работе с гостями свяжется с вами напрямую для изучения вашей ситуации.',
+      'Искренне приносим извинения за то, что вы пережили. Наш сотрудник свяжется с вами напрямую для обсуждения вашего случая.',
+      'Ваш опыт не соответствует нашим стандартам. Наша команда свяжется с вами напрямую для выработки оптимального решения.',
+      'Нам очень жаль. Наша служба поддержки клиентов свяжется с вами индивидуально для рассмотрения вашей ситуации.',
+    ],
+    ar: [
+      'نحن آسفون بصدق على التجربة التي مررتم بها. سيتواصل فريق تجربة الضيوف لدينا معكم مباشرة لمراجعة وضعكم.',
+      'نعتذر بصدق عما مررتم به. أحد أعضاء فريقنا سيتصل بكم مباشرة لمناقشة حالتكم.',
+      'تجربتكم لا ترقى إلى معاييرنا. سيتواصل فريقنا معكم مباشرة لتحديد أفضل مسار للعمل.',
+      'نحن في غاية الأسف. سيتواصل فريق خدمة العملاء لدينا معكم بشكل فردي لمراجعة وضعكم.',
+    ],
+    hi: [
+      'आपके द्वारा हुए अनुभव के लिए हम वास्तव में खेद व्यक्त करते हैं। हमारी अतिथि अनुभव टीम आपकी स्थिति की समीक्षा करने के लिए सीधे आपसे संपर्क करेगी।',
+      'आपने जो अनुभव किया उसके लिए हम ईमानदारी से माफी चाहते हैं। हमारे टीम का एक सदस्य आपके मामले पर चर्चा करने के लिए सीधे आपसे संपर्क करेगा।',
+      'आपका अनुभव हमारे मानकों से कम है। हमारी टीम आपसे सीधे सर्वोत्तम कार्रवाई निर्धारित करने के लिए संपर्क करेगी।',
+      'हमें बहुत खेद है। हमारी ग्राहक सेवा टीम आपकी स्थिति की समीक्षा करने के लिए व्यक्तिगत रूप से आपसे संपर्क करेगी।',
+    ],
+    tl: [
+      'Labis kaming nagsisisi sa karanasang inyong natanggap. Ang aming guest experience team ay direktang makikipag-ugnayan sa inyo upang suriin ang inyong sitwasyon.',
+      'Taos-pusong humihingi kami ng paumanhin sa inyong naranasan. Isang miyembro ng aming koponan ay direktang makikipag-ugnayan sa inyo upang talakayin ang inyong kaso.',
+      'Ang inyong karanasan ay hindi nakakatugon sa aming mga pamantayan. Ang aming koponan ay makikipag-ugnayan sa inyo nang direkta upang matukoy ang pinakamahusay na paraan ng pagkilos.',
+      'Labis kaming nagsisisi. Ang aming koponan ng serbisyo sa customer ay makikipag-ugnayan sa inyo nang indibidwal upang suriin ang inyong sitwasyon.',
     ],
   },
   PUNISHMENT_DEMAND: {
@@ -729,6 +1237,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '这一情况已与团队领导层共享，我们将采取适当的内部行动。',
       '您描述的经历已向运营团队报告，将进行内部审查。',
     ],
+    es: [
+      'La situación que describió ha sido remitida directamente a nuestro director de operaciones para revisión interna y las acciones apropiadas.',
+      'Sus comentarios han sido escalados a nuestra dirección in situ de inmediato. Tomaremos las medidas necesarias para evitar que vuelva a ocurrir.',
+      'Esta situación ha sido compartida con el liderazgo de nuestro equipo para su revisión. Nos comprometemos a tomar las medidas internas apropiadas.',
+      'La experiencia que describió ha sido reportada a nuestro equipo de operaciones y será revisada internamente.',
+    ],
+    ru: [
+      'Описанная вами ситуация передана напрямую нашему директору по операциям для внутреннего рассмотрения и принятия соответствующих мер.',
+      'Ваши отзывы немедленно эскалированы нашему локальному менеджменту. Мы примем необходимые шаги для предотвращения повторения.',
+      'Эта ситуация доведена до сведения руководства нашей команды для рассмотрения. Мы обязуемся принять надлежащие внутренние меры.',
+      'Описанный вами опыт передан нашей операционной команде и будет рассмотрен внутренне.',
+    ],
+    ar: [
+      'الوضع الذي وصفتموه تم إحالته مباشرة إلى مدير العمليات لمراجعة داخلية واتخاذ الإجراءات المناسبة.',
+      'تم رفع ملاحظاتكم فوراً إلى إدارتنا الميدانية. سنتخذ الخطوات اللازمة لمنع التكرار.',
+      'تمت مشاركة هذا الوضع مع قيادة الفريق للمراجعة. نلتزم باتخاذ الإجراءات الداخلية المناسبة.',
+      'تجربتكم التي وصفتموها أُبلغت لفريق العمليات لدينا وستخضع للمراجعة الداخلية.',
+    ],
+    hi: [
+      'आपने जो स्थिति वर्णित की है, उसे आंतरिक समीक्षा और उचित कार्रवाई के लिए सीधे हमारे संचालन निदेशक को अग्रेषित किया गया है।',
+      'आपकी प्रतिक्रिया को हमारी साइट पर मौजूद प्रबंधन को तुरंत एस्केलेट किया गया है। हम पुनरावृत्ति को रोकने के लिए आवश्यक कदम उठाएंगे।',
+      'इस स्थिति को समीक्षा के लिए हमारी टीम के नेतृत्व के साथ साझा किया गया है। हम उचित आंतरिक कार्रवाई करने के लिए प्रतिबद्ध हैं।',
+      'आपने जो अनुभव वर्णित किया है, उसे हमारी संचालन टीम को रिपोर्ट किया गया है और आंतरिक रूप से समीक्षा की जाएगी।',
+    ],
+    tl: [
+      'Ang sitwasyong inyong inilarawan ay direktang naipasa sa aming direktor ng operasyon para sa panloob na pagsusuri at naaangkop na aksyon.',
+      'Ang inyong feedback ay agad na na-escalate sa aming on-site na pamamahala. Magsasagawa kami ng mga kinakailangang hakbang upang maiwasan ang paulit-ulit na pangyayari.',
+      'Ibinabahagi ang sitwasyong ito sa pamumuno ng aming koponan para sa pagsusuri. Nakatuon kami sa pagsasagawa ng naaangkop na panloob na aksyon.',
+      'Ang karanasang inyong inilarawan ay naiulat sa aming operations team at isasailalim sa panloob na pagsusuri.',
+    ],
   },
   STAFF_COMPLAINT: {
     ko: [
@@ -754,6 +1292,36 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       '感谢您对员工服务的坦诚反馈。我们将立即重新评估客服培训，防止类似情况再次发生。',
       '对于员工服务态度未达标准，我们深感抱歉。我们致力于确保所有员工提供友善专业的服务。',
       '感谢您提出这一问题。我们的现场客服经理将立即采取改进措施。',
+    ],
+    es: [
+      'Eso no debería haber ocurrido. Nuestro gerente de atención al cliente hablará directamente con el equipo hoy.',
+      'Lamentamos que su interacción con nuestro personal no estuviera a la altura — esto será revisado y atendido de inmediato.',
+      'Gracias por informarnos. Una conducta del personal como esta no es aceptable y actuaremos al respecto.',
+      'Le escuchamos, y su experiencia ha sido reportada a nuestro equipo de operaciones para que lo gestione directamente.',
+    ],
+    ru: [
+      'Этого не должно было произойти. Наш менеджер по обслуживанию клиентов сегодня напрямую поговорит с командой.',
+      'Сожалеем, что взаимодействие с нашим персоналом не соответствовало стандартам — это будет рассмотрено и устранено немедленно.',
+      'Благодарим, что сообщили нам. Подобное поведение сотрудников недопустимо, и мы примем меры.',
+      'Мы слышим вас, и ваш опыт был передан нашей операционной команде для непосредственного рассмотрения.',
+    ],
+    ar: [
+      'لم يكان يجب أن يحدث هذا. مدير خدمة العملاء لدينا سيتحدث مباشرة مع الفريق اليوم.',
+      'نأسف لأن تعاملكم مع موظفينا لم يكن في المستوى المطلوب — سيتم مراجعة هذا الأمر ومعالجته فوراً.',
+      'شكراً لإخبارنا. هذا النوع من السلوك غير مقبول من جانب موظفينا، وسنتخذ الإجراءات اللازمة.',
+      'نسمعكم، وقد أُبلغ فريق العمليات لدينا عن تجربتكم للتعامل معها مباشرة.',
+    ],
+    hi: [
+      'ऐसा नहीं होना चाहिए था। हमारे सीएस मैनेजर आज सीधे टीम से बात करेंगे।',
+      'हमें खेद है कि हमारे कर्मचारियों के साथ आपकी बातचीत मानकों पर खरी नहीं उतरी — इसकी तुरंत समीक्षा और समाधान किया जाएगा।',
+      'हमें बताने के लिए धन्यवाद। कर्मचारियों का ऐसा व्यवहार स्वीकार्य नहीं है, और हम इस पर कार्रवाई करेंगे।',
+      'हम आपको सुनते हैं, और आपके अनुभव को हमारी संचालन टीम को सीधे संभालने के लिए रिपोर्ट किया गया है।',
+    ],
+    tl: [
+      'Hindi sana dapat nangyari ito. Ang aming CS manager ay direktang makikipag-usap sa koponan ngayon.',
+      'Ipinagpaumanhin namin na ang inyong pakikipag-ugnayan sa aming staff ay hindi nakatupad sa pamantayan — ito ay susuriin at haharapin agad.',
+      'Salamat sa pagpapaalam sa amin. Ang ganitong pag-uugali ng staff ay hindi katanggap-tanggap, at magsasagawa kami ng aksyon.',
+      'Naririnig namin kayo, at ang inyong karanasan ay naiulat na sa aming operations team para harapin nang direkta.',
     ],
   },
 }
@@ -804,6 +1372,31 @@ export function slotD_peak_hours(lang: Language, idx = 0): string {
       '建议您下次选择工作日上午或午后较早时段前来，届时人流较少，观展体验更为舒适。',
       '工作日上午11点前或下午2点后参观，通常能享受更舒适的观展环境。',
       '工作日上午是参观的最佳时机，让您能更从容地欣赏{highlight_room}等精彩装置。',
+    ],
+    es: [
+      'Para disfrutar de una visita más tranquila, le recomendamos los días laborables por la mañana o primeras horas de la tarde.',
+      'Visitar antes de las 11 AM o después de las 2 PM en días laborables suele ofrecer una experiencia más cómoda.',
+      'Las mañanas de entre semana son las más tranquilas, lo que le permitirá disfrutar de {highlight_room} y otras instalaciones con más calma.',
+    ],
+    ru: [
+      'Для более спокойного посещения мы рекомендуем приходить в будние дни, утром или ранним вечером.',
+      'Посещение до 11:00 или после 14:00 в будние дни обычно обеспечивает более комфортные условия.',
+      'Будние утра — самое тихое время, когда можно в полной мере насладиться {highlight_room} и другими инсталляциями.',
+    ],
+    ar: [
+      'لتجربة أكثر راحة، نوصيكم بزيارتنا في أيام الأسبوع صباحاً أو في ساعات ما بعد الظهر المبكرة.',
+      'الزيارة قبل الساعة 11 صباحاً أو بعد الساعة 2 ظهراً في أيام الأسبوع توفر عادةً تجربة أكثر هدوءاً.',
+      'الصباح الباكر في أيام الأسبوع هو الوقت الأهدأ، مما يتيح لكم الاستمتاع الكامل بـ{highlight_room} وسائر المعروضات.',
+    ],
+    hi: [
+      'अधिक शांत और सुखद अनुभव के लिए हम सप्ताह के कार्यदिवसों में सुबह या दोपहर के प्रारंभिक समय में आने की सलाह देते हैं।',
+      'सप्ताह के कार्यदिवसों में सुबह 11 बजे से पहले या दोपहर 2 बजे के बाद आना आमतौर पर अधिक आरामदायक होता है।',
+      'कार्यदिवसों की सुबह सबसे शांत समय होता है, जब आप {highlight_room} और अन्य प्रदर्शनियों का भरपूर आनंद ले सकते हैं।',
+    ],
+    tl: [
+      'Para sa mas marelaks na pagbisita, inirekomenda namin ang mga weekday na umaga o hapon.',
+      'Ang pagbisita bago mag-11 AM o pagkatapos ng 2 PM sa mga weekday ay karaniwang nagbibigay ng mas komportableng karanasan.',
+      'Ang mga weekday morning ang pinaka-tahimik na oras, na nagbibigay-daan sa inyong lubos na mag-enjoy sa {highlight_room} at iba pang mga eksibisyon.',
     ],
   }
   const arr = v[lang] ?? v.ko
@@ -997,6 +1590,36 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
       '{branch_name}将持续带来更精彩的展览，期待您下次光临。',
       '感谢您的到来，期待在{branch_name}与您再次相遇，共享美好时光。',
     ],
+    es: [
+      'Esperamos verle de nuevo pronto en {branch_name}. ¡Hasta la próxima!',
+      'En {branch_name} siempre hay algo nuevo por descubrir. ¡Le esperamos!',
+      'Nos alegra contar con visitantes como usted. ¡Vuelva cuando quiera a {branch_name}!',
+      'Gracias por visitarnos. Esperamos que su próxima visita a {branch_name} sea igual de especial.',
+    ],
+    ru: [
+      'Будем рады снова видеть вас в {branch_name} в ближайшее время!',
+      'В {branch_name} всегда есть что-то новое для открытия — ждём вас снова!',
+      'Спасибо за визит. Мы надеемся, что ваш следующий приход в {branch_name} подарит ещё больше впечатлений.',
+      'Приходите снова в {branch_name} — мы всегда рады принять вас!',
+    ],
+    ar: [
+      'نتطلع إلى استقبالكم مجدداً في {branch_name} في أقرب وقت ممكن!',
+      'في {branch_name} دائماً ما هو جديد ينتظر اكتشافه — نراكم قريباً!',
+      'شكراً على زيارتكم. نأمل أن تكون زيارتكم القادمة لـ{branch_name} أكثر متعةً.',
+      'يسعدنا دائماً استقبالكم في {branch_name} — نراكم في المرة القادمة!',
+    ],
+    hi: [
+      'हम आशा करते हैं कि आप जल्द ही {branch_name} में फिर पधारेंगे!',
+      '{branch_name} में हमेशा कुछ नया इंतजार करता है — आपका स्वागत है!',
+      'आपकी यात्रा के लिए धन्यवाद। हम आशा करते हैं कि {branch_name} में आपकी अगली यात्रा और भी खास होगी।',
+      '{branch_name} में हम हमेशा आपका स्वागत करते हैं — जल्द फिर आइए!',
+    ],
+    tl: [
+      'Inaasahan naming makita kayo muli sa {branch_name} sa lalong madaling panahon!',
+      'Lagi kaming may bago sa {branch_name} para sa inyo — inaabangan namin kayo!',
+      'Salamat sa pagbisita. Umaasa kami na ang inyong susunod na pagbisita sa {branch_name} ay magiging mas espesyal.',
+      'Lagi kaming naghihintay sa inyo sa {branch_name} — bumalik kayo anumang oras!',
+    ],
   }
   const arr = v[lang] ?? v.ko
   return arr[idx % arr.length]
@@ -1055,6 +1678,36 @@ export function slotE_negative(lang: Language, idx = 0): string {
       '再次为给您带来的不便致歉，期待下次为您提供更好的体验。',
       '感谢您的反馈，这有助于我们持续进步。',
       '感谢您的坦诚意见，这将帮助我们让{branch_name}变得更好。',
+    ],
+    es: [
+      'Gracias por su sincero comentario. Lo usaremos para mejorar continuamente.',
+      'Lamentamos el inconveniente y esperamos tener la oportunidad de brindarle una experiencia mejor en su próxima visita.',
+      'Su experiencia nos ayuda a crecer. Gracias por tomarse el tiempo de contarnos.',
+      'Gracias por su honestidad. Haremos todo lo posible para que {branch_name} esté a la altura de sus expectativas.',
+    ],
+    ru: [
+      'Благодарим за честный отзыв. Мы приложим все усилия, чтобы стать лучше.',
+      'Ещё раз приносим извинения за неудобства и надеемся предложить вам более приятный опыт в следующий раз.',
+      'Ваш отзыв помогает нам совершенствоваться. Спасибо, что нашли время поделиться им.',
+      'Спасибо за откровенность. Ваши слова помогут нам сделать {branch_name} лучше.',
+    ],
+    ar: [
+      'نشكركم على ملاحظاتكم الصريحة. سنسعى للتحسين المستمر بناءً عليها.',
+      'نعتذر مجدداً عن الإزعاج ونأمل أن تمنحونا فرصة تقديم تجربة أفضل في زيارتكم القادمة.',
+      'ملاحظاتكم تساعدنا على النمو. شكراً لأخذكم الوقت لمشاركتها معنا.',
+      'نشكركم على صراحتكم. ستساعدنا كلماتكم في تحسين {branch_name} لتكون في مستوى توقعاتكم.',
+    ],
+    hi: [
+      'आपकी ईमानदार प्रतिक्रिया के लिए धन्यवाद। हम इसे लेकर लगातार सुधार करने का प्रयास करेंगे।',
+      'असुविधा के लिए पुनः क्षमाप्रार्थी हैं। हम आशा करते हैं कि अगली बार आपको बेहतर अनुभव मिलेगा।',
+      'आपकी प्रतिक्रिया हमें बेहतर बनाने में मदद करती है। समय निकालकर बताने के लिए धन्यवाद।',
+      'आपकी ईमानदारी के लिए आभारी हैं। आपके शब्द {branch_name} को बेहतर बनाने में सहायक होंगे।',
+    ],
+    tl: [
+      'Salamat sa inyong tapat na feedback. Gagamitin namin ito para mapabuti ang aming serbisyo.',
+      'Humihingi kami ng paumanhin sa abala at umaasa kaming magbigay sa inyo ng mas magandang karanasan sa susunod.',
+      'Ang inyong karanasan ay tumutulong sa amin na lumago. Salamat sa paglaan ng inyong oras para ibahagi ito.',
+      'Salamat sa inyong katapatan. Ang inyong mga salita ay makakatulong sa amin na mapabuti ang {branch_name}.',
     ],
   }
   const arr = v[lang] ?? v.ko
