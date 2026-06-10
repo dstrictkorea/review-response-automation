@@ -695,7 +695,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 2, location: 'AMNY', lang: 'ko', demographic: '31대 한국인 여성', scenario: 'ko-locker-complaint',
     reviewer_name: '임가영',
     review_text: '물건 맡기는 락커가 너무 적어요. 가방 들고 들어가니 불편하고 전시를 제대로 즐기기 힘들었어요. 락커 수를 늘려줬으면 좋겠어요.' },
-  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '35대 한국인 남성', scenario: 'ko-stolen-item',
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '35대 한국인 남성', scenario: 'ko-stolen-item-v2',
     reviewer_name: '조성민',
     review_text: '락커에 물건을 맡겼는데 카드 지갑이 없어졌어요. 직원한테 말하니까 확인이 어렵다고만 하고 도움이 안 됐어요. 정말 실망스럽습니다.' },
   { rating: 3, location: 'AMLV', lang: 'ko', demographic: '29대 한국인 여성', scenario: 'ko-photo-rules-unclear',
@@ -822,7 +822,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   // ─────────────────────────────────────────────────────────────────
   // [EMERGENCY] 법적 위협 — LEGAL_THREAT 태그 (관리자 승인 필수)
   // ─────────────────────────────────────────────────────────────────
-  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '41대 한국인 남성', scenario: 'ko-legal-threat',
+  { rating: 1, location: 'AMNY', lang: 'ko', demographic: '41대 한국인 남성', scenario: 'ko-legal-threat-v2',
     reviewer_name: '강현석',
     review_text: '아이가 전시 중 미끄러져서 다쳤는데 직원이 제대로 대응을 안 했어요. 병원 진단서도 있고 변호사 통해서 법적으로 처리할 생각입니다.' },
   { rating: 1, location: 'AMDB', lang: 'en', demographic: '39yo American female', scenario: 'en-legal-threat',
@@ -1056,7 +1056,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   // ─────────────────────────────────────────────────────────────────
   // [Round 5] 임산부 배려
   // ─────────────────────────────────────────────────────────────────
-  { rating: 4, location: 'AMDB', lang: 'ko', demographic: '31대 한국인 여성 임산부', scenario: 'ko-pregnant-visitor',
+  { rating: 4, location: 'AMDB', lang: 'ko', demographic: '31대 한국인 여성 임산부', scenario: 'ko-pregnant-visitor-v2',
     reviewer_name: '김나연',
     review_text: '임신 7개월에 왔는데 직원분이 먼저 다가와서 앉을 곳 안내해 주시고 음향이 강한 방은 우회할 수 있도록 도와줬어요. 덕분에 편안하게 즐겼습니다. 작은 배려가 정말 감사했어요.' },
 
@@ -1190,7 +1190,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 1, location: 'AMDB', lang: 'ja', demographic: '45才日本人男性', scenario: 'ja-worst-experience',
     reviewer_name: '鈴木健二',
     review_text: '最悪でした。スタッフの態度が非常に失礼で、質問しても無視されました。これだけの入場料を払っているのに、対応が最低です。二度と来ません。' },
-  { rating: 3, location: 'AMNY', lang: 'ja', demographic: '34才日本人女性', scenario: 'ja-mixed-review',
+  { rating: 3, location: 'AMNY', lang: 'ja', demographic: '34才日本人女性', scenario: 'ja-mixed-review-v2',
     reviewer_name: '佐藤美咲',
     review_text: '映像は美しかったですが、混雑がひどくて落ち着いて鑑賞できませんでした。週末は避けた方がいいかもしれません。スタッフさんは親切でした。' },
   { rating: 2, location: 'AMLV', lang: 'ja', demographic: '51才日本人女性', scenario: 'ja-staff-rude',
@@ -1206,7 +1206,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMDB', lang: 'zh', demographic: '26岁中国女性情侣', scenario: 'zh-couple-5star',
     reviewer_name: '李晓雨',
     review_text: '和男友一起来的，整个体验太震撼了！光影和香气完美结合，感觉像是走进了另一个世界。每个房间都是不同的惊喜，特别是花海那个展厅，美哭了。强烈推荐！' },
-  { rating: 2, location: 'AMNY', lang: 'zh', demographic: '40岁中国女性', scenario: 'zh-crowd-complaint',
+  { rating: 2, location: 'AMNY', lang: 'zh', demographic: '40岁中国女性', scenario: 'zh-crowd-complaint-v2',
     reviewer_name: '王芳',
     review_text: '人太多了，根本没办法好好欣赏！排队排了将近一个小时，进去之后还是挤。工作人员也不限制入场人数，完全没有秩序。票价不便宜，这样的体验真的很失望。' },
   { rating: 1, location: 'AMDB', lang: 'zh', demographic: '33岁中国男性', scenario: 'zh-staff-complaint',
@@ -1870,7 +1870,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   // ─────────────────────────────────────────────────────────────────
   // [Round 13] 영어 — 인플루언서 (팔로워 50만) 매우 긍정
   // ─────────────────────────────────────────────────────────────────
-  { rating: 5, location: 'AMLV', lang: 'en', demographic: '24yo American female lifestyle influencer 500k followers', scenario: 'en-influencer-5star',
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: '24yo American female lifestyle influencer 500k followers', scenario: 'en-influencer-5star-v2',
     reviewer_name: 'Alyssa Morgan',
     review_text: 'I have visited immersive art experiences in NYC, London, Paris and Tokyo and ARTE Las Vegas is genuinely top tier. Every single room is content-worthy. My Reel from here got 2M views overnight. The WAVE room and GARDEN room are unmatched for golden-hour vibes. If you\'re a content creator, this is non-negotiable. Put it on your list.' },
 
@@ -2038,7 +2038,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   // ─────────────────────────────────────────────────────────────────
   // [Round 15] 한국어 — 번아웃 직장인, 완전 치유 (감성 긍정)
   // ─────────────────────────────────────────────────────────────────
-  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '32대 한국인 여성 스타트업 대표', scenario: 'ko-burnout-recovery',
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: '32대 한국인 여성 스타트업 대표', scenario: 'ko-burnout-recovery-v2',
     reviewer_name: '권나래',
     review_text: '6개월째 번아웃 상태였는데 우연히 친구가 데려와줬어요. 처음엔 아무것도 못 느낄 줄 알았는데 WAVE 공간에서 갑자기 눈물이 쏟아졌습니다. 내가 살아있다는 걸 오랜만에 느꼈어요. 예술이 이렇게 사람을 살릴 수 있구나 싶었습니다. 다음 주에 팀원들 데려오려고 이미 예약했습니다.' },
 
@@ -2901,7 +2901,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
 
   // [Round 25] 한국어 — 직원 해고 요구 (★1, EMERGENCY)
   // 기대: EMERGENCY (해고해 패턴 in DEFAULT_EMERGENCY)
-  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '40세 한국인 여성, 직원 불만', scenario: 'ko-staff-punishment-demand',
+  { rating: 1, location: 'AMDB', lang: 'ko', demographic: '40세 한국인 여성, 직원 불만', scenario: 'ko-staff-punishment-demand-v2',
     reviewer_name: '최지원',
     review_text: '매표소 직원이 노골적으로 무시하는 태도로 응대했습니다. 반말에 눈도 안 마주치고 고객을 투명인간 취급했어요. 그 직원은 해고해야 마땅합니다. 다시는 방문하지 않겠습니다.' },
 
@@ -2999,7 +2999,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
 
   // [Round 27] 아랍어 — 가족 방문 긍정 (★5, COMPLIMENT)
   // 기대: COMPLIMENT (★5 감정 레이어 or 긍정어 패턴)
-  { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'أسرة عربية من الإمارات', scenario: 'ar-family-positive',
+  { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'أسرة عربية من الإمارات', scenario: 'ar-family-positive-v2',
     reviewer_name: 'نورة المنصوري',
     review_text: 'زيارة رائعة مع العائلة. الأطفال كانوا مفتونين بالتجارب البصرية والإضاءة الجميلة. الموظفون كانوا لطيفين ومساعدين للغاية. مكان استثنائي لا يُفوَّت. أنصح بشدة بزيارة هذا المتحف لجميع العائلات.' },
 
@@ -3225,7 +3225,7 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
 
   // [Round 33] 영어 — 카드사 차지백 위협 (★1, EMERGENCY)
   // 기대: EMERGENCY (\bchargeback\b 패턴 추가)
-  { rating: 1, location: 'AMNY', lang: 'en', demographic: '48yo American male, assertive consumer', scenario: 'en-chargeback-threat',
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '48yo American male, assertive consumer', scenario: 'en-chargeback-threat-v2',
     reviewer_name: 'Kevin Marshall',
     review_text: 'I am filing a chargeback with my credit card company. This was a total waste of money and nothing as advertised. Absolute scam.' },
 
