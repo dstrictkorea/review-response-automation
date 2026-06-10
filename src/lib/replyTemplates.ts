@@ -27,9 +27,7 @@
  */
 
 // Reply-engine language set — broader than UI Language ('ko'|'en'|'ja'|'zh')
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Language as _UILang } from '@/lib/i18n'
-type Language = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'ru' | 'ar' | 'hi' | 'tl'
+import type { ReplyLanguage as Language } from '@/lib/replyLanguage'
 import { branchSignatureWork } from '@/lib/branches'
 import { getBranchTokens, applyBranchTokens } from '@/lib/branchMetadata'
 import {

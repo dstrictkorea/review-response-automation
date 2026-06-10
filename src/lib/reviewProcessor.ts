@@ -16,7 +16,7 @@
  * 순수 함수 — DB/LLM 부작용 없음. 라우트 핸들러가 결정을 받아 실제 I/O를 수행한다.
  */
 
-import type { Language } from '@/lib/i18n'
+import type { ReplyLanguage as Language } from '@/lib/replyLanguage'
 import { analyzeReview, type WaterfallResult } from '@/lib/waterfallRegexEngine'
 import { buildStaticReply } from '@/lib/replyTemplates'
 import { sanitizeAndScoreRisk } from '@/lib/synonymEngine'

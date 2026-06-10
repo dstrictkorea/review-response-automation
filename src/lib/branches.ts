@@ -12,6 +12,7 @@
  */
 
 import type { Language } from '@/lib/i18n'
+import type { ReplyLanguage } from '@/lib/replyLanguage'
 
 export type BranchGroup = 'domestic' | 'global'
 
@@ -68,9 +69,11 @@ export function classifyBranch(code: string, countryCode?: string | null): Branc
   return 'global'
 }
 
-/** 공식 도시명 (없으면 null) */
-export function branchCity(code: string, lang: Language): string | null {
-  return BRANCH_CITY[code.toUpperCase()]?.[lang] ?? null
+/** 공식 도시명 (없으면 null). ES/RU/AR/HI/TL 등 확장 언어는 EN 표기 폴백(도시명은 고유명사). */
+export function branchCity(code: string, lang: ReplyLanguage): string | null {
+  const m = BRANCH_CITY[code.toUpperCase()]
+  if (!m) return null
+  return (m as Partial<Record<ReplyLanguage, string>>)[lang] ?? m.en ?? null
 }
 
 // ── ETERNAL NATURE 브랜드 메타데이터 (답변 템플릿용) ─────────────────────────────
@@ -79,8 +82,8 @@ export function branchCity(code: string, lang: Language): string | null {
 // ※ 시그니처 작품명은 편집 가능한 브랜드 메타데이터입니다(마케팅팀 검수 대상).
 //    인간 승인 전 게시되지 않으므로 담당자가 최종 확인/수정합니다.
 
-/** 공식 지점명 = "ARTE MUSEUM " + 도시명 (4개국어). 도시명이 없으면 코드 노출 없이 "ARTE MUSEUM". */
-export function branchOfficialName(code: string, lang: Language): string {
+/** 공식 지점명 = "ARTE MUSEUM " + 도시명. 도시명이 없으면 코드 노출 없이 "ARTE MUSEUM". */
+export function branchOfficialName(code: string, lang: ReplyLanguage): string {
   const city = branchCity(code, lang)
   return city ? `ARTE MUSEUM ${city}` : 'ARTE MUSEUM'
 }
@@ -102,9 +105,11 @@ export const BRANCH_SIGNATURE: Record<string, Record<Language, string>> = {
   AMKH: { ko: 'GARDEN(가든)',     en: 'GARDEN',     ja: 'GARDEN（庭園）',   zh: 'GARDEN（花园）' },
 }
 
-/** 지점 시그니처 작품명 (없으면 null) */
-export function branchSignatureWork(code: string, lang: Language): string | null {
-  return BRANCH_SIGNATURE[code.toUpperCase()]?.[lang] ?? null
+/** 지점 시그니처 작품명 (없으면 null). 확장 언어는 EN 작품명 폴백(작품명은 고유명사). */
+export function branchSignatureWork(code: string, lang: ReplyLanguage): string | null {
+  const m = BRANCH_SIGNATURE[code.toUpperCase()]
+  if (!m) return null
+  return (m as Partial<Record<ReplyLanguage, string>>)[lang] ?? m.en ?? null
 }
 
 // ── 지점 자동 감지 (CSV 컬럼 / 파일명) ───────────────────────────────────────────

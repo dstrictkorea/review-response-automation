@@ -8,6 +8,7 @@
  */
 
 import { processReview } from '../src/lib/reviewProcessor'
+import { toReplyLanguage } from '../src/lib/replyLanguage'
 
 // ═══════════════════════════════════════════════════════════════
 //  합성 리뷰 데이터셋 — 다양한 언어/인종/나이/성별/상황 조합
@@ -17,8 +18,8 @@ interface SyntheticReview {
   rating: number
   review_text: string
   reviewer_name: string
-  location: 'AMLV' | 'AMDB' | 'AMNY'
-  lang: 'ko' | 'en' | 'ja' | 'zh'
+  location: string      // 지점 코드 (AMLV/AMDB/AMNY/AMTK/AMSG/AMHE 등)
+  lang: string          // 30개 테스트 언어 — 코어 9개는 toReplyLanguage로 매핑, 나머지는 ko 폴백(프로덕션 동일)
   demographic: string   // 분석용 메타데이터
   scenario: string      // 어떤 시나리오를 테스트하는지
 }
@@ -3769,7 +3770,7 @@ for (let i = 0; i < SYNTHETIC_REVIEWS.length; i++) {
   const decision = processReview({
     reviewText: r.review_text,
     branchCode: r.location,
-    language: r.lang,
+    language: toReplyLanguage(r.lang),  // 프로덕션 langKeyOf와 동일 매핑 (비지원 언어 → ko)
     reviewerName: r.reviewer_name,
     rating: r.rating,
     reviewId: syntheticId,
