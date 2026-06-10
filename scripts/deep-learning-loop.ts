@@ -3170,6 +3170,56 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 1, location: 'AMDB', lang: 'es', demographic: '37yo Spanish female, staff complaint', scenario: 'es-staff-fired-demand',
     reviewer_name: 'Carmen Vega',
     review_text: 'Una empleada nos trató de manera muy grosera e irrespetuosa. Delante de todos los visiteurs, nos gritó sin ninguna razón. Este tipo de comportamiento es inaceptable y esa empleada debería ser despedida inmediatamente. No volveremos.' },
+
+  // ── Round 31: 새 언어(fi/uk/tl) + 영어 사기/사법 위협 + 이중언어 + ★5 묻힌 불만 ──
+
+  // [Round 31] 영어 — 사기 주장 + 환불 요구 (★1, EMERGENCY)
+  // 기대: EMERGENCY (demand money back = COMPENSATION_DEMAND)
+  { rating: 1, location: 'AMNY', lang: 'en', demographic: '44yo American male, legal-minded', scenario: 'en-scam-allegation',
+    reviewer_name: 'Brian Foster',
+    review_text: 'This place is a complete scam. I demand my money back, or I will report this to consumer protection authorities. The experience was nothing like advertised.' },
+
+  // [Round 31] 영어 — 사기 + 변호사 언급 (★1, EMERGENCY)
+  // 기대: EMERGENCY (consulting a lawyer = LEGAL_THREAT)
+  { rating: 1, location: 'AMLA', lang: 'en', demographic: '51yo American female, assertive reviewer', scenario: 'en-fraud-lawyer',
+    reviewer_name: 'Sandra Pryce',
+    review_text: 'This is outright fraud. We paid for an immersive experience and got a badly lit room. We are consulting a lawyer already.' },
+
+  // [Round 31] 중국어 — 환불 강요 + 소비자 고발 (★1, EMERGENCY)
+  // 기대: EMERGENCY (要求退款 = COMPENSATION_DEMAND via filterService ZH tag)
+  { rating: 1, location: 'AMSG', lang: 'zh', demographic: '39yo Chinese female, consumer advocate', scenario: 'zh-forced-refund-demand',
+    reviewer_name: '林美华',
+    review_text: '要求退款，否则投诉到消费者协会。服务极差，完全不值票价，入场排队超过一小时，展品也令人失望。' },
+
+  // [Round 31] 우크라이나어 — 사기 + 법원 위협 (★1, EMERGENCY)
+  // 기대: EMERGENCY (шахрайство + звернемося до суду = 새 패턴)
+  { rating: 1, location: 'AMDB', lang: 'uk', demographic: '33yo Ukrainian male, expat visitor', scenario: 'uk-court-threat',
+    reviewer_name: 'Андрій Коваль',
+    review_text: 'Це шахрайство. Ми звернемося до суду, якщо не отримаємо відшкодування. Умови огидні, ціни завищені.' },
+
+  // [Round 31] 핀란드어 — 실망 + 가격 + 혼잡 (★2, COMPLAINT)
+  // 기대: COMPLAINT (pettymys, liian kallis, täynnä = 새 패턴)
+  { rating: 2, location: 'AMHE', lang: 'fi', demographic: '29yo Finnish female, budget traveler', scenario: 'fi-disappointed-price',
+    reviewer_name: 'Aino Mäkinen',
+    review_text: 'Todella pettymys. Liian kallis ja liian täynnä väkeä viikonloppuna. Jono kesti yli tunnin. En suosittele kenellekään.' },
+
+  // [Round 31] 타갈로그어 — 무례한 직원 + 재방문 거부 (★1, COMPLAINT)
+  // 기대: COMPLAINT (bastos = 무례함, hindi babalik = 재방문 거부)
+  { rating: 1, location: 'AMDB', lang: 'tl', demographic: '27yo Filipino female, first-time visitor', scenario: 'tl-rude-staff',
+    reviewer_name: 'Maria Santos',
+    review_text: 'Ang bastos ng staff nito. Inignore nila kami at hindi tumulong kahit nag-aabala kami. Hindi na kami babalik dito kailanman.' },
+
+  // [Round 31] 영어 ★5 — 묻힌 소소한 불만 (★5, COMPLIMENT)
+  // 기대: COMPLIMENT (★5 별점이 지배, 작은 불만은 COMPLAINT 미분류)
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: '36yo American female, casual reviewer', scenario: 'en-5star-buried-complaint',
+    reviewer_name: 'Olivia Hartman',
+    review_text: 'Absolutely loved the ARTE Museum! The light art installations were breathtaking and truly unique. I wish the café had more seating, but that is a really minor thing. Would highly recommend to anyone.' },
+
+  // [Round 31] 한국어+영어 혼합 — 이중언어 불만 (★2, COMPLAINT)
+  // 기대: COMPLAINT (한국어 불만 패턴 감지 + 혼합 언어 내성)
+  { rating: 2, location: 'AMSE', lang: 'ko', demographic: '31yo Korean-American female, bilingual reviewer', scenario: 'ko-en-bilingual-complaint',
+    reviewer_name: '박지은',
+    review_text: '정말 disappointing했어요. 줄이 너무 길고 staff도 not helpful at all. 가격 대비 퀄리티가 너무 별로였어요. 다음엔 안 올 것 같아요.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
