@@ -3736,6 +3736,80 @@ function detectForbidden(reply: string): string[] {
   return hits
 }
 
+// ── 토큰 미치환 탐지 — 템플릿 {token}이 최종 답변에 남으면 P0 ──────────────────
+function detectUnreplacedTokens(reply: string): string | null {
+  const m = reply.match(/\{(branch_name|landmark|highlight_room|facility)\}/g)
+  return m ? `UNREPLACED_TOKEN: ${[...new Set(m)].join(', ')}` : null
+}
+
+// ── 답변 문자체계(스크립트) 검증 — 9개 코어 언어 전체 ────────────────────────
+// 리뷰 언어와 답변 문자체계 불일치 = '말도 안 되는 답변'의 대표 케이스 (P0).
+// 비코어 언어(de/fr/pt/vi 등)는 ko 폴백이 설계 동작이므로 검사하지 않는다.
+function detectWrongScript(reply: string, lang: string): string | null {
+  if (reply.includes('null — LLM')) return null
+  const count = (re: RegExp) => (reply.match(re) || []).length
+  const hangul = count(/[가-힣]/g)
+  const kana   = count(/[぀-ヿ]/g)
+  const han    = count(/[一-鿿]/g)
+  const cyr    = count(/[Ѐ-ӿ]/g)
+  const arab   = count(/[؀-ۿ]/g)
+  const deva   = count(/[ऀ-ॿ]/g)
+  switch (lang) {
+    case 'ko': if (hangul < 10) return `WRONG_SCRIPT: ko reply has only ${hangul} Hangul chars`; break
+    case 'ja': if (kana < 5)    return `WRONG_SCRIPT: ja reply has only ${kana} Kana chars`; break
+    case 'zh': if (han < 10 || kana > 3) return `WRONG_SCRIPT: zh reply han=${han} kana=${kana}`; break
+    case 'ru': if (cyr < 10)    return `WRONG_SCRIPT: ru reply has only ${cyr} Cyrillic chars`; break
+    case 'ar': if (arab < 10)   return `WRONG_SCRIPT: ar reply has only ${arab} Arabic chars`; break
+    case 'hi': if (deva < 10)   return `WRONG_SCRIPT: hi reply has only ${deva} Devanagari chars`; break
+    case 'en':
+      if (hangul > 5 || !/thank|appreciat|sorry|apolog|glad|welcome|hear|delight|honor/i.test(reply))
+        return `WRONG_SCRIPT: en reply lang markers missing (hangul=${hangul})`
+      break
+    case 'es':
+      if (hangul > 5 || !/gracias|disculpas|sentimos|alegra|lamentamos|esperamos|bienvenid/i.test(reply))
+        return `WRONG_SCRIPT: es reply lang markers missing (hangul=${hangul})`
+      break
+    case 'tl':
+      if (hangul > 5 || !/salamat|paumanhin|kami|inyong|natutuwa|maligayang/i.test(reply))
+        return `WRONG_SCRIPT: tl reply lang markers missing (hangul=${hangul})`
+      break
+  }
+  return null
+}
+
+// ── 지점 교차 오염 탐지 — 다른 지점 도시명이 답변에 등장하면 P0 ──────────────
+const BRANCH_CITY_WORDS: Record<string, RegExp> = {
+  AMLV: /LAS\s*VEGAS/i, AMDB: /DUBAI/i,     AMNY: /NEW\s*YORK/i,
+  AMTK: /TOKYO/i,       AMSG: /SINGAPORE/i, AMHE: /HELSINKI/i,
+}
+function detectBranchContamination(reply: string, location: string): string | null {
+  for (const [code, re] of Object.entries(BRANCH_CITY_WORDS)) {
+    if (code !== location.toUpperCase() && re.test(reply)) {
+      return `BRANCH_CONTAMINATION: ${location} reply mentions ${code} city name`
+    }
+  }
+  return null
+}
+
+// ── 조립 아티팩트 — 빈 슬롯/이중 공백/잘린 문장 흔적 (P1) ─────────────────────
+function detectAssemblyArtifact(reply: string): string | null {
+  if (/\n{3,}/.test(reply))        return 'ARTIFACT: triple newline (empty slot joined)'
+  if (/^\s|\s$/.test(reply))       return 'ARTIFACT: leading/trailing whitespace'
+  if (/[,;:、，]\s*\n/.test(reply))  return 'ARTIFACT: dangling punctuation before line break'
+  if (/\(\)|\[\]|「」|『』/.test(reply)) return 'ARTIFACT: empty brackets'
+  return null
+}
+
+// ── 승인 우회 탐지 — 저평점 리뷰가 무승인(ai_done)으로 직행하면 P0 ────────────
+// COMPLAINT Tier1 static은 설계상 허용(사전 검수 사과 템플릿).
+// 위험한 것은 ≤2★ 리뷰가 COMPLIMENT/SAFE로 분류되어 '긍정 감사' 답변이 무승인 발행되는 경우.
+function detectApprovalBypass(status: string, rating: number, requiresApproval: boolean): string | null {
+  if (rating <= 2 && !requiresApproval && (status === 'COMPLIMENT' || status === 'SAFE')) {
+    return `APPROVAL_BYPASS: ★${rating} ${status} auto-done without human approval`
+  }
+  return null
+}
+
 // ── 공통 후처리 클로징 과다 반복 탐지 ──────────────────────────────
 const CLOSING_CORPUS: Record<string, number> = {}
 function trackClosing(reply: string, lang: string): string | null {
@@ -3819,6 +3893,28 @@ for (let i = 0; i < SYNTHETIC_REVIEWS.length; i++) {
   // ── 9. 클로징 반복 추적 ────────────────────────────────────
   const closing = trackClosing(reply, r.lang)
   if (closing) issues.push({ code: 'REPETITIVE_CLOSING', severity: 'P2', description: closing, evidence: '' })
+
+  // ── 10. 토큰 미치환 (P0 — 템플릿 변수가 그대로 노출) ────────────
+  const tok = detectUnreplacedTokens(reply)
+  if (tok) issues.push({ code: 'UNREPLACED_TOKEN', severity: 'P0', description: tok, evidence: reply.substring(0, 60) })
+
+  // ── 11. 문자체계 불일치 (P0 — 답변 언어가 리뷰 언어와 다름) ──────
+  if (decision.route !== 'llm') {
+    const ws = detectWrongScript(reply, r.lang)
+    if (ws) issues.push({ code: 'WRONG_SCRIPT', severity: 'P0', description: ws, evidence: reply.substring(0, 60) })
+  }
+
+  // ── 12. 지점 교차 오염 (P0 — 다른 지점명 노출) ──────────────────
+  const bc = detectBranchContamination(reply, r.location)
+  if (bc) issues.push({ code: 'BRANCH_CONTAMINATION', severity: 'P0', description: bc, evidence: reply.substring(0, 60) })
+
+  // ── 13. 조립 아티팩트 (P1 — 빈 슬롯/공백/잘림) ──────────────────
+  const art = detectAssemblyArtifact(reply)
+  if (art) issues.push({ code: 'ARTIFACT', severity: 'P1', description: art, evidence: reply.substring(0, 60) })
+
+  // ── 14. 승인 우회 (P0 — 저평점 무승인 자동완료) ─────────────────
+  const bypass = detectApprovalBypass(decision.classification.status, r.rating, decision.requiresApproval)
+  if (bypass) issues.push({ code: 'APPROVAL_BYPASS', severity: 'P0', description: bypass, evidence: reply.substring(0, 60) })
 
   allResults.push({
     idx: i + 1,

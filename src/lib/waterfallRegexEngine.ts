@@ -396,11 +396,20 @@ export function analyzeReview(
       reason = '운영/서비스 불만 감지 → LLM 공감 사과문(STANDARD)'
     }
   } else if (hasPositive && !isQuestion) {
-    status = ratingHigh ? 'COMPLIMENT' : 'SAFE'
-    requiresLLM = false
-    reason = isArtworkFocused
-      ? '작품 중심 긍정 리뷰 → 정적 템플릿(ETERNAL NATURE)'
-      : ratingHigh ? '고평점 긍정 리뷰 → COMPLIMENT(정적 감사)' : '일반 긍정 리뷰 → 정적 감사 템플릿'
+    if (ratingLow) {
+      // ★1-2 + 긍정 본문 = 별점·본문 충돌 (미탐지 불만/혼합 뉘앙스/사캐즘 잔존 가능성)
+      // 저평점 리뷰가 무승인 ai_done으로 직행하는 것을 차단 → 사람 검토 필수
+      status = 'AMBIGUOUS'
+      requiresLLM = true
+      reason = '저평점(1·2점) + 긍정 본문 충돌 → 미탐지 불만 가능성, LLM/사람 검토 격리'
+      tags.push('저평점_부정신호')
+    } else {
+      status = ratingHigh ? 'COMPLIMENT' : 'SAFE'
+      requiresLLM = false
+      reason = isArtworkFocused
+        ? '작품 중심 긍정 리뷰 → 정적 템플릿(ETERNAL NATURE)'
+        : ratingHigh ? '고평점 긍정 리뷰 → COMPLIMENT(정적 감사)' : '일반 긍정 리뷰 → 정적 감사 템플릿'
+    }
   } else {
     status = 'AMBIGUOUS'
     requiresLLM = true
