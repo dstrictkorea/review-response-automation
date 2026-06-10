@@ -3298,7 +3298,8 @@ function detectAISmell(reply: string, lang: string): string[] {
 // ── 답변 길이 이슈 탐지 ──────────────────────────────────────────
 function detectLength(reply: string, status: string, reviewText?: string): string | null {
   const len = reply.length
-  if (reply.includes('null — LLM') || len < 30) return `TOO_SHORT (${len}자)`
+  if (reply.includes('null — LLM')) return null   // LLM route: 시뮬레이션 플레이스홀더 — 길이 체크 불필요
+  if (len < 30) return `TOO_SHORT (${len}자)`
   if (status === 'COMPLIMENT' && len > 600) return `OVER_LONG_COMPLIMENT (${len}자)`
   if (status === 'COMPLAINT' && len < 80) return `TOO_SHORT_COMPLAINT (${len}자)`
   // TMI: 리뷰가 30자 이하 단문인데 답변이 300자 넘으면 과잉 응대 (SHORT 모드 270자 미만은 허용)

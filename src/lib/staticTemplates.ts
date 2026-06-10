@@ -131,7 +131,10 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
 //  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 응답 우선 반환 (AI같은 답변 구현)
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: string | null): string {
-  // ── 맥락 거울 응답 (EN 데이트/romantic 전용) ──────────────────────────────────────
+  // ── 맥락 거울 응답 (EN 전용: 힐링·데이트) ────────────────────────────────────────
+  if (contextMirror === '힐링' && lang === 'en') {
+    return 'We are so glad {branch_name} offered you that sense of healing and calm. That truly means a great deal to us.'
+  }
   if (contextMirror === '데이트' && lang === 'en') {
     return 'We are so glad {branch_name} made for such a special evening together. That means a lot to us.'
   }
@@ -717,7 +720,16 @@ export function slotD_peak_hours(lang: Language, idx = 0): string {
 //  contextMirror: 리뷰 핵심 감성 키워드가 있을 경우 맞춤 클로징 우선 반환
 // ════════════════════════════════════════════════════════════════════════════════
 export function slotE_positive(lang: Language, idx = 0, contextMirror?: string | null): string {
-  // ── 맥락 거울 클로징 (EN 데이트/romantic 전용) ────────────────────────────────────
+  // ── 맥락 거울 클로징 (EN 전용: 힐링·데이트) ─────────────────────────────────────
+  if (contextMirror === '힐링' && lang === 'en') {
+    const healClose = [
+      'Whenever you need a moment to breathe and restore, {branch_name} will be here for you.',
+      'We hope you carry that sense of calm with you. Come back whenever you need to recharge.',
+      '{branch_name} is always here as a place of calm and renewal. See you again soon.',
+      'A healing space is something we strive to be. Thank you for reminding us why that matters.',
+    ]
+    return healClose[idx % healClose.length]
+  }
   if (contextMirror === '데이트' && lang === 'en') {
     const dateClose = [
       'We hope {branch_name} becomes your go-to spot for special evenings. See you next time.',
