@@ -3382,6 +3382,95 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
   { rating: 5, location: 'AMTK', lang: 'ja', demographic: '28세 일본인 여성, 디지털아트 팬', scenario: 'ja-immersive-5star',
     reviewer_name: '鈴木花子',
     review_text: '素晴らしい体験でした！光と音が完璧に調和していて、まるで別世界に迷い込んだようでした。特に花のインスタレーションが美しく、何度も行ったり来たりしてしまいました。スタッフも親切で、また必ず来たいと思います。' },
+
+  // ── Round 36: 핵심 9개 언어 고도화 — 힌디어·필리핀어 확장 + 러·스·아랍·중국 다양성 ──
+
+  // ── 힌디어 (hi) : 1→6개로 확장 ──────────────────────────────────────────────
+
+  // [R36] hi ★1 EMERGENCY — 환불 요구 + 법적 위협 (공식 힌디어)
+  { rating: 1, location: 'AMDB', lang: 'hi', demographic: '42세 인도인 남성, 소비자권익 의식', scenario: 'hi-emergency-refund-court',
+    reviewer_name: 'Rajesh Kumar',
+    review_text: 'यह अनुभव पूरी तरह निराशाजनक था। हमें पैसे वापस चाहिए। अगर नहीं मिले तो कोर्ट जाएंगे और कानूनी कार्रवाई करने में देरी नहीं करेंगे।' },
+
+  // [R36] hi ★5 COMPLIMENT — 가족 방문 극찬 (캐주얼 힌디어)
+  { rating: 5, location: 'AMSG', lang: 'hi', demographic: '38세 인도인 여성, 가족 방문', scenario: 'hi-family-praise',
+    reviewer_name: 'Priya Sharma',
+    review_text: 'परिवार के साथ बहुत शानदार अनुभव था! बच्चे खुशी से झूम उठे। हर कमरा एक अलग दुनिया की तरह था। जरूर दोबारा आएंगे, यह यात्रा अविस्मरणीय रही।' },
+
+  // [R36] hi ★2 COMPLAINT — 혼잡·가격 불만 (힌글리시 코드스위칭)
+  { rating: 2, location: 'AMNY', lang: 'hi', demographic: '26세 인도계 미국인, 힌글리시 사용자', scenario: 'hi-hinglish-crowd',
+    reviewer_name: 'Arjun Mehta',
+    review_text: 'Bahut zyaada crowd tha. Theek se kuch bhi dekh nahi paye. Price bhi itna zyaada tha jitna worth nahi tha. Bahut bura anubhav raha. Wapas nahi aayenge.' },
+
+  // [R36] hi ★2 COMPLAINT — 직원 불친절 (힌디어)
+  { rating: 2, location: 'AMLV', lang: 'hi', demographic: '55세 인도인 남성, 어르신', scenario: 'hi-staff-rude',
+    reviewer_name: 'Suresh Patel',
+    review_text: 'स्टाफ का व्यवहार बहुत बुरा था। कुछ पूछने पर ऐसे जवाब देते हैं जैसे कोई एहसान कर रहे हों। पैसे की बर्बादी हुई। वापस नहीं आएंगे।' },
+
+  // [R36] hi ★3 AMBIGUOUS — 예쁘지만 너무 짧음 (혼합 감정)
+  { rating: 3, location: 'AMTK', lang: 'hi', demographic: '31세 인도인 여성, 솔로 여행자', scenario: 'hi-mixed-short-visit',
+    reviewer_name: 'Ananya Gupta',
+    review_text: 'कला बेहद सुंदर थी और रोशनी का जादू मन मोह लेता है। लेकिन केवल 40 मिनट में सब कुछ खत्म हो गया। इतनी कीमत के लिए थोड़ा और समय मिलता तो बेहतर होता।' },
+
+  // [R36] hi ★5 COMPLIMENT — 데이트 밤 낭만 (힌디어)
+  { rating: 5, location: 'AMDB', lang: 'hi', demographic: '29세 인도인 커플', scenario: 'hi-date-night-praise',
+    reviewer_name: 'Kavya Singh',
+    review_text: 'पार्टनर के साथ यहाँ आना बेहद खास रहा। रोशनी और संगीत का संयोजन दिल को छू लेने वाला था। रोमांटिक माहौल के लिए यह जगह बिल्कुल परफेक्ट है।' },
+
+  // ── 필리핀어/타갈로그어 (tl) : 1→5개로 확장 ─────────────────────────────────
+
+  // [R36] tl ★5 COMPLIMENT — 가족 방문 극찬 (타글리시)
+  { rating: 5, location: 'AMSG', lang: 'tl', demographic: '34세 필리핀인 여성, 가족 방문', scenario: 'tl-family-compliment',
+    reviewer_name: 'Maria Santos',
+    review_text: 'Napakaganda ng experience! Dinala ko ang buong pamilya at natuwang-tuwa silang lahat. Ang mga ilaw at musika ay nakakamangha talaga. Babalik kami nang babalik!' },
+
+  // [R36] tl ★2 COMPLAINT — 긴 대기 + 직원 설명 부족 (타갈로그)
+  { rating: 2, location: 'AMDB', lang: 'tl', demographic: '28세 필리핀인 남성, 여행자', scenario: 'tl-long-wait',
+    reviewer_name: 'Carlo Reyes',
+    review_text: 'Napakatagal ng pila — halos dalawang oras kami naghintay! Hindi ito katanggap-tanggap para sa presyong binayad namin. Masyadong maraming tao at walang malinaw na paliwanag ang staff sa mga bisita.' },
+
+  // [R36] tl ★1 COMPLAINT — 직원 무례함 (타갈로그)
+  { rating: 1, location: 'AMNY', lang: 'tl', demographic: '22세 필리핀계 미국인 여성', scenario: 'tl-rude-staff-v2',
+    reviewer_name: 'Ana Cruz',
+    review_text: 'Walang respeto ang mga staff dito. Kapag nagtatanong ka, parang inaabala mo sila. Nakakainis! Ang ganda ng exhibit pero ang sama ng pagtrato sa mga bisita. Hindi na kami babalik.' },
+
+  // [R36] tl ★5 COMPLIMENT — 솔로 방문 (타갈로그)
+  { rating: 5, location: 'AMLV', lang: 'tl', demographic: '25세 필리핀인 여성, 솔로 여행', scenario: 'tl-solo-compliment',
+    reviewer_name: 'Jasmine De Leon',
+    review_text: 'Napuntahan ko ito nang mag-isa at isa ito sa pinaka-magandang desisyon ko. Ang bawat kwarto ay parang ibang mundo. Sobrang worth it ang presyo para sa ganitong kahanga-hangang karanasan!' },
+
+  // ── 러시아어 (ru) 다양성 확장 ────────────────────────────────────────────────
+
+  // [R36] ru ★5 COMPLIMENT — 감동적 극찬 (러시아어)
+  { rating: 5, location: 'AMTK', lang: 'ru', demographic: '36세 러시아인 여성, 예술 애호가', scenario: 'ru-5star-emotional',
+    reviewer_name: 'Анна Соколова',
+    review_text: 'Это было невероятно! Световые инсталляции создавали ощущение полного погружения. Я была тронута до глубины души. Обязательно вернусь — и приведу с собой всю семью.' },
+
+  // [R36] ru ★2 COMPLAINT — 간접적 실망 (러시아어)
+  { rating: 2, location: 'AMDB', lang: 'ru', demographic: '44세 러시아인 남성, 비즈니스 여행자', scenario: 'ru-indirect-complaint',
+    reviewer_name: 'Дмитрий Волков',
+    review_text: 'Ожидал большего от такого именитого места. Технические неполадки с несколькими инсталляциями, слишком шумно и тесно. Цена не соответствует качеству. Не рекомендую.' },
+
+  // ── 스페인어 (es) 다양성 확장 ────────────────────────────────────────────────
+
+  // [R36] es ★2 COMPLAINT — 기념일 망침 (스페인어)
+  { rating: 2, location: 'AMNY', lang: 'es', demographic: '35세 라틴계 미국인 커플', scenario: 'es-anniversary-ruined',
+    reviewer_name: 'Diego Fernández',
+    review_text: 'Vinimos a celebrar nuestro aniversario y fue una gran decepción. Tres horas de cola, instalaciones con fallos técnicos y servicio pésimo. La velada perfecta se convirtió en una verdadera pesadilla.' },
+
+  // ── 아랍어 (ar) 다양성 확장 ─────────────────────────────────────────────────
+
+  // [R36] ar ★2 COMPLAINT — 어르신 접근성 (아랍어)
+  { rating: 2, location: 'AMDB', lang: 'ar', demographic: '48세 사우디 남성, 부모 동반', scenario: 'ar-elderly-accessibility',
+    reviewer_name: 'عبدالرحمن الحربي',
+    review_text: 'أحضرت والدتي المسنة ولم تكن هناك أي تسهيلات للأشخاص ذوي الاحتياجات الخاصة. لا كراسي متحركة ولا مصاعد مريحة. مخيب للآمال جداً ولا أنصح به لمن لديه كبار في السن.' },
+
+  // ── 중국어 (zh) 다양성 확장 ─────────────────────────────────────────────────
+
+  // [R36] zh ★1 COMPLAINT — 웨이보 협박 + 다양한 불만 (중국어 간체)
+  { rating: 1, location: 'AMSG', lang: 'zh', demographic: '27세 중국인 여성, SNS 파워유저', scenario: 'zh-weibo-complaint',
+    reviewer_name: '李晓雯',
+    review_text: '整个体验非常令人失望。工作人员态度极差，设施有多处损坏，排队时间长达两小时。我会在微博上曝光这些问题，让更多人了解真实情况。' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
