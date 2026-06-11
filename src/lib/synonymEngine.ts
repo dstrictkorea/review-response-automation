@@ -272,6 +272,96 @@ export function extractContextMirror(text: string): string | null {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+//  extractSensoryFocus — 감각 경험 추출 (빛/물/향/소리)
+//
+//  ARTE MUSEUM은 라이트·미디어 아트관 → 리뷰가 빛/파도/향/음악 등 특정 감각을 자주 언급.
+//  답변이 그 감각을 구체적으로 반향하면 "상황에 맞는" 비-제네릭 응답이 된다 (slotSensory용).
+//  ⚠ \b(워드바운더리)는 ASCII 전용 — CJK/데바나가리/아랍/키릴은 평문 교차만 사용.
+//  COMPLIMENT/SAFE 경로에서만 사용 → 맥락은 이미 긍정.
+// ════════════════════════════════════════════════════════════════════════════════
+export function extractSensoryFocus(text: string): string | null {
+  const t = text ?? ''
+  // 빛/조명
+  if (/빛이|빛의|빛에|빛\s|조명|불빛|라이트\s*(?:쇼|아트)/.test(t)) return '빛'
+  if (/\blight(?:s|ing)?\b|\bluminous\b|\bglow(?:ing)?\b/i.test(t)) return '빛'
+  if (/光の|光が|照明|ライト/.test(t)) return '빛'
+  if (/灯光|光影|光线/.test(t)) return '빛'
+  if (/रोशनी|प्रकाश/.test(t)) return '빛'
+  if (/إضاءة|أضواء|الضوء/.test(t)) return '빛'
+  if (/\bluces?\b|\biluminaci\w*/i.test(t)) return '빛'
+  if (/свет|подсветк\w*/i.test(t)) return '빛'
+  if (/\bilaw\b|\bliwanag\b/i.test(t)) return '빛'
+  // 물/파도/폭포
+  if (/물결|파도|폭포|워터/.test(t)) return '물'
+  if (/\bwater(?:fall)?\b|\bwaves?\b|\bocean\b/i.test(t)) return '물'
+  if (/滝|波の|海の/.test(t)) return '물'
+  if (/瀑布|海浪|波浪/.test(t)) return '물'
+  if (/लहर|झरना|पानी/.test(t)) return '물'
+  if (/شلال|أمواج|الماء|موج/.test(t)) return '물'
+  if (/\bcascada\b|\bolas?\b|\boc[eé]ano\b/i.test(t)) return '물'
+  if (/волн\w*|водопад/i.test(t)) return '물'
+  if (/\balon\b|\btalon\s*ng\s*tubig/i.test(t)) return '물'
+  // 향/향기
+  if (/향기|향이|향에|향긋|아로마/.test(t)) return '향'
+  if (/\bscent(?:ed)?\b|\bfragrance\b|\baroma\b|\bsmell(?:ed|s)?\b/i.test(t)) return '향'
+  if (/香り|香りが|匂い/.test(t)) return '향'
+  if (/香味|香气|气味/.test(t)) return '향'
+  if (/खुशबू|सुगंध|महक/.test(t)) return '향'
+  if (/رائحة|عطر|عبير/.test(t)) return '향'
+  if (/\baroma\b|\bfragancia\b|\baromático/i.test(t)) return '향'
+  if (/аромат|благоухан/i.test(t)) return '향'
+  if (/\bbango\b|\bhalimuyak\b/i.test(t)) return '향'
+  // 소리/음악
+  if (/음악|선율|사운드|소리가|소리에/.test(t)) return '소리'
+  if (/\bmusic\b|\bsoundscape\b|\bmelod\w*\b/i.test(t)) return '소리'
+  if (/音楽|サウンド|旋律/.test(t)) return '소리'
+  if (/音乐|声音|旋律/.test(t)) return '소리'
+  if (/संगीत|धुन|ध्वनि/.test(t)) return '소리'
+  if (/موسيقى|الصوت|أنغام/.test(t)) return '소리'
+  if (/\bmúsica\b|\bsonido\b|\bmelod[ií]a\b/i.test(t)) return '소리'
+  if (/музык\w*|мелоди/i.test(t)) return '소리'
+  if (/\bmusika\b|\btunog\b/i.test(t)) return '소리'
+  return null
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  extractCompanion — 동반자 맥락 추출 (가족/데이트/친구) — contextMirror와 독립
+//
+//  contextMirror는 우선순위로 1개만 반환(예: '힐링'). 동반자 정보가 묻히는 것을 보완.
+//  → 답변이 감성(B/E)과 동반자(전용 슬롯)를 둘 다 반영 가능 (governor가 중복 echo 차단).
+// ════════════════════════════════════════════════════════════════════════════════
+export function extractCompanion(text: string): string | null {
+  const t = text ?? ''
+  // 데이트/커플
+  if (/데이트|연인과|파트너와|커플/.test(t)) return '데이트'
+  if (/\bdate\s*(?:night|spot|place)?\b|\bromantic\b|\bpartner\b|\bboyfriend\b|\bgirlfriend\b/i.test(t)) return '데이트'
+  if (/パートナー|彼氏|彼女|カップル|デート/.test(t)) return '데이트'
+  if (/伴侣|男朋友|女朋友|约会|情侣/.test(t)) return '데이트'
+  if (/पार्टनर|प्रेमी|प्रेमिका/.test(t)) return '데이트'
+  if (/романтич\w*|с\s*(?:партнёром|любимым|любимой)/i.test(t)) return '데이트'
+  if (/\bpareja\b|\brom[aá]ntic\w*/i.test(t)) return '데이트'
+  // 가족
+  if (/(?:아이|아들|딸|아기|어린이)(?:랑|이랑|과\s*함께|들과|와\s*함께)/.test(t)) return '가족'
+  if (/가족(?:이랑|과\s*함께|끼리|들과|과\s*방문|여행)/.test(t)) return '가족'
+  if (/\b(?:kids?|children|child|son|daughter|toddler|family)\b/i.test(t)) return '가족'
+  if (/子供|家族|お子|娘|息子/.test(t)) return '가족'
+  if (/孩子|家人|家庭|儿子|女儿|小朋友/.test(t)) return '가족'
+  if (/परिवार|बच्च\S*/.test(t)) return '가족'
+  if (/\bpamilya\b|\bmga\s+bata\b/i.test(t)) return '가족'
+  if (/\bfamilia\b|\bniños\b|\bhijos?\b/i.test(t)) return '가족'
+  if (/семь[яёи]\w*|детьми|ребёнком/i.test(t)) return '가족'
+  // 친구
+  if (/친구(?:랑|이랑|들과|와\s*함께)/.test(t)) return '친구'
+  if (/\bfriends?\b/i.test(t)) return '친구'
+  if (/友達|友人|仲間/.test(t)) return '친구'
+  if (/朋友|好友/.test(t)) return '친구'
+  if (/दोस्त|मित्र/.test(t)) return '친구'
+  if (/с\s*друзьями|друзь\w*/i.test(t)) return '친구'
+  if (/\bamigos?\b|\bkaibigan\b/i.test(t)) return '친구'
+  return null
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 //  3-Tier Risk Dictionary & Sanitization Layer
 //
 //  목적: COMPLAINT/AMBIGUOUS 라우팅 전 독성 순화 및 리스크 등급 판별.

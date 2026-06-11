@@ -41,6 +41,11 @@ import {
   slotD_peak_hours,
   slotE_positive,
   slotE_negative,
+  slotSensory,
+  slotCompanion,
+  slotRepeatVisitor,
+  slotEmpathy,
+  slotReassurance,
 } from '@/lib/staticTemplates'
 import { scanForbidden, type WaterfallResult } from '@/lib/waterfallRegexEngine'
 
@@ -72,6 +77,11 @@ interface SlotIndices {
   idxC: number   // prime 5
   idxD: number   // prime 7 (Slot D: 3 variants)
   idxE: number   // prime 11
+  idxS: number   // prime 13 (Sensory)
+  idxM: number   // prime 17 (coMpanion)
+  idxR: number   // prime 19 (Repeat visitor)
+  idxP: number   // prime 23 (emPathy)
+  idxQ: number   // prime 29 (reassurance Q)
 }
 
 function buildSlotIndices(reviewId: string | null | undefined): SlotIndices {
@@ -81,63 +91,104 @@ function buildSlotIndices(reviewId: string | null | undefined): SlotIndices {
     idxC: slotHash(reviewId,  5) % 4,  // 태그 기반 pivot 4-variant 유지
     idxD: slotHash(reviewId,  7) % 3,  // 피크힌트 3-variant 유지
     idxE: slotHash(reviewId, 11) % 8,
+    idxS: slotHash(reviewId, 13) % 2,  // 신규 상황 슬롯: 2 variants/lang
+    idxM: slotHash(reviewId, 17) % 2,
+    idxR: slotHash(reviewId, 19) % 2,
+    idxP: slotHash(reviewId, 23) % 2,
+    idxQ: slotHash(reviewId, 29) % 2,
   }
 }
 
 /**
- * buildStaticReply — 5-슬롯 STANDARD 답변 조립 (LLM 미사용).
+ * buildStaticReply — 다중 슬롯 STANDARD 답변 조립 (LLM 미사용, governed palette).
  *
- * Kill-Switch(불변): isEmergency || isComplaint → Slot C에서 ETERNAL NATURE 찬양 차단.
- * 토큰 치환: 슬롯 조립 후 applyBranchTokens()가 {branch_name}/{landmark}/{highlight_room}/{facility}를 교체.
+ * 고정 슬롯: A(인사/사과) + B(감정/수용) + E(클로징). 그 사이를 '상황 본문 슬롯'으로 채운다.
+ * 본문 팔레트(조건부):
+ *   COMPLIMENT/SAFE  : Sensory(빛/물/향/소리) · Companion(가족/데이트/친구) · RepeatVisitor ·
+ *                      Artwork/General · Peak
+ *   COMPLAINT        : Empathy · Tag-Pivot · Peak · Reassurance
+ * Governor: 리뷰 길이에 비례한 bodyBudget(1~3)으로 가장 상황적인 슬롯만 선택 → TMI 방지.
+ *   더 풍부한 리뷰 = 더 많은 상황 슬롯, 단문 = 최소 슬롯. (슬롯이 많아도 답변이 길어지지 않음)
+ *
+ * Kill-Switch(불변): isEmergency || isComplaint → ETERNAL NATURE 찬양/상황 호평 슬롯 원천 차단.
+ * 중복 echo 차단: companionContext === contextMirror 이면 Companion 슬롯 생략(B/E가 이미 반영).
+ * 토큰 치환: 조립 후 applyBranchTokens()가 {branch_name}/{landmark}/{highlight_room}/{facility} 교체.
  */
 export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContext): string {
   const lang   = ctx.language
   const name   = (ctx.reviewerName ?? '').trim()
   const tokens = getBranchTokens(ctx.branchCode, lang)
   const sig    = branchSignatureWork(ctx.branchCode, lang)
-  const { idxA, idxB, idxC, idxD, idxE } = buildSlotIndices(ctx.reviewId)
+  const ix     = buildSlotIndices(ctx.reviewId)
+  const len    = ctx.reviewTextLength ?? 999
 
   let rawReply: string
 
   const mirror = result.contextMirror ?? null
 
   if (result.isEmergency || result.isComplaint) {
-    // ── COMPLAINT / EMERGENCY: A + B + C? + D? + E ──────────────────────────
-    // Kill-Switch: ETERNAL NATURE 찬양 블록 원천 차단
-    const a = slotA_apology(lang, name, idxA)
-    const b = slotB_acknowledgment(lang, idxB)
-    const c = slotC_pivot(lang, result.tags, idxC)  // '' = 매칭 태그 없음
-    // CROWD_COMPLAINT + 피크타임 언급 → 평일 방문 권유
-    const d = (result.hasPeakHours && result.tags.includes('CROWD_COMPLAINT'))
-              ? slotD_peak_hours(lang, idxD)
-              : null
-    const e = slotE_negative(lang, idxE)
-    const parts: string[] = [a, b, ...(c ? [c] : []), ...(d ? [d] : []), e]
-    rawReply = parts.join('\n\n')
+    // ── COMPLAINT / EMERGENCY ───────────────────────────────────────────────
+    // Kill-Switch: ETERNAL NATURE 찬양 블록 원천 차단. 긴급은 건조 유지(공감/안심 슬롯 X).
+    const a = slotA_apology(lang, name, ix.idxA)
+    const b = slotB_acknowledgment(lang, ix.idxB)
+    const e = slotE_negative(lang, ix.idxE)
+
+    const piv  = slotC_pivot(lang, result.tags, ix.idxC)          // '' = 매칭 태그 없음
+    const peak = (result.hasPeakHours && result.tags.includes('CROWD_COMPLAINT'))
+                 ? slotD_peak_hours(lang, ix.idxD) : ''
+    const emp  = result.isEmergency ? '' : slotEmpathy(lang, ix.idxP)
+    const rea  = result.isEmergency ? '' : slotReassurance(lang, ix.idxQ)
+
+    let body: string[]
+    if (result.isEmergency) {
+      body = [piv].filter(Boolean)            // 긴급: 건조하게 핵심 피벗만
+    } else {
+      // pivot(핵심 개선 약속)은 태그 있으면 항상 포함. empathy/reassurance/peak는 '재량 슬롯'으로
+      // 리뷰 길이에 비례한 예산 내에서만 — 초단문 불만에 공감/안심 덧붙여 TMI 되는 것 방지.
+      const discBudget = len <= 40 ? 0 : len <= 90 ? 1 : 2
+      const keep = new Set([emp, rea, peak].filter(Boolean).slice(0, discBudget))
+      // 서사 순서: empathy → pivot → peak → reassurance
+      body = [emp, piv, peak, rea].filter((s) => s && (s === piv || keep.has(s)))
+    }
+    rawReply = [a, b, ...body, e].join('\n\n')
   } else {
-    // ── SAFE / COMPLIMENT: A + B + [C?] + [D?] + E ─────────────────────────
-    const a = slotA_greeting(lang, name, idxA)
-    // contextMirror가 있으면 슬롯 B가 리뷰 내용 반영 맞춤 응답 반환 (AI같은 답변)
-    const b = slotB_appreciation(lang, idxB, mirror)
+    // ── SAFE / COMPLIMENT ───────────────────────────────────────────────────
+    const a = slotA_greeting(lang, name, ix.idxA)
+    const b = slotB_appreciation(lang, ix.idxB, mirror)  // contextMirror 맞춤 감사
+    const e = slotE_positive(lang, ix.idxE, mirror)      // contextMirror 맞춤 클로징
 
-    // SHORT 모드: SAFE(저·무평점) + 단문 COMPLIMENT(≤40자) — Slot C 생략 → A + B + E
-    //   단문 리뷰에 ETERNAL NATURE 자랑 블록 붙이는 것 = TMI (사용자 피드백)
-    // FULL 모드: COMPLIMENT(4-5★) 또는 작품 중심이거나 피크타임 언급이거나 맥락거울 있음
-    const isVeryShortReview = (ctx.reviewTextLength ?? 999) <= 40
-    const useShortMode = (result.status === 'SAFE' || (result.status === 'COMPLIMENT' && isVeryShortReview))
-                         && !result.isArtworkFocused && !result.hasPeakHours && !mirror
-    const c = useShortMode
-              ? null
-              : result.isArtworkFocused
-                ? slotC_artwork(lang, sig, idxC)
-                : slotC_general(lang, idxC)
+    // 상황 본문 슬롯 (신규)
+    const sensory   = result.sensoryFocus ? slotSensory(lang, result.sensoryFocus, ix.idxS) : ''
+    // 동반자 echo는 contextMirror와 다를 때만 (중복 방지)
+    const companion = (result.companionContext && result.companionContext !== mirror)
+                      ? slotCompanion(lang, result.companionContext, ix.idxM) : ''
+    const repeat    = result.isRepeatVisitor ? slotRepeatVisitor(lang, ix.idxR) : ''
+    const art       = result.isArtworkFocused ? slotC_artwork(lang, sig, ix.idxC) : slotC_general(lang, ix.idxC)
+    const peak      = result.hasPeakHours ? slotD_peak_hours(lang, ix.idxD) : ''
 
-    // 긍정 리뷰에서 피크타임 언급 시 방문 권유 힌트 추가
-    const d = result.hasPeakHours ? slotD_peak_hours(lang, idxD) : null
-    // contextMirror가 있으면 슬롯 E가 리뷰 내용 반영 맞춤 클로징 반환
-    const e = slotE_positive(lang, idxE, mirror)
-    const parts: string[] = [a, b, ...(c ? [c] : []), ...(d ? [d] : []), e]
-    rawReply = parts.join('\n\n')
+    // SHORT 모드: SAFE(저·무평점) 또는 단문 COMPLIMENT(≤40자)이면서 어떤 상황 신호도 없을 때
+    //   → A + B + E (3슬롯). 단문에 자랑 블록 붙이는 TMI 방지.
+    const isVeryShort = len <= 40
+    const hasSignal   = result.isArtworkFocused || result.hasPeakHours || !!mirror
+                        || !!result.sensoryFocus || !!result.companionContext || result.isRepeatVisitor
+    const useShortMode = (result.status === 'SAFE' || (result.status === 'COMPLIMENT' && isVeryShort)) && !hasSignal
+
+    let body: string[]
+    if (useShortMode) {
+      body = []
+    } else {
+      // 길이 비례 예산 — 풍부한 리뷰일수록 더 많은 상황 슬롯
+      const budget = len <= 40 ? 1 : len <= 130 ? 2 : 3
+      const situational = [sensory, companion, repeat].filter(Boolean)
+      // 상황 신호가 있으면 그것을 우선, 작품 라인은 작품 중심일 때만 보강.
+      // 신호가 없으면 원래 동작(작품/일반 + 피크).
+      const priority = situational.length > 0
+        ? [...situational, ...(result.isArtworkFocused ? [art] : []), peak].filter(Boolean)
+        : [art, peak].filter(Boolean)
+      const keep = new Set(priority.slice(0, budget))
+      body = [sensory, companion, repeat, art, peak].filter((s) => s && keep.has(s))
+    }
+    rawReply = [a, b, ...body, e].join('\n\n')
   }
 
   // ── 토큰 치환 파이프라인 ───────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 // 순수 데이터 모듈 — 클라이언트 번들 안전
 import { getBranchTokens } from '@/lib/branchMetadata'
 // Zero-Cost NLP 모사: 유의어 사전 + 필러 패턴 + 맥락 거울 추출
-import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror } from '@/lib/synonymEngine'
+import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror, extractSensoryFocus, extractCompanion } from '@/lib/synonymEngine'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -48,6 +48,10 @@ export interface WaterfallResult {
   hasPeakHours: boolean      // 피크/혼잡 시간대 언급 여부 (Slot C 대체 클로징 트리거)
   /** 맥락 거울 — 리뷰 핵심 감성 키워드(힐링/데이트/가족/사진 등). 답변 슬롯 B/E 맞춤 구성용. */
   contextMirror?: string | null
+  /** 감각 초점 — 빛/물/향/소리. 라이트·미디어 아트 특화 감각 반향 슬롯용 (COMPLIMENT 전용). */
+  sensoryFocus?: string | null
+  /** 동반자 맥락 — 가족/데이트/친구. contextMirror와 독립(중복 echo는 governor가 차단). */
+  companionContext?: string | null
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -454,6 +458,9 @@ export function analyzeReview(
 
   // 맥락 거울: 리뷰 감성 핵심 키워드 추출 (답변 슬롯 B/E 맞춤 구성용)
   const contextMirror = extractContextMirror(text)
+  // 감각 초점 + 동반자 맥락 — 긍정 리뷰에서만 의미 (불만/긴급은 governor가 사용 안 함)
+  const sensoryFocus    = !isComplaint ? extractSensoryFocus(text) : null
+  const companionContext = !isComplaint ? extractCompanion(text) : null
 
   return {
     status,
@@ -468,6 +475,8 @@ export function analyzeReview(
     isChurnRisk,
     hasPeakHours,
     contextMirror,
+    sensoryFocus,
+    companionContext,
   }
 }
 

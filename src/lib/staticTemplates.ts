@@ -1346,6 +1346,172 @@ export function slotC_pivot(lang: Language, tags: string[], idx = 0): string {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+//  Slot S — 감각 경험 반향 (빛/물/향/소리) — 라이트·미디어 아트 특화 (COMPLIMENT 전용)
+//  governor가 sensoryFocus 신호 있을 때만 삽입. 9개 언어 × 2 variants.
+//  미커버 언어는 '' 반환(governor가 스킵) → WRONG_SCRIPT 방어.
+// ════════════════════════════════════════════════════════════════════════════════
+const SENSORY_LINES: Record<string, Partial<Record<Language, string[]>>> = {
+  '빛': {
+    ko: ['빛이 만들어내는 공간을 깊이 느끼셨다니, 저희가 가장 바라던 경험을 하셨네요.', '빛으로 채워진 순간이 오래 기억에 남으시길 바랍니다.'],
+    en: ['That you felt the spaces our light creates is exactly the experience we hope for.', 'We hope the moments filled with light stay with you for a long time.'],
+    ja: ['光が織りなす空間を深く感じていただけたこと、私どもが最も願う体験です。', '光に満ちたひとときが長く心に残りますように。'],
+    zh: ['您深切感受到光影营造的空间，这正是我们最期待的体验。', '愿这些光影交织的时刻长留您心中。'],
+    es: ['Que sintiera los espacios que crea nuestra luz es justo la experiencia que buscamos.', 'Esperamos que esos momentos llenos de luz permanezcan con usted mucho tiempo.'],
+    ru: ['То, что Вы прочувствовали пространства, созданные светом, — именно тот опыт, к которому мы стремимся.', 'Надеемся, что наполненные светом мгновения надолго останутся с Вами.'],
+    ar: ['إحساسكم بالمساحات التي يصنعها الضوء هو تماماً التجربة التي نتمناها.', 'نأمل أن تبقى لحظات الضوء في ذاكرتكم طويلاً.'],
+    hi: ['आपने हमारी रोशनी से बने स्थानों को गहराई से महसूस किया — यही वह अनुभव है जिसकी हम कामना करते हैं।', 'आशा है रोशनी से भरे ये पल लंबे समय तक आपके साथ रहेंगे।'],
+    tl: ['Ang pakiramdam ninyo sa mga espasyong nilikha ng aming ilaw ang mismong karanasang hinahangad namin.', 'Sana manatili sa inyo nang matagal ang mga sandaling puno ng liwanag.'],
+  },
+  '물': {
+    ko: ['물결과 파도가 주는 생생함에 빠져드셨다니 정말 기쁩니다.', '파도의 일렁임 속에서 시원한 휴식을 느끼셨길 바랍니다.'],
+    en: ['We are so glad you were drawn into the vivid flow of water and waves.', 'We hope the rolling waves gave you a refreshing sense of calm.'],
+    ja: ['波と水の生き生きとした動きに引き込まれていただけて、とても嬉しく思います。', '波の揺らぎの中で涼やかなひとときを感じていただけますように。'],
+    zh: ['您沉浸在水波与海浪的生动之中，我们非常欣喜。', '愿波光荡漾间，您感受到清凉的放松。'],
+    es: ['Nos alegra mucho que se dejara llevar por el flujo vívido del agua y las olas.', 'Esperamos que el vaivén de las olas le diera una refrescante sensación de calma.'],
+    ru: ['Мы очень рады, что Вас захватило живое движение воды и волн.', 'Надеемся, что плеск волн подарил Вам освежающее спокойствие.'],
+    ar: ['يسعدنا أنكم انجذبتم إلى تدفق الماء والأمواج النابض بالحياة.', 'نأمل أن تكون حركة الأمواج قد منحتكم إحساساً منعشاً بالهدوء.'],
+    hi: ['आप पानी और लहरों के जीवंत प्रवाह में डूब गए — यह जानकर बहुत खुशी हुई।', 'आशा है लहरों के हिलोरों ने आपको ताज़गी भरा सुकून दिया होगा।'],
+    tl: ['Natutuwa kami na napaakit kayo sa buhay na daloy ng tubig at mga alon.', 'Sana ang indayog ng mga alon ay nagbigay sa inyo ng nakakapreskong kapayapaan.'],
+  },
+  '향': {
+    ko: ['공간마다 번지는 향까지 느껴 주셨다니, 섬세한 디테일을 알아봐 주셔서 감사합니다.', '은은한 향이 관람의 여운을 더했기를 바랍니다.'],
+    en: ['That you noticed the scent drifting through each space means our subtle details reached you.', 'We hope the gentle fragrance deepened the lingering impression of your visit.'],
+    ja: ['空間ごとに広がる香りまで感じていただけたこと、繊細なディテールに気づいてくださり感謝いたします。', 'ほのかな香りが、ご鑑賞の余韻をより一層深めていれば幸いです。'],
+    zh: ['您连每个空间弥漫的香气都细细感受到了，感谢您留意到这些精致的细节。', '愿淡淡的香气为您的观展增添了悠长余韵。'],
+    es: ['Que percibiera el aroma que flota en cada espacio significa que nuestros detalles sutiles le llegaron.', 'Esperamos que la fragancia delicada haya profundizado la impresión de su visita.'],
+    ru: ['То, что Вы уловили аромат, плывущий по каждому залу, говорит о том, что наши тонкие детали Вас тронули.', 'Надеемся, что нежный аромат углубил послевкусие Вашего визита.'],
+    ar: ['ملاحظتكم للعبير المنتشر في كل مساحة تعني أن تفاصيلنا الدقيقة قد وصلت إليكم.', 'نأمل أن يكون العبير اللطيف قد عمّق أثر زيارتكم.'],
+    hi: ['आपने हर स्थान में फैली खुशबू को भी महसूस किया — हमारी सूक्ष्म बारीकियाँ आप तक पहुँचीं।', 'आशा है हल्की खुशबू ने आपकी यात्रा की छाप को और गहरा किया होगा।'],
+    tl: ['Ang pagpansin ninyo sa halimuyak na kumakalat sa bawat espasyo ay nangangahulugang naabot kayo ng aming mga pinong detalye.', 'Sana ang banayad na halimuyak ay nagpalalim sa naiwang impresyon ng inyong pagbisita.'],
+  },
+  '소리': {
+    ko: ['음악과 영상이 어우러진 순간에 깊이 몰입하셨다니 더없이 기쁩니다.', '선율이 공간의 감동을 한층 더해 드렸기를 바랍니다.'],
+    en: ['We are delighted you were immersed in the moments where music and visuals meet.', 'We hope the melodies deepened the wonder of each space.'],
+    ja: ['音楽と映像が溶け合う瞬間に深く浸っていただけて、この上なく嬉しく思います。', '旋律が空間の感動をより一層高めていましたら幸いです。'],
+    zh: ['您深深沉浸在音乐与影像交融的瞬间，我们倍感欣喜。', '愿旋律为每个空间的感动更添一分。'],
+    es: ['Nos encanta que se sumergiera en los momentos donde la música y las imágenes se encuentran.', 'Esperamos que las melodías hayan profundizado el asombro de cada espacio.'],
+    ru: ['Мы рады, что Вы погрузились в моменты, где встречаются музыка и образы.', 'Надеемся, что мелодии усилили восхищение каждым залом.'],
+    ar: ['يسعدنا أنكم انغمستم في اللحظات التي تلتقي فيها الموسيقى بالصورة.', 'نأمل أن تكون الألحان قد عمّقت روعة كل مساحة.'],
+    hi: ['आप संगीत और दृश्यों के मिलन के क्षणों में डूब गए — यह जानकर हमें बेहद खुशी है।', 'आशा है धुनों ने हर स्थान के विस्मय को और गहरा किया होगा।'],
+    tl: ['Natutuwa kami na napalubog kayo sa mga sandaling nagtatagpo ang musika at mga visual.', 'Sana ang mga melodiya ay nagpalalim sa pagkamangha sa bawat espasyo.'],
+  },
+}
+export function slotSensory(lang: Language, sensory: string, idx = 0): string {
+  const byType = SENSORY_LINES[sensory]
+  if (!byType) return ''
+  const arr = byType[lang]
+  if (!arr || !arr.length) return ''  // 미커버 언어 → 스킵 (WRONG_SCRIPT 방어)
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  Slot M — 동반자 맞춤 본문 (가족/데이트/친구) — B/E의 contextMirror echo와 별개 본문
+//  governor가 companionContext 신호 있고 contextMirror와 다를 때만 삽입.
+// ════════════════════════════════════════════════════════════════════════════════
+const COMPANION_LINES: Record<string, Partial<Record<Language, string[]>>> = {
+  '가족': {
+    ko: ['소중한 가족과 함께 좋은 시간을 보내셨다니 그 의미가 더욱 특별하게 느껴집니다.', '온 가족이 함께 즐기실 수 있었다니 저희에게도 큰 보람입니다.'],
+    en: ['Sharing this time with your family makes it all the more meaningful to us.', 'Knowing the whole family could enjoy it together is a real joy for us.'],
+    ja: ['大切なご家族と良い時間を過ごしていただけたこと、その意味をより一層特別に感じます。', 'ご家族みなさまで楽しんでいただけたこと、私どもにとって大きな喜びです。'],
+    zh: ['您与珍贵的家人共度美好时光，这份意义对我们而言更加特别。', '一家人能一同享受，对我们来说是莫大的欣慰。'],
+    es: ['Compartir este tiempo con su familia lo hace aún más significativo para nosotros.', 'Saber que toda la familia pudo disfrutarlo es una verdadera alegría para nosotros.'],
+    ru: ['То, что Вы разделили это время с семьёй, делает его для нас ещё более значимым.', 'Знать, что вся семья смогла насладиться этим вместе, — настоящая радость для нас.'],
+    ar: ['مشاركتكم هذا الوقت مع عائلتكم يجعله أكثر معنى بالنسبة لنا.', 'معرفة أن العائلة بأكملها استمتعت معاً تسعدنا حقاً.'],
+    hi: ['अपने परिवार के साथ यह समय बिताना हमारे लिए इसे और भी सार्थक बना देता है।', 'यह जानकर कि पूरा परिवार साथ में इसका आनंद ले सका, हमारे लिए सच्ची खुशी है।'],
+    tl: ['Ang pagbahagi ng panahong ito kasama ang inyong pamilya ay lalong nagpapahalaga nito para sa amin.', 'Ang malaman na nag-enjoy ang buong pamilya nang sama-sama ay tunay na kagalakan para sa amin.'],
+  },
+  '데이트': {
+    ko: ['두 분의 특별한 시간에 저희 공간이 함께할 수 있어 영광입니다.', '소중한 분과의 추억에 {branch_name}이 한 자리를 차지했다니 기쁩니다.'],
+    en: ['It is an honor that our space could be part of your special time together.', 'We are glad {branch_name} found a place in the memory you two made.'],
+    ja: ['お二人の特別なひとときに私どもの空間がご一緒できたこと、光栄に存じます。', '大切な方との思い出に{branch_name}が加わったこと、嬉しく思います。'],
+    zh: ['两位的特别时光能有我们的空间相伴，深感荣幸。', '很高兴{branch_name}成为您与心爱之人回忆的一部分。'],
+    es: ['Es un honor que nuestro espacio formara parte de su tiempo especial juntos.', 'Nos alegra que {branch_name} ocupara un lugar en el recuerdo que crearon.'],
+    ru: ['Для нас честь, что наше пространство стало частью Вашего особенного времени вдвоём.', 'Мы рады, что {branch_name} занял место в созданном вами воспоминании.'],
+    ar: ['من دواعي شرفنا أن يكون فضاؤنا جزءاً من وقتكما المميز معاً.', 'يسعدنا أن {branch_name} احتل مكاناً في الذكرى التي صنعتماها.'],
+    hi: ['यह हमारे लिए सम्मान की बात है कि आपके खास पलों में हमारा स्थान साथ रहा।', 'हमें खुशी है कि {branch_name} आप दोनों की यादों का हिस्सा बना।'],
+    tl: ['Karangalan namin na naging bahagi ang aming espasyo ng inyong espesyal na sandali.', 'Natutuwa kami na ang {branch_name} ay nakapwesto sa alaalang nilikha ninyong dalawa.'],
+  },
+  '친구': {
+    ko: ['좋은 친구분들과 함께한 시간이 즐거우셨다니 저희도 덩달아 기쁩니다.', '친구분들과의 나들이에 {branch_name}을 떠올려 주셔서 감사합니다.'],
+    en: ['We are happy the time with your friends was such an enjoyable one.', 'Thank you for thinking of {branch_name} for your day out with friends.'],
+    ja: ['ご友人との時間を楽しんでいただけたこと、私どもも嬉しく思います。', 'ご友人とのお出かけに{branch_name}を思い浮かべてくださり、ありがとうございます。'],
+    zh: ['您与好友共度的时光如此愉快，我们也倍感欢喜。', '感谢您与朋友出游时想到了{branch_name}。'],
+    es: ['Nos alegra que el tiempo con sus amigos fuera tan agradable.', 'Gracias por pensar en {branch_name} para su salida con amigos.'],
+    ru: ['Мы рады, что время с друзьями выдалось таким приятным.', 'Спасибо, что вспомнили о {branch_name} для прогулки с друзьями.'],
+    ar: ['يسعدنا أن الوقت مع أصدقائكم كان ممتعاً إلى هذا الحد.', 'شكراً لتفكيركم في {branch_name} لنزهتكم مع الأصدقاء.'],
+    hi: ['हमें खुशी है कि दोस्तों के साथ बिताया समय इतना सुखद रहा।', 'दोस्तों के साथ अपनी सैर के लिए {branch_name} को याद करने हेतु धन्यवाद।'],
+    tl: ['Natutuwa kami na napakasaya ng oras na kasama ninyo ang inyong mga kaibigan.', 'Salamat sa pag-isip sa {branch_name} para sa inyong lakad kasama ang mga kaibigan.'],
+  },
+}
+export function slotCompanion(lang: Language, companion: string, idx = 0): string {
+  const byType = COMPANION_LINES[companion]
+  if (!byType) return ''
+  const arr = byType[lang]
+  if (!arr || !arr.length) return ''
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  Slot R — 재방문 인정 (isRepeatVisitor && 긍정) — 단골 고객 인정 (기존 미활용 신호)
+// ════════════════════════════════════════════════════════════════════════════════
+const REPEAT_VISITOR_LINES: Partial<Record<Language, string[]>> = {
+  ko: ['다시 찾아주신 발걸음이 저희에게는 가장 큰 칭찬입니다. 진심으로 감사드립니다.', '잊지 않고 또 방문해 주셔서, 그 변함없는 애정에 깊이 감사드립니다.'],
+  en: ['Your returning visit is the highest compliment we could receive. Thank you sincerely.', 'Thank you for coming back to us — your continued affection means a great deal.'],
+  ja: ['再びお越しいただいたことが、私どもにとって何よりの褒め言葉です。心より感謝いたします。', '忘れずにまた訪れてくださり、その変わらぬご愛顧に深く感謝申し上げます。'],
+  zh: ['您再次到访，是对我们最高的赞美。衷心感谢。', '感谢您始终记得并再度光临，这份不变的喜爱令我们深深感激。'],
+  es: ['Que vuelva a visitarnos es el mayor cumplido que podríamos recibir. Gracias de corazón.', 'Gracias por regresar — su afecto continuo significa muchísimo para nosotros.'],
+  ru: ['Ваш повторный визит — высшая похвала для нас. Искренне благодарим.', 'Спасибо, что вернулись к нам, — Ваша неизменная привязанность очень много значит.'],
+  ar: ['زيارتكم المتجددة هي أعظم إطراء يمكن أن نتلقاه. شكراً من القلب.', 'شكراً لعودتكم إلينا — ودّكم المستمر يعني لنا الكثير.'],
+  hi: ['आपका दोबारा आना हमारे लिए सबसे बड़ी तारीफ है। हार्दिक धन्यवाद।', 'हमें फिर से याद रखकर आने के लिए धन्यवाद — आपका निरंतर स्नेह हमारे लिए बहुत मायने रखता है।'],
+  tl: ['Ang muli ninyong pagbisita ang pinakamataas na papuri na matatanggap namin. Taos-pusong salamat.', 'Salamat sa pagbabalik ninyo sa amin — malaki ang kahulugan ng inyong patuloy na pagmamahal.'],
+}
+export function slotRepeatVisitor(lang: Language, idx = 0): string {
+  const arr = REPEAT_VISITOR_LINES[lang]
+  if (!arr || !arr.length) return ''
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  Slot P — 공감/검증 (COMPLAINT 전용) — 액션 피벗 전에 감정 인정. 보상·약속 절대 없음.
+// ════════════════════════════════════════════════════════════════════════════════
+const EMPATHY_LINES: Partial<Record<Language, string[]>> = {
+  ko: ['기대를 안고 찾아주셨을 텐데 아쉬운 경험을 드린 것 같아 마음이 무겁습니다.', '소중한 시간을 내어 방문해 주셨는데 불편을 느끼셨다니 진심으로 안타깝습니다.'],
+  en: ['You came to us with expectations, and it weighs on us that the experience fell short.', 'You set aside precious time to visit, and we are genuinely sorry it brought you discomfort.'],
+  ja: ['ご期待を抱いてお越しくださったのに、心残りのある体験となってしまい胸が痛みます。', '大切なお時間を割いてご来館いただいたのに、ご不便を感じさせてしまい誠に残念に思います。'],
+  zh: ['您满怀期待而来，却留下了遗憾的体验，我们深感不安。', '您特意抽出宝贵时间前来，却让您感到不便，我们由衷感到抱歉。'],
+  es: ['Vino a nosotros con expectativas, y nos pesa que la experiencia no estuviera a la altura.', 'Dedicó un tiempo valioso a visitarnos, y lamentamos sinceramente que le causara incomodidad.'],
+  ru: ['Вы пришли к нам с надеждами, и нам тяжело осознавать, что впечатление не оправдалось.', 'Вы выделили драгоценное время на визит, и мы искренне сожалеем, что он принёс Вам неудобство.'],
+  ar: ['أتيتم إلينا بتوقعات، ويؤلمنا أن التجربة لم تكن بالمستوى المنشود.', 'خصصتم وقتاً ثميناً للزيارة، ونأسف بصدق لأنها سببت لكم الإزعاج.'],
+  hi: ['आप उम्मीदें लेकर हमारे पास आए, और हमें भारी लगता है कि अनुभव कम रहा।', 'आपने बहुमूल्य समय निकालकर आना चुना, और हमें सच में खेद है कि इससे आपको असुविधा हुई।'],
+  tl: ['Pumunta kayo sa amin nang may inaasahan, at mabigat sa amin na hindi naabot ng karanasan ang inaasahan.', 'Naglaan kayo ng mahalagang oras upang bumisita, at taos-puso kaming humihingi ng paumanhin na nagdulot ito ng abala.'],
+}
+export function slotEmpathy(lang: Language, idx = 0): string {
+  const arr = EMPATHY_LINES[lang]
+  if (!arr || !arr.length) return ''
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  Slot Q — 재방문 안심 (COMPLAINT 전용) — 보상·환불·책임 인정 없는 개선 의지 표현.
+// ════════════════════════════════════════════════════════════════════════════════
+const REASSURANCE_LINES: Partial<Record<Language, string[]>> = {
+  ko: ['다음 방문에서는 더 나은 모습으로 맞이할 수 있도록 정성을 다하겠습니다.', '오늘의 아쉬움이 다음에는 좋은 기억으로 바뀔 수 있도록 노력하겠습니다.'],
+  en: ['On your next visit, we will do our utmost to welcome you with a better experience.', "We will work so that today's disappointment can become a good memory next time."],
+  ja: ['次回のご来館では、より良い姿でお迎えできるよう真心を尽くしてまいります。', '本日の心残りが次は良い思い出に変わりますよう努めてまいります。'],
+  zh: ['下次到访时，我们将竭尽诚意，以更好的面貌迎接您。', '我们会努力，让今日的遗憾在下次化作美好的回忆。'],
+  es: ['En su próxima visita, haremos todo lo posible por recibirle con una mejor experiencia.', 'Trabajaremos para que la decepción de hoy pueda convertirse en un buen recuerdo la próxima vez.'],
+  ru: ['В Ваш следующий визит мы приложим все усилия, чтобы встретить Вас лучшим опытом.', 'Мы будем работать, чтобы сегодняшнее разочарование в следующий раз стало добрым воспоминанием.'],
+  ar: ['في زيارتكم القادمة، سنبذل قصارى جهدنا لاستقبالكم بتجربة أفضل.', 'سنعمل لكي يتحول إحباط اليوم إلى ذكرى طيبة في المرة القادمة.'],
+  hi: ['आपकी अगली यात्रा में, हम आपको बेहतर अनुभव के साथ स्वागत करने का पूरा प्रयास करेंगे।', 'हम कोशिश करेंगे कि आज की निराशा अगली बार एक अच्छी याद में बदल सके।'],
+  tl: ['Sa inyong susunod na pagbisita, gagawin namin ang aming makakaya upang salubungin kayo nang may mas mahusay na karanasan.', 'Pagsisikapan naming maging magandang alaala sa susunod ang pagkadismaya ngayon.'],
+}
+export function slotReassurance(lang: Language, idx = 0): string {
+  const arr = REASSURANCE_LINES[lang]
+  if (!arr || !arr.length) return ''
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 //  Slot D — 현장 운영 힌트 (피크타임/혼잡 시간대 방문 권유)
 //  3 variants × 4 languages | {highlight_room}
 // ════════════════════════════════════════════════════════════════════════════════
