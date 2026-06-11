@@ -294,7 +294,7 @@ export function extractSensoryFocus(text: string): string | null {
   // 물/파도/폭포
   if (/물결|파도|폭포|워터/.test(t)) return '물'
   if (/\bwater(?:fall)?\b|\bwaves?\b|\bocean\b/i.test(t)) return '물'
-  if (/滝|波の|海の/.test(t)) return '물'
+  if (/滝|波|海の/.test(t)) return '물'
   if (/瀑布|海浪|波浪/.test(t)) return '물'
   if (/लहर|झरना|पानी/.test(t)) return '물'
   if (/شلال|أمواج|الماء|موج/.test(t)) return '물'
@@ -358,6 +358,66 @@ export function extractCompanion(text: string): string | null {
   if (/दोस्त|मित्र/.test(t)) return '친구'
   if (/с\s*друзьями|друзь\w*/i.test(t)) return '친구'
   if (/\bamigos?\b|\bkaibigan\b/i.test(t)) return '친구'
+  return null
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  extractTemporal — 방문 시간대 추출 (아침/저녁/주말) — Fragment Pool 'temporal' 차원
+//  명시적 시간 언급이 있을 때만. \b는 라틴(EN/ES/TL)에만, CJK/키릴/아랍/데바나가리는 평문.
+// ════════════════════════════════════════════════════════════════════════════════
+export function extractTemporal(text: string): string | null {
+  const t = text ?? ''
+  // 주말 (weekend) — 가장 구체적
+  if (/주말|토요일|일요일/.test(t)) return '주말'
+  if (/\bweekend\b|\bon\s+(?:satur|sun)day\b/i.test(t)) return '주말'
+  if (/週末|土曜|日曜/.test(t)) return '주말'
+  if (/周末|周六|周日|星期六|星期日/.test(t)) return '주말'
+  if (/\bfin\s+de\s+semana\b|\bs[aá]bado\b|\bdomingo\b/i.test(t)) return '주말'
+  if (/выходн\w*|суббот\w*|воскресень\w*/i.test(t)) return '주말'
+  if (/عطلة\s*(?:نهاية\s*)?الأسبوع/.test(t)) return '주말'
+  if (/सप्ताहांत|वीकेंड/.test(t)) return '주말'
+  if (/\bkatapusan\s+ng\s+linggo\b/i.test(t)) return '주말'
+  // 저녁/밤 (evening/night)
+  if (/저녁|밤에|야간|밤\s*늦/.test(t)) return '저녁'
+  if (/\bevening\b|\bat\s+night\b|\bnight[\s-]?time\b/i.test(t)) return '저녁'
+  if (/夜に|夕方|ナイト/.test(t)) return '저녁'
+  if (/晚上|夜晚|傍晚/.test(t)) return '저녁'
+  if (/\bnoche\b|\bpor\s+la\s+tarde\b/i.test(t)) return '저녁'
+  if (/вечер\w*|ночью/i.test(t)) return '저녁'
+  if (/مساء|في\s*الليل/.test(t)) return '저녁'
+  if (/शाम|रात\s*को/.test(t)) return '저녁'
+  if (/\bgabi\b/i.test(t)) return '저녁'
+  // 아침/오전 (morning)
+  if (/아침|오전|이른\s*시간/.test(t)) return '아침'
+  if (/\bmorning\b|\bearly\s+(?:visit|hours?)\b/i.test(t)) return '아침'
+  if (/朝に|午前中?/.test(t)) return '아침'
+  if (/早上|上午|清晨/.test(t)) return '아침'
+  if (/\bpor\s+la\s+mañana\b|\btemprano\b/i.test(t)) return '아침'
+  if (/утром|с\s*утра/i.test(t)) return '아침'
+  if (/في\s*الصباح|صباحاً/.test(t)) return '아침'
+  if (/सुबह/.test(t)) return '아침'
+  if (/\bumaga\b/i.test(t)) return '아침'
+  return null
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  extractSpatial — 공간감(긍정) 추출 (포토스팟/넓은공간) — Fragment Pool 'spatial' 차원
+//  ※ 포토스팟은 contextMirror '사진'과 중복될 수 있어 governor에서 dedupe.
+// ════════════════════════════════════════════════════════════════════════════════
+export function extractSpatial(text: string): string | null {
+  const t = text ?? ''
+  // 포토스팟 (photo spot)
+  if (/포토\s*스팟|포토\s*존|사진\s*찍기\s*(?:좋|딱)/.test(t)) return '포토스팟'
+  if (/\bphoto\s*(?:spot|zone|op)\b|\binstagram\w*\b|\bpicture[\s-]?perfect\b|\binstagramm?able\b/i.test(t)) return '포토스팟'
+  if (/フォトスポット|インスタ映え/.test(t)) return '포토스팟'
+  if (/拍照\s*(?:圣地|打卡)|打卡|出片/.test(t)) return '포토스팟'
+  // 넓은 공간 (spacious/open)
+  if (/넓은\s*(?:공간|전시|홀)|탁\s*트인|개방감/.test(t)) return '넓은공간'
+  if (/\bspacious\b|\bopen\s+space\b|\bexpansive\b/i.test(t)) return '넓은공간'
+  if (/広々|開放的/.test(t)) return '넓은공간'
+  if (/宽敞|开阔/.test(t)) return '넓은공간'
+  if (/\bespacios[oa]\b|\bamplio\b/i.test(t)) return '넓은공간'
+  if (/просторн\w*/i.test(t)) return '넓은공간'
   return null
 }
 

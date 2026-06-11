@@ -21,7 +21,7 @@ import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 // 순수 데이터 모듈 — 클라이언트 번들 안전
 import { getBranchTokens } from '@/lib/branchMetadata'
 // Zero-Cost NLP 모사: 유의어 사전 + 필러 패턴 + 맥락 거울 추출
-import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror, extractSensoryFocus, extractCompanion } from '@/lib/synonymEngine'
+import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror, extractSensoryFocus, extractCompanion, extractTemporal, extractSpatial } from '@/lib/synonymEngine'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -52,6 +52,10 @@ export interface WaterfallResult {
   sensoryFocus?: string | null
   /** 동반자 맥락 — 가족/데이트/친구. contextMirror와 독립(중복 echo는 governor가 차단). */
   companionContext?: string | null
+  /** 방문 시간대 — 아침/저녁/주말. Fragment Pool 'temporal' 차원 (COMPLIMENT 전용). */
+  temporalContext?: string | null
+  /** 공간감(긍정) — 포토스팟/넓은공간. Fragment Pool 'spatial' 차원 (COMPLIMENT 전용). */
+  spatialContext?: string | null
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -461,9 +465,11 @@ export function analyzeReview(
 
   // 맥락 거울: 리뷰 감성 핵심 키워드 추출 (답변 슬롯 B/E 맞춤 구성용)
   const contextMirror = extractContextMirror(text)
-  // 감각 초점 + 동반자 맥락 — 긍정 리뷰에서만 의미 (불만/긴급은 governor가 사용 안 함)
-  const sensoryFocus    = !isComplaint ? extractSensoryFocus(text) : null
-  const companionContext = !isComplaint ? extractCompanion(text) : null
+  // 감각/동반자/시간/공간 — 긍정 리뷰에서만 의미 (Fragment Pool 차원; 불만/긴급은 미사용)
+  const sensoryFocus     = !isComplaint ? extractSensoryFocus(text) : null
+  const companionContext = !isComplaint ? extractCompanion(text)    : null
+  const temporalContext  = !isComplaint ? extractTemporal(text)     : null
+  const spatialContext   = !isComplaint ? extractSpatial(text)      : null
 
   return {
     status,
@@ -480,6 +486,8 @@ export function analyzeReview(
     contextMirror,
     sensoryFocus,
     companionContext,
+    temporalContext,
+    spatialContext,
   }
 }
 

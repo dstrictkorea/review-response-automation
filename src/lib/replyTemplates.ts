@@ -41,12 +41,10 @@ import {
   slotD_peak_hours,
   slotE_positive,
   slotE_negative,
-  slotSensory,
-  slotCompanion,
-  slotRepeatVisitor,
   slotEmpathy,
   slotReassurance,
 } from '@/lib/staticTemplates'
+import { selectFragments, type FragmentSignal } from '@/lib/fragmentPool'
 import { scanForbidden, type WaterfallResult } from '@/lib/waterfallRegexEngine'
 
 export interface StaticReplyContext {
@@ -157,36 +155,43 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
     const b = slotB_appreciation(lang, ix.idxB, mirror)  // contextMirror 맞춤 감사
     const e = slotE_positive(lang, ix.idxE, mirror)      // contextMirror 맞춤 클로징
 
-    // 상황 본문 슬롯 (신규)
-    const sensory   = result.sensoryFocus ? slotSensory(lang, result.sensoryFocus, ix.idxS) : ''
-    // 동반자 echo는 contextMirror와 다를 때만 (중복 방지)
-    const companion = (result.companionContext && result.companionContext !== mirror)
-                      ? slotCompanion(lang, result.companionContext, ix.idxM) : ''
-    const repeat    = result.isRepeatVisitor ? slotRepeatVisitor(lang, ix.idxR) : ''
-    const art       = result.isArtworkFocused ? slotC_artwork(lang, sig, ix.idxC) : slotC_general(lang, ix.idxC)
-    const peak      = result.hasPeakHours ? slotD_peak_hours(lang, ix.idxD) : ''
+    // ── Matrix Fragment Pool: 다차원 신호 수집 → 가중치 거버너 top-N pruning ─────
+    //   persona/sensory/spatial/temporal 신호를 가중치와 함께 수집. companion이 contextMirror와
+    //   같으면(B/E가 이미 echo) persona 생략; spatial '포토스팟'이 mirror '사진/분위기'와 겹치면 생략.
+    const signals: FragmentSignal[] = []
+    if (result.sensoryFocus) signals.push({ dim: 'sensory', tag: result.sensoryFocus, weight: 10 })
+    if (result.companionContext && result.companionContext !== mirror) signals.push({ dim: 'persona', tag: result.companionContext, weight: 9 })
+    if (result.isRepeatVisitor) signals.push({ dim: 'persona', tag: '단골', weight: 8 })
+    if (result.spatialContext && !(result.spatialContext === '포토스팟' && (mirror === '사진' || mirror === '분위기'))) {
+      signals.push({ dim: 'spatial', tag: result.spatialContext, weight: 6 })
+    }
+    if (result.temporalContext) signals.push({ dim: 'temporal', tag: result.temporalContext, weight: 5 })
 
     // SHORT 모드: SAFE(저·무평점) 또는 단문 COMPLIMENT(≤40자)이면서 어떤 상황 신호도 없을 때
     //   → A + B + E (3슬롯). 단문에 자랑 블록 붙이는 TMI 방지.
     const isVeryShort = len <= 40
-    const hasSignal   = result.isArtworkFocused || result.hasPeakHours || !!mirror
-                        || !!result.sensoryFocus || !!result.companionContext || result.isRepeatVisitor
+    const hasSignal   = result.isArtworkFocused || result.hasPeakHours || !!mirror || signals.length > 0
     const useShortMode = (result.status === 'SAFE' || (result.status === 'COMPLIMENT' && isVeryShort)) && !hasSignal
 
     let body: string[]
     if (useShortMode) {
       body = []
     } else {
-      // 길이 비례 예산 — 풍부한 리뷰일수록 더 많은 상황 슬롯
+      // 길이 비례 예산 — 풍부한 리뷰일수록 더 많은 조각 (슬롯 수가 아니라 적합도 상위만 선택)
       const budget = len <= 40 ? 1 : len <= 130 ? 2 : 3
-      const situational = [sensory, companion, repeat].filter(Boolean)
-      // 상황 신호가 있으면 그것을 우선, 작품 라인은 작품 중심일 때만 보강.
-      // 신호가 없으면 원래 동작(작품/일반 + 피크).
-      const priority = situational.length > 0
-        ? [...situational, ...(result.isArtworkFocused ? [art] : []), peak].filter(Boolean)
-        : [art, peak].filter(Boolean)
-      const keep = new Set(priority.slice(0, budget))
-      body = [sensory, companion, repeat, art, peak].filter((s) => s && keep.has(s))
+      const fragIdx = { persona: ix.idxM, sensory: ix.idxS, spatial: ix.idxQ, temporal: ix.idxP }
+      const frags = selectFragments(signals, lang, budget, fragIdx)
+      if (frags.length === 0) {
+        // Fragment 신호 없음 → 원래 동작(작품/일반 + 피크)
+        const c = result.isArtworkFocused ? slotC_artwork(lang, sig, ix.idxC) : slotC_general(lang, ix.idxC)
+        const d = result.hasPeakHours ? slotD_peak_hours(lang, ix.idxD) : ''
+        body = [c, ...(d ? [d] : [])].slice(0, budget)
+      } else {
+        body = frags
+        // 작품 중심 리뷰는 시그니처 작품 라인, 피크 언급 시 힌트를 예산 남는 만큼 보강
+        if (result.isArtworkFocused && body.length < budget) body.push(slotC_artwork(lang, sig, ix.idxC))
+        if (result.hasPeakHours && body.length < budget) body.push(slotD_peak_hours(lang, ix.idxD))
+      }
     }
     rawReply = [a, b, ...body, e].join('\n\n')
   }
