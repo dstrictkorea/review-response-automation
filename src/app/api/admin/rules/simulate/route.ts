@@ -12,7 +12,7 @@ import { getBranchAccess } from '@/lib/auth/branchAccess'
 import { processReview } from '@/lib/reviewProcessor'
 import { buildStaticReply } from '@/lib/replyTemplates'
 import { refreshEngineFromDB, isUsingDefaults } from '@/lib/waterfallRegexEngine'
-import type { Language } from '@/lib/i18n'
+import { toReplyLanguage } from '@/lib/replyLanguage'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
 
   // 최신 DB 규칙으로 강제 갱신 후 분류 (수정사항 즉시 반영 검증)
   await refreshEngineFromDB(true)
-  const lang = (['ko', 'en', 'ja', 'zh'].includes(body.language ?? '') ? body.language : 'ko') as Language
+  // 답변 엔진 9개 언어 전체 지원 (ko/en/ja/zh + es/ru/ar/hi/tl); 미지원 → ko 폴백
+  const lang = toReplyLanguage(body.language)
 
   const ratingNum = typeof body.rating === 'number' ? body.rating : null
   const decision = processReview({
