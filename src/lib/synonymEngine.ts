@@ -397,12 +397,66 @@ const TIER1_SANITIZE: Array<[RegExp, string, string]> = [
   [/개\s*열받|열받음|개\s*짜증|존\s*나\s*짜증|완전\s*빡침|빡쳤|환장\s*하|개\s*빡침/i, '관람 불편', 'FRUSTRATION_SLANG'],
   // 가치 비하 비속어: 바가지, 돈낭비, 완전쓰레기
   [/바가지|돈\s*낭비|완전\s*쓰레기|전시\s*개\s*별로|개\s*실망|개\s*쓰레기\s*같|ㅈ같은\s*전시/i, '관람 만족도', 'VALUE_SLANG'],
+
+  // ── EN (영어) 비속어/슬랭 → 비즈니스 언어 ──────────────────────────────────────
+  // 가격: fucking expensive, rip-off, overpriced as hell
+  [/\b(?:fuck\w*|damn|insanely|ridiculously|stupidly)\s+(?:expensive|pricey|overpriced)\b|\brip[\s-]?off\b|\boverpriced\s+as\s+(?:hell|fuck)\b/i, 'the ticket price', 'PRICE_SLANG_EN'],
+  // 직원: shitty/crappy staff, staff suck, rude as hell
+  [/\b(?:shitty|crappy|damn|fuck\w*)\s+staff\b|\bstaff\s+(?:suck\w*|were\s+ass\w*)\b|\brude\s+as\s+(?:hell|fuck)\b/i, 'the staff service', 'STAFF_SLANG_EN'],
+  // 혼잡: packed like sardines, way too crowded, crammed
+  [/\bpacked\s+like\s+sardines\b|\bway\s+too\s+(?:crowded|packed)\b|\bcrammed\s+(?:in|like)\b/i, 'the crowded environment', 'CROWD_SLANG_EN'],
+  // 가치/전반: total garbage, this place sucks, waste of money, shit show
+  [/\b(?:total|complete|absolute)\s+(?:garbage|trash|crap|rubbish)\b|\bthis\s+place\s+suck\w*\b|\bwaste\s+of\s+(?:money|time)\b|\bshit[\s-]?show\b|\bf(?:ucking|reaking)\s+(?:terrible|awful|horrible)\b/i, 'the overall experience', 'VALUE_SLANG_EN'],
+
+  // ── JA (일본어) 비속어/맹비난 → 비즈니스 언어 ──────────────────────────────────
+  // 가격: 高すぎ, ぼったくり, 金返せレベル
+  [/高すぎ(?:る|だ|ます)?|ぼったくり|ぼられた|金\s*返せ\s*レベル/i, 'チケット価格', 'PRICE_SLANG_JA'],
+  // 직원/전반: 最悪, 態度悪すぎ, ゴミ, クソ
+  [/(?:スタッフ|店員|従業員)?\s*(?:最悪|態度\s*(?:が)?\s*悪すぎ)|ゴミ\s*(?:みたい|同然|レベル)|クソ(?:みたいな|な)?\s*(?:展示|対応|施設)?/i, '館内サービス', 'TONE_SLANG_JA'],
+  // 혼잡: 混みすぎ, 人多すぎ
+  [/混みすぎ|人\s*多すぎ|ぎゅうぎゅう|芋洗い/i, '混雑した観覧環境', 'CROWD_SLANG_JA'],
+
+  // ── ZH (중국어) 비속어/맹비난 → 비즈니스 언어 ──────────────────────────────────
+  // 가격: 太贵了, 坑钱, 宰客
+  [/太贵了|坑钱|宰客|不值这个价|贵得离谱/i, '门票价格', 'PRICE_SLANG_ZH'],
+  // 가치/전반: 垃圾, 烂透了, 糟透了, 浪费钱
+  [/垃圾(?:展览|场馆|透了)?|烂透了|糟透了|浪费(?:钱|时间)|差劲透顶/i, '整体体验', 'VALUE_SLANG_ZH'],
+  // 직원: 服务态度差, 员工很烂, 态度恶劣
+  [/服务态度(?:差|恶劣|极差)|员工(?:很烂|态度差|素质低)|态度(?:恶劣|极差)/i, '员工服务', 'STAFF_SLANG_ZH'],
+  // 혼잡: 人太多, 挤死了, 人山人海
+  [/人太多|挤死了|人山人海|挤得要命/i, '拥挤的观展环境', 'CROWD_SLANG_ZH'],
 ]
 
 // ── Tier 2: Critical 리스크 — waterfallRegexEngine DEFAULT_EMERGENCY 보완망 ─────
-// 특정 직원 지목, 법적 위협 표현, 아동 부상 근접 패턴 등 추가 포착
+// 특정 직원 지목, 법적 위협, 아동 부상, 환불요구, 언론/경찰 위협 (9개 언어).
+// ⚠ \b(워드바운더리)는 EN(라틴)에만; CJK/키릴/아랍/데바나가리는 평문 교차만.
+// ⚠ 환불은 '요구/거부' 맥락만(단순 언급/보고화법 제외) — 오격리 방지.
 const TIER2_CRITICAL: RegExp =
-  /(?:특정\s*직원|담당\s*직원|직원\s*(?:실명|성함|이름))|직원\s*(?:해고하|신고하|고발)\s*(?:겠|해야|할|했)|소비자\s*고발|집단\s*소송|언론\s*제보|인스타\s*(?:박살|올릴|퍼뜨릴)|sns\s*(?:올릴|퍼뜨릴|폭파)|온라인\s*(?:신고|도배|뭉개)|(?:아이|아들|딸|애)[^.!?\n]{0,15}(?:다쳤|다칩|넘어졌|부딪|피가\s*났)|환불\s*(?:요구|거부|안\s*해|해\s*달라|못\s*받)|법적\s*(?:조치|대응|책임)/i
+  new RegExp([
+    // KO
+    '(?:특정\\s*직원|담당\\s*직원|직원\\s*(?:실명|성함|이름))',
+    '직원\\s*(?:해고하|신고하|고발)\\s*(?:겠|해야|할|했)',
+    '소비자\\s*고발|집단\\s*소송|언론\\s*제보',
+    '인스타\\s*(?:박살|올릴|퍼뜨릴)|sns\\s*(?:올릴|퍼뜨릴|폭파)|온라인\\s*(?:신고|도배|뭉개)',
+    '(?:아이|아들|딸|애)[^.!?\\n]{0,15}(?:다쳤|다칩|넘어졌|부딪|피가\\s*났)',
+    '환불\\s*(?:요구|거부|안\\s*해|해\\s*달라|못\\s*받)|법적\\s*(?:조치|대응|책임)',
+    // EN — lawsuit/refund-demand/injury/police/media
+    '\\b(?:lawsuit|sue\\s+(?:you|them|the\\s+museum|this)|my\\s+lawyer|legal\\s+action|take\\s+(?:you\\s+)?to\\s+court)\\b',
+    '\\b(?:demand|want|need|give\\s+me)\\s+(?:a\\s+|my\\s+|full\\s+)*(?:refund|money\\s+back)\\b',
+    '\\b(?:call|called|calling|contact\\w*)\\s+(?:the\\s+)?(?:police|cops|media|press|news|health\\s+department|authorities)\\b',
+    '\\b(?:my\\s+)?(?:child|kid|son|daughter|baby|toddler)\\s+(?:got\\s+|was\\s+)?(?:hurt|injured|bleeding|fell)\\b',
+    // JA — 訴訟/弁護士/返金要求/怪我/警察/メディア
+    '訴訟|弁護士|法的措置|裁判',
+    '返金\\s*(?:しろ|してください|を要求|を求め|されない|拒否)',
+    '警察\\s*(?:を呼|に通報|沙汰)|消費者(?:センター|庁)',
+    '(?:子供|子ども|息子|娘|赤ちゃん)[^。!?\\n]{0,15}(?:怪我|けが|転倒|ぶつか|血が)',
+    'メディア\\s*(?:に|へ)\\s*(?:通報|連絡|暴露|リーク)',
+    // ZH — 起诉/律师/退款要求/受伤/报警/媒体
+    '起诉|律师|法律\\s*(?:行动|责任)|打官司',
+    '(?:要求|给我|必须)\\s*退款|退款\\s*(?:要求|给我|不可|拒绝)',
+    '报警|消费者协会|向\\s*媒体\\s*曝光|媒体\\s*曝光',
+    '(?:孩子|小孩|儿子|女儿|宝宝)[^。!?\\n]{0,15}(?:受伤|摔倒|撞到|流血|擦伤)',
+  ].join('|'), 'i')
 
 // ── Tier 3: 딕셔너리 미등록 극단 욕설 / 특수기호 혼합 비속어 ─────────────────────
 // 자음 조합 욕설(ㅅㅂ, ㄲㅈ, ㅁㅊ) + 특수기호 대체 욕설

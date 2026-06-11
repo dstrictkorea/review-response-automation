@@ -179,7 +179,9 @@ export async function processReviewById(
   const riskByClass  = cls.status === 'EMERGENCY' ? 'high'
                      : cls.status === 'COMPLAINT'  ? 'medium'
                      : 'low'
-  const finalRisk = floorRisk(existingRisk, riskByClass)
+  // Tier 2/3 독성·Critical(욕설/부상/환불요구/소송 — 9개 언어) → risk_level 'high' 강제 격상
+  const riskByTier   = (decision.riskTier ?? 0) >= 2 ? 'high' : 'low'
+  const finalRisk = floorRisk(existingRisk, riskByClass, riskByTier)
 
   async function applyReviewMeta(status: string, extraNote?: string): Promise<void> {
     await admin.from('reviews').update({
