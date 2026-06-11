@@ -1421,8 +1421,8 @@ const COMPANION_LINES: Record<string, Partial<Record<Language, string[]>>> = {
     tl: ['Ang pagbahagi ng panahong ito kasama ang inyong pamilya ay lalong nagpapahalaga nito para sa amin.', 'Ang malaman na nag-enjoy ang buong pamilya nang sama-sama ay tunay na kagalakan para sa amin.'],
   },
   '데이트': {
-    ko: ['두 분의 특별한 시간에 저희 공간이 함께할 수 있어 영광입니다.', '소중한 분과의 추억에 {branch_name}이 한 자리를 차지했다니 기쁩니다.'],
-    en: ['It is an honor that our space could be part of your special time together.', 'We are glad {branch_name} found a place in the memory you two made.'],
+    ko: ['특별한 데이트 시간에 저희 공간이 함께할 수 있어 영광입니다.', '소중한 데이트 코스로 {branch_name}을 떠올려 주셔서 기쁩니다.'],
+    en: ['It is an honor that {branch_name} could be part of your special date together.', 'We are so glad we could set the scene for your romantic time together.'],
     ja: ['お二人の特別なひとときに私どもの空間がご一緒できたこと、光栄に存じます。', '大切な方との思い出に{branch_name}が加わったこと、嬉しく思います。'],
     zh: ['两位的特别时光能有我们的空间相伴，深感荣幸。', '很高兴{branch_name}成为您与心爱之人回忆的一部分。'],
     es: ['Es un honor que nuestro espacio formara parte de su tiempo especial juntos.', 'Nos alegra que {branch_name} ocupara un lugar en el recuerdo que crearon.'],
