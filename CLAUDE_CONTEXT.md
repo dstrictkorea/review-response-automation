@@ -45,19 +45,20 @@ Repo `supabase/migrations/`: `001–007, 009–016` (**no 008** — intentional 
 **Ingestion** (CSV import w/ branch auto-detect + **5-dim SHA-256** dedup on 3-col index, or Google sync) → **deterministic classification at ingest** (no LLM). Google collection (manual `/api/google/sync` AND `/api/cron/sync-all`) share one helper `lib/google/syncReviews.ts` → every fetched review runs `processReviewById` (9-lang detect via `detectReviewLanguage`; empty-text/junk-rating guarded). No legacy "insert-only" gap.
 **Classification** `waterfallRegexEngine` 5 layers: EMERGENCY(0, immutable) → COMPLAINT(1, 11 tags) → CHURN/Repeat(2) → Sarcasm(3) → Sentiment(4, contextMirror) + gates: ★4-5+tags<2→COMPLIMENT · ★4-5+tags≥2→AMBIGUOUS · **★1-2+positive→AMBIGUOUS** · **service question→`[질문]`+AMBIGUOUS** · refund reported-speech excluded from EMERGENCY.
 **Routing** `reviewProcessor` (3-Tier): SAFE/COMPLIMENT→static `ai_done` (LLM 0) · COMPLAINT Tier1→static apology `ai_done` · Tier2/3→manual isolation · AMBIGUOUS Tier1→LLM (tags injected, always `pending_approval`) · EMERGENCY→manual. All replies pass `scanForbidden` Double-Check.
-**Reply assembly** `buildStaticReply` **governed multi-slot palette** (DECISIONS #15): fixed A(open)+B(emotion)+E(close) with conditional body slots — COMPLIMENT={Sensory(빛/물/향/소리)·Companion(가족/데이트/친구)·RepeatVisitor·Artwork·Peak}, COMPLAINT={Empathy·Tag-Pivot·Peak·Reassurance}. A length-proportional **governor** (bodyBudget 1~3) picks only the most situational slots → richer review = richer reply, NOT longer. × 9 languages × reviewId-hash variants + SHORT mode + contextMirror echo (KO/EN/JA/ZH) + `SLOT_C_PIVOTS` 13 complaint pivots × 9 langs + branch tokens w/ localized DEFAULT + **KO josa auto-correction**. New slots return '' for uncovered langs (governor skips → WRONG_SCRIPT-safe).
-**Quality gate** `scripts/deep-learning-loop.ts`: 683 synthetic reviews / 30 langs / **14 detectors** (incl. WRONG_SCRIPT, UNREPLACED_TOKEN, APPROVAL_BYPASS, BRANCH_CONTAMINATION) — **0/683 is the merge bar** for engine/template changes.
+**Reply assembly** `buildStaticReply` — **Matrix Fragment Pool** (DECISIONS #16, `src/lib/fragmentPool.ts`): fixed A(open)+B(emotion)+E(close); COMPLIMENT body = 4 dimensions {persona(가족/데이트/친구/단골)·sensory(빛/물/향/소리)·spatial(포토스팟/넓은공간)·temporal(아침/저녁/주말)} scored by weight, `selectFragments` keeps top-N by length-budget (1~3) → 수십 조각→수천 조합, richer review = richer reply NOT longer. COMPLAINT body={Empathy·Tag-Pivot·Peak·Reassurance}. × 9 languages × reviewId-hash variants + SHORT mode + contextMirror echo (KO/EN/JA/ZH) + `SLOT_C_PIVOTS` 13 pivots × 9 langs + branch tokens + **KO josa auto-correction**. Uncovered-lang fragments return '' (governor skips → WRONG_SCRIPT-safe). Pool is code-internal (no UI/DB exposure). **Toxicity:** `sanitizeAndScoreRisk` 9-lang (KO/EN/JA/ZH) Tier1 순화 / Tier2 격리(+risk high).
+**Quality gate** `scripts/deep-learning-loop.ts`: 713 synthetic reviews / 30 langs / **14 detectors** (incl. WRONG_SCRIPT, UNREPLACED_TOKEN, APPROVAL_BYPASS, BRANCH_CONTAMINATION) — **0/713 is the merge bar** for engine/template changes.
 **Publish:** human approves → `/api/review/publish` (assistive; **manual paste is the norm**). Soft delete everywhere.
 
 ## 6. Important file locations
 - **Language SSOT:** `src/lib/replyLanguage.ts` (`ReplyLanguage` 9 langs + `toReplyLanguage`) — **never re-create per-file Language shadows**
 - **Deterministic engine:** `src/lib/waterfallRegexEngine.ts` (5 layers, gates, `scanForbidden`, EMERGENCY immutable) + `src/lib/reviewProcessor.ts` (3-Tier gatekeeper) + `src/lib/synonymEngine.ts` (risk dict, sanitizer, contextMirror)
-- **Reply assembly:** `src/lib/staticTemplates.ts` (slot pools 9 langs, ~2,900 lines — grep, don't read whole) + `src/lib/replyTemplates.ts` (buildStaticReply) + `src/lib/branchMetadata.ts` (tokens, DEFAULT 9 langs, josa fixer) + `src/lib/branches.ts` (city/signature, EN fallback)
+- **Reply assembly:** `src/lib/fragmentPool.ts` (Matrix 4-dim pool + selectFragments governor) + `src/lib/staticTemplates.ts` (slot pools 9 langs, ~3,200 lines — grep, don't read whole) + `src/lib/replyTemplates.ts` (buildStaticReply) + `src/lib/branchMetadata.ts` (tokens, DEFAULT 9 langs, josa fixer) + `src/lib/branches.ts` (city/signature, EN fallback)
+- **Regression guard:** `npx tsx scripts/regression-guard.ts` = tsc + validate-waterfall + deep-learning-loop in one gate (run after any engine/dict/pool edit; ❌ BLOCKED → roll back)
 - **Single-review processing:** `src/lib/processReviewById.ts` (admin-context; bulk/re-process/cron/**sync** 공통; rating-coerce + empty-text guard) · API gatekeeper `src/app/api/review/generate/route.ts`
 - **Google collection SSOT:** `src/lib/google/syncReviews.ts` (`syncGoogleAccountReviews` + `detectReviewLanguage` 9-lang) — both sync routes call it; no engine bypass
 - **Inbound filter:** `src/services/filterService.ts` (5-lang hardcoded rules; KO refund excludes reported speech) · **LLM prompt:** `src/services/aiService.ts`
 - **DB rules:** `automation_rules`/`response_templates` + `src/lib/rulesCache.ts` + `/api/admin/rules`
-- **Quality loops:** `scripts/deep-learning-loop.ts` (683×14 detectors, ~4,000 lines — grep by scenario/Round) · `scripts/validate-waterfall.ts` (116+ TDD)
+- **Quality loops:** `scripts/deep-learning-loop.ts` (713×14 detectors, ~4,000 lines — grep by scenario/Round) · `scripts/validate-waterfall.ts` (116+ TDD)
 - **Reviews list UI (~900 lines):** `src/app/(admin)/reviews/ReviewsListClient.tsx` · server sort `page.tsx`
 - **Branch guard (app-layer):** `src/lib/auth/branchAccess.ts` (fail-closed) · **Gated RLS (do not apply):** `supabase/gated/rbac_rls_step_b.sql`
 - **i18n (UI only, 4 langs):** `src/lib/i18n/index.ts`
@@ -65,7 +66,7 @@ Repo `supabase/migrations/`: `001–007, 009–016` (**no 008** — intentional 
 
 ## 7. Typical workflow
 1. Edit code (read `node_modules/next/dist/docs/` before any novel Next 16 API — see AGENTS.md).
-2. **Verify (all must pass):** `npx tsc --noEmit` → `npm run lint` → `npm run build` → engine/template changes also need `npx tsx scripts/deep-learning-loop.ts` = **0/683** and `validate-waterfall` ALL PASS.
+2. **Verify (all must pass):** `npx tsc --noEmit` → `npm run lint` → `npm run build` → engine/template changes also need `npx tsx scripts/deep-learning-loop.ts` = **0/713** and `validate-waterfall` ALL PASS.
 3. DB change → Supabase MCP `apply_migration` on `vmrvyqqlebviaczsgapn` AND add file to `supabase/migrations/`. Never apply gated RLS. Update §4 table.
 4. Commit + `git push origin main` (only when asked) → Vercel deploys. Co-author footer per repo convention.
 

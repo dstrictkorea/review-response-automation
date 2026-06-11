@@ -92,7 +92,7 @@
 npx tsc --noEmit                                                  # 0 에러
 npm run lint && npm run build                                     # 0 / 성공
 npx tsx scripts/validate-waterfall.ts | tail -5                   # 116+ ALL PASS
-npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는"      # 0/683 필수
+npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는"      # 0/713 필수
 ```
 - 엔진/템플릿/필터를 수정했다면 **deep-learning-loop 0건이 머지 조건**입니다.
 - 새 위험 패턴 추가 시 EMERGENCY 레이어는 코드에만 추가 (DB 규칙은 additive only).

@@ -1,6 +1,6 @@
 # DECISIONS.md — Locked architectural decisions
 > Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-11.
-> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly
+> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly · 16 Matrix Fragment Pool · 17 9-Lang Sanitization + Regression Guard
 
 ---
 ## 1. Algorithm-First (template before LLM)
@@ -122,10 +122,10 @@
 
 ## 14. deep-learning-loop 0건 = 엔진/템플릿 변경의 머지 게이트
 - **Status:** LOCKED (2026-06-11)
-- **Decision:** `scripts/deep-learning-loop.ts`(683건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
+- **Decision:** `scripts/deep-learning-loop.ts`(713건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
 - **Reason:** 답변 품질 결함(언어 혼입, 토큰 노출, 무승인 우회, 타 지점명)은 단위 테스트로는 못 잡고 전수 조립 출력에서만 드러난다. 0건 기준선이 있어야 "수정이 다른 언어를 깨뜨렸는지"를 1커맨드로 안다.
 - **Alternatives:** (a) validate-waterfall(분류 단위 테스트)만; (b) 수동 샘플 검수.
-- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 683×9언어 수동 검수는 불가능.
+- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 713×9언어 수동 검수는 불가능.
 - **Consequences:** 데이터셋/검출기가 자라며 루프 실행 ~30s. `npx tsx`는 타입체크를 안 하므로 **루프 통과 ≠ 빌드 통과** — `tsc --noEmit` 별도 필수. 의도된 폴백(비코어 언어 ko 답변)은 검출기에서 명시적으로 제외해 두었다.
 - **Files:** `scripts/deep-learning-loop.ts`, `scripts/validate-waterfall.ts`.
 
@@ -137,3 +137,21 @@
 - **Why rejected:** (a) 감각/동반자/재방문을 반영 못 함 — 제네릭; (b) 길이 폭증 = TMI, 안전 규칙 위반 위험; (c) 결정론·무비용·감사가능성 상실(DECISIONS #1).
 - **Consequences:** 신규 슬롯은 전부 9개 언어 변형(미커버 언어 '' → governor 스킵, WRONG_SCRIPT 방어). 중복 echo 차단: `companionContext === contextMirror`이면 Companion 생략. 긴급은 공감/안심 슬롯 차단(건조 유지) — 안전 posture 보존. 슬롯 추가 시 deep-learning-loop 0건 필수(#14). 감각 탐지 패턴은 한국어 조사 전반 커버하되 '취향/방향' 등 오탐 회피.
 - **Files:** `src/lib/synonymEngine.ts` (extractSensoryFocus/extractCompanion), `src/lib/waterfallRegexEngine.ts` (sensoryFocus/companionContext 신호), `src/lib/staticTemplates.ts` (slotSensory/slotCompanion/slotRepeatVisitor/slotEmpathy/slotReassurance), `src/lib/replyTemplates.ts` (buildStaticReply governor).
+
+## 16. Matrix-Based Fragment Pool (선형 슬롯 → 4차원 동적 조각 조립)
+- **Status:** LOCKED (2026-06-11) — #15(Governed Multi-Slot)를 일반화·대체.
+- **Decision:** COMPLIMENT 본문을 고정 슬롯의 선형 연결이 아니라 **4차원 마이크로 조각 풀**(`src/lib/fragmentPool.ts`)에서 가중치 거버너(`selectFragments`)로 조립한다. 차원=persona(가족/데이트/친구/단골)·sensory(빛/물/향/소리)·spatial(포토스팟/넓은공간)·temporal(아침/저녁/주말). 신호별 가중치 내림차순 → 리뷰 길이 비례 budget(1~3)개 top-N pruning → 서사 순서 재배열. persona/sensory는 기존 검증 슬롯(slotCompanion/slotRepeatVisitor/slotSensory) 재사용, spatial/temporal은 풀 신규. **풀은 코드 내부 전용 — 프런트엔드 UI/DB 미노출.**
+- **Reason:** "10개 슬롯 무식하게 이어붙이기"의 한계(조합 폭발 불가, 길이 폭증)를 깬다. 수십 조각으로 수천 자연스러운 조합 생성(Zero-Cost Matrix)하되, 거버너 pruning으로 신호 5개가 잡혀도 상위 2~3개만 조립 → 다양하되 TMI 없음.
+- **Alternatives:** (a) #15 선형 슬롯 유지; (b) 모든 신호 무조건 조립; (c) LLM으로 다양성.
+- **Why rejected:** (a) 새 차원 추가 시마다 ad-hoc 분기 증가; (b) 길이 폭증·TMI; (c) 결정론·무비용·감사가능성 상실(#1).
+- **Consequences:** 신규 차원은 `WaterfallResult`에 신호 필드 추가(temporalContext/spatialContext) + extractor(synonymEngine). 전 조각 9개 언어(미커버 '' → governor 스킵, WRONG_SCRIPT 방어). 중복 echo 차단(companion===mirror, spatial 포토스팟=mirror 사진/분위기). Fragment 0개 → 작품/일반+피크 폴백(plain 리뷰 무회귀). 차원/조각 추가 시 regression-guard 통과 필수(#17).
+- **Files:** `src/lib/fragmentPool.ts`, `src/lib/synonymEngine.ts`(extractTemporal/extractSpatial), `src/lib/waterfallRegexEngine.ts`(temporalContext/spatialContext), `src/lib/replyTemplates.ts`(buildStaticReply Fragment Pool 본문).
+
+## 17. 9개 언어 독성 필터 + Regression Guard
+- **Status:** LOCKED (2026-06-11)
+- **Decision:** `sanitizeAndScoreRisk()`를 KO 단일 → KO/EN/JA/ZH 글로벌 딕셔너리로 확장. Tier1(비속어→비즈니스 언어 순화, AI_DONE 허용), Tier2(부상/환불요구/소송/경찰·언론 위협 → PENDING_APPROVAL + `risk_level:'high'` 강제), Tier3(미지 욕설 → fallback). `processReviewById`가 riskTier≥2 → risk 'high' floor. 동시에 `scripts/regression-guard.ts`로 tsc+validate-waterfall+deep-learning-loop을 1-커맨드 통합 게이트화 — 1개라도 FAIL 시 비-제로 종료(롤백 신호).
+- **Reason:** 글로벌 9개 언어 리뷰에서 EN/JA/ZH 욕설·치명적 위협이 KO-only 필터를 통과하던 구멍 차단. Regression Guard는 AI 자체 고도화 루프가 기존 통과 케이스를 깨는 수정을 원천 차단(회귀 방어).
+- **Alternatives:** (a) KO 필터만 유지(다른 언어는 waterfall EMERGENCY에만 의존); (b) 게이트 수동 개별 실행.
+- **Why rejected:** (a) waterfall EMERGENCY는 인입 분류용 — 라우팅 직전 sanitizer 보완망이 별도로 필요(특히 욕설 순화·환불요구 격리); (b) 수동 실행은 누락 위험 — 단일 게이트가 회귀 방어를 강제.
+- **Consequences:** Tier2 환불은 '요구/거부' 맥락만(보고화법 제외) → 오격리 방지. `\b`는 라틴(EN/ES/TL)에만 — CJK는 평문 교차(비ASCII 워드바운더리 버그 회피). regression-guard는 ~1~2분 소요(loop 포함). 검출기 SSOT는 여전히 #14.
+- **Files:** `src/lib/synonymEngine.ts`(TIER1_SANITIZE/TIER2_CRITICAL 9-lang), `src/lib/processReviewById.ts`(riskTier floor), `scripts/regression-guard.ts`.
