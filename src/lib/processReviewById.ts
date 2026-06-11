@@ -21,11 +21,11 @@
  */
 
 import OpenAI from 'openai'
-import { processReview } from '@/lib/reviewProcessor'
-import { scanForbidden, refreshEngineFromDB } from '@/lib/waterfallRegexEngine'
+import { processReview, type ProcessDecision } from '@/lib/reviewProcessor'
+import { scanForbidden, refreshEngineFromDB, type WaterfallResult } from '@/lib/waterfallRegexEngine'
 import { buildStaticReply } from '@/lib/replyTemplates'
 import { branchOfficialName } from '@/lib/branches'
-import { toReplyLanguage as langKeyOf } from '@/lib/replyLanguage'
+import { toReplyLanguage as langKeyOf, type ReplyLanguage } from '@/lib/replyLanguage'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // ── Provider URL map ─────────────────────────────────────────────────────────
@@ -45,6 +45,62 @@ function floorRisk(...levels: Array<string | null | undefined>): string {
 
 const FORBIDDEN_FLAGS_CLEAN = {
   refund_promise: false, legal_admission: false, cctv_mention: false, staff_discipline: false,
+}
+
+// ── 실데이터 정합성 가드 (PHASE 2) ──────────────────────────────────────────────
+// 외부 수집 데이터는 rating이 누락/문자열일 수 있다 → 1~5 숫자 또는 null로 정규화.
+function coerceRating(raw: unknown): number | null {
+  if (typeof raw === 'number') return Number.isFinite(raw) && raw >= 1 && raw <= 5 ? raw : null
+  if (typeof raw === 'string') {
+    const n = parseInt(raw.trim(), 10)
+    return Number.isFinite(n) && n >= 1 && n <= 5 ? n : null
+  }
+  return null
+}
+
+/**
+ * 빈 텍스트(별점만 등) 리뷰는 N-gram/정규식 분류 엔진을 태우지 않고 즉시 정적 처리한다.
+ *   - 비부정(★≥3 또는 무평점) → 정적 감사 템플릿 + ai_done (승인 불필요)
+ *   - 저평점(★≤2)            → 건조 사과 정적 초안 + pending_approval (사람 검토)
+ * → 내용 없는 리뷰가 LLM으로 새거나 부정 리뷰가 무승인 자동완료되는 것을 차단.
+ */
+function emptyTextDecision(
+  rating: number | null,
+  ctx: { branchCode: string; language: ReplyLanguage; reviewerName?: string | null; reviewId: string },
+): ProcessDecision {
+  const isNeg = typeof rating === 'number' && rating <= 2
+  const cls: WaterfallResult = {
+    status:           isNeg ? 'COMPLAINT' : (typeof rating === 'number' && rating >= 4 ? 'COMPLIMENT' : 'SAFE'),
+    requiresLLM:      false,
+    reason:           isNeg
+      ? '빈 텍스트 + 저평점 — 분류 엔진 미실행, 건조 사과 정적 초안 + 사람 검토'
+      : '빈 텍스트(별점/무평점) — 분류 엔진 미실행, 정적 감사 템플릿',
+    tags:             [],
+    tone:             'STANDARD',
+    isEmergency:      false,
+    isComplaint:      isNeg,
+    isArtworkFocused: false,
+    isRepeatVisitor:  false,
+    isChurnRisk:      false,
+    hasPeakHours:     false,
+    contextMirror:    null,
+    sensoryFocus:     null,
+    companionContext: null,
+  }
+  const staticReply = buildStaticReply(cls, {
+    branchCode:       ctx.branchCode,
+    language:         ctx.language,
+    reviewerName:     ctx.reviewerName,
+    reviewId:         ctx.reviewId,
+    rating,
+    reviewTextLength: 0,
+  })
+  return {
+    classification:   cls,
+    route:            isNeg ? 'manual' : 'static',
+    staticReply,
+    requiresApproval: isNeg,
+  }
 }
 
 type AdminClient = ReturnType<typeof createAdminClient>
@@ -92,17 +148,30 @@ export async function processReviewById(
   const lang = langKeyOf(review.review_language)
   const now  = new Date().toISOString()
 
-  // ── 2. DB 규칙 로드 (TTL 60s — 캐시 유효 시 no-op) ───────────────────────
+  // ── 2. 실데이터 정합성 가드 (PHASE 2) — rating 정규화 + 빈 텍스트 분기 ─────
+  const rating = coerceRating(review.rating)
+  const text   = (review.review_text ?? '').trim()
+
+  // ── 3. DB 규칙 로드 (TTL 60s — 캐시 유효 시 no-op) ───────────────────────
   await refreshEngineFromDB()
 
-  // ── 3. 결정론적 분류 + 라우팅 ──────────────────────────────────────────────
-  const decision = processReview({
-    reviewText:   review.review_text ?? '',
-    branchCode:   review.branch_code,
-    language:     lang,
-    reviewerName: review.reviewer_name,
-    rating:       review.rating,
-  })
+  // ── 4. 결정론적 분류 + 라우팅 ──────────────────────────────────────────────
+  //   빈 텍스트는 분류 엔진을 건너뛰고 정적 처리(emptyTextDecision); 유효 텍스트만 N-gram/정규식 통과.
+  const decision = text
+    ? processReview({
+        reviewText:   text,
+        branchCode:   review.branch_code,
+        language:     lang,
+        reviewerName: review.reviewer_name,
+        rating,
+        reviewId:     reviewId,
+      })
+    : emptyTextDecision(rating, {
+        branchCode:   review.branch_code,
+        language:     lang,
+        reviewerName: review.reviewer_name,
+        reviewId:     reviewId,
+      })
   const cls = decision.classification
 
   // ── 4. 위험도 floor (인입 위험도 절대 하향 금지) ──────────────────────────
@@ -126,7 +195,7 @@ export async function processReviewById(
   // ════════════ STATIC (SAFE / COMPLIMENT) / MANUAL (EMERGENCY) ════════════
   if (decision.route === 'static' || decision.route === 'manual') {
     const reply  = decision.staticReply
-      ?? buildStaticReply(cls, { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId, rating: review.rating })
+      ?? buildStaticReply(cls, { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId, rating })
     const fb     = scanForbidden(reply)
     const status = decision.requiresApproval ? 'pending_approval' : 'ai_done'
 
@@ -176,7 +245,7 @@ export async function processReviewById(
   async function dryFallback(note: string): Promise<void> {
     const reply = buildStaticReply(
       { ...cls, isComplaint: true },
-      { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId, rating: review.rating },
+      { branchCode: review.branch_code, language: lang, reviewerName: review.reviewer_name, reviewId: reviewId, rating },
     )
     await upsertDraft(admin, reviewId, {
       review_id: reviewId, draft_short: null, draft_standard: reply, draft_careful: null,
@@ -222,7 +291,7 @@ export async function processReviewById(
   ].join('\n')
 
   const userMessage =
-    `리뷰 별점: ${review.rating ?? '-'}\n리뷰 작성자: ${review.reviewer_name ?? '-'}\n리뷰 원문:\n${review.review_text ?? ''}`
+    `리뷰 별점: ${rating ?? '-'}\n리뷰 작성자: ${review.reviewer_name ?? '-'}\n리뷰 원문:\n${text}`
 
   let llmReply: string
   try {

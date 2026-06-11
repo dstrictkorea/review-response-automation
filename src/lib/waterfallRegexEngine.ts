@@ -136,7 +136,7 @@ const DEFAULT_SYSTEM_COMPLAINT =
 // 반드시 부정/실망 신호가 재방문 마커 근처(40자 이내)에 동반될 때만 매칭.
 // (긍정 재방문 "두 번째인데도 여전히 새롭고 감동적"은 isRepeatVisitor로만 처리 → COMPLIMENT)
 const DEFAULT_REVISIT_COMPLAINT =
-  /\b(?:second\s+visit|visited\s+before|came\s+back|used\s+to\s+be|been\s+here\s+before)\b[^.!?\n]{0,40}(?:disappoint\w*|worse|not\s+as\s+good|nothing\s+(?:new|changed|different)|same\s+(?:as|old)|let\s+down|underwhelm\w*|expected\s+more)|disappointed\s+this\s+time|(?<!안\s*)(?:재방문|두\s*번째|세\s*번째|예전에는?|과거에|지난번)[^.!?\n]{0,40}(?:아쉽|실망|별로|예전만\s*못|전보다\s*못|똑같|그대로|변화\s*(?:가\s*)?없|바뀐\s*게\s*없|달라진\s*게\s*없|새로운\s*게\s*없|기대\s*이하|나아진\s*게\s*없|그\s*나물에\s*그\s*밥)/i
+  /\b(?:second\s+visit|visited\s+before|came\s+back|used\s+to\s+be|been\s+here\s+before)\b[^.!?\n]{0,40}(?:disappoint\w*|worse|not\s+as\s+good|nothing\s+(?:new|changed|different)|same\s+(?:as|old)|let\s+down|underwhelm\w*|expected\s+more)|disappointed\s+this\s+time|(?<!안\s*)(?:재방문|두\s*번째|세\s*번째|예전에는?|과거에|지난번)[^.!?\n]{0,40}(?:아쉬|실망|별로|예전만\s*못|전보다\s*못|똑같|그대로|변화\s*(?:가\s*)?없|바뀐\s*게\s*없|달라진\s*게\s*없|새로운\s*게\s*없|기대\s*이하|나아진\s*게\s*없|그\s*나물에\s*그\s*밥)/i
 
 // STAFF_COMPLAINT: 직원 태도/응대 불만 (위험도 medium 격상 — processReviewById의 COMPLAINT → medium이 자동 처리)
 // 싸가지없음/직원최악 등 슬랭 포함: Tier 1 sanitizer와 협력 — 탐지는 여기서, 순화는 sanitizeAndScoreRisk

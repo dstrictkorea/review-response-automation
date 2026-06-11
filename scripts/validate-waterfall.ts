@@ -9,6 +9,7 @@ import { processReview } from '@/lib/reviewProcessor'
 import { analyzeReview, scanForbidden, applyRulesBundle, isUsingDefaults } from '@/lib/waterfallRegexEngine'
 import type { AutomationRule } from '@/lib/rulesCache'
 import { buildStaticReply } from '@/lib/replyTemplates'
+import { detectReviewLanguage, starRatingToNumber } from '@/lib/google/syncReviews'
 
 let failures = 0
 function check(name: string, cond: boolean, extra = '') {
@@ -454,6 +455,31 @@ import { sanitizeAndScoreRisk } from '@/lib/synonymEngine'
   check('S19 sanitizer tier=3', risk.tier === 3, `tier=${risk.tier}`)
   check('S19 sanitizer UNKNOWN_TOXIC flag', risk.flags.includes('UNKNOWN_TOXIC'), risk.flags.join(','))
   check('S19 sanitizer fallback replacement', risk.replacements.length > 0 && risk.replacements[0].replacement === '말씀해주신 관람 불편 사항')
+}
+
+// ── S20: 실제 수집 파이프라인 입력단 — 9개 언어 감지 + rating 정규화 ─────────────
+// 외부(Google 등) Raw 데이터가 syncReviews 헬퍼를 거쳐 올바른 언어/별점으로 적재되는지 검증.
+{
+  const langCases: Array<[string, string]> = [
+    ['빛이 가득한 공간 최고였어요', 'ko'],
+    ['素晴らしい光の演出でした', 'ja'],
+    ['灯光效果非常美丽', 'zh'],
+    ['Световые инсталляции потрясающие', 'ru'],
+    ['الإضاءة كانت ساحرة', 'ar'],
+    ['रोशनी बहुत सुंदर थी', 'hi'],
+    ['Las luces son increíbles, gracias', 'es'],
+    ['Napakaganda ng ilaw, salamat talaga', 'tl'],
+    ['The light installations were stunning', 'en'],
+  ]
+  for (const [txt, exp] of langCases) {
+    check(`S20 detectLang ${exp}`, detectReviewLanguage(txt) === exp, `got=${detectReviewLanguage(txt)}`)
+  }
+  check('S20 detectLang empty→null', detectReviewLanguage('') === null)
+  check('S20 detectLang null→null', detectReviewLanguage(null) === null)
+  // rating 정규화: 누락/문자열/범위초과 방어
+  check('S20 rating FIVE→5', starRatingToNumber('FIVE') === 5)
+  check('S20 rating missing→null', starRatingToNumber(undefined) === null)
+  check('S20 rating junk→null', starRatingToNumber('STAR_RATING_UNSPECIFIED') === null)
 }
 
 console.log(`\n${failures === 0 ? '✅ ALL PASS' : `❌ ${failures} FAILURE(S)`}`)

@@ -2,7 +2,22 @@
 > Updated 2026-06-11. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: Governed 다중 슬롯 조립 (5-슬롯 → 조건부 팔레트) — 더 다양·상황적 답변 (Rounds 42–43)**
+**✅ EPIC COMPLETE: 실제 수집(Sync) 파이프라인에 고도화 엔진 완전 이식**
+
+### 이번 EPIC 완료 사항
+- **수집부 누락 구간 차단**: `/api/google/sync`(수동 수집)가 엔진을 호출하지 않고 `status='new'`로
+  방치하던 레거시 경로 제거 → 수집 직후 전수 `processReviewById`(9-lang 슬롯 + 3-Tier Risk Routing).
+- **단일 출처 헬퍼** `src/lib/google/syncReviews.ts`: 수집·적재·엔진처리 통합. 수동 sync + cron/sync-all 공유.
+- **9개 언어 수집 감지** `detectReviewLanguage`(문자체계 + es/tl 기능어). 과거 ko/en 2종 한계 해소.
+- **실데이터 가드(processReviewById)**: `coerceRating`(누락/문자열/범위초과 → null), 빈 텍스트는
+  분류 엔진 미실행 → 비부정 정적 감사 ai_done / 저평점 건조 사과 pending_approval.
+- 보너스: processReviewById가 `reviewId`를 processReview에 전달 → 수집분도 슬롯 변형 다양성 확보(과거 idx=0 고정).
+- **검증**: tsc 0 · validate-waterfall ✅ ALL PASS(S20 추가) · deep-learning-loop **0/683** · next build OK.
+  (※ R42 REVISIT_COMPLAINT 강화로 깨졌던 validate-waterfall S7도 '아쉽→아쉬' 조사 보정으로 복구.)
+
+---
+
+**이전 EPIC COMPLETE: Governed 다중 슬롯 조립 (5-슬롯 → 조건부 팔레트) — 더 다양·상황적 답변 (Rounds 42–43)**
 
 ### 이번 EPIC 완료 사항 (commits `75d68b2`…`6fb8354`)
 - **5-슬롯 → governed 다중 슬롯 팔레트** (DECISIONS #15)

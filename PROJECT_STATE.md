@@ -1,7 +1,17 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → `6fb8354` (Wave 18 / 다중 슬롯 R43)
+> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → (Wave 19 / 수집 파이프라인 이식)
 > ⚠️ 적용 마이그레이션 SSOT는 `CLAUDE_CONTEXT.md` §4. 현행 아키텍처는 `ARCHITECTURE.md`.
+
+## 🌊 Wave 19 — 실제 수집 파이프라인 알고리즘 완전 이식 (완료)
+- **누락 구간 차단**: `/api/google/sync`(수동 "리뷰 가져오기")가 과거 `status='new'`로 INSERT만 하고
+  엔진을 호출하지 않던 문제 수정 → 수집 직후 전수 `processReviewById` 통과. cron/sync-all과 동일 경로.
+- **단일 출처 헬퍼** `src/lib/google/syncReviews.ts`: 수집·적재·엔진처리를 한 곳에 통합
+  (수동 sync + 크론이 공유). 9개 언어 governed 다중 슬롯 + 3-Tier Risk Routing 100% 강제 적용.
+- **9개 언어 수집 감지** `detectReviewLanguage`: 과거 ko/en 2종 → ko/ja/zh/ru/ar/hi(문자체계) + es/tl(기능어) + en.
+- **실데이터 정합성 가드 (processReviewById)**: rating 누락/문자열/범위초과 → `coerceRating`로 정규화;
+  빈 텍스트(별점만)는 분류 엔진 미실행 → 비부정=정적 감사 ai_done, 저평점=건조 사과 pending_approval.
+- **검증**: tsc 0 · validate-waterfall ✅ ALL PASS(S20 9-lang/rating 추가) · deep-learning-loop 0/683 · next build OK.
 
 ## 🌊 Wave 18 — Governed 다중 슬롯 조립 (R42–R43, 완료)
 - **5-슬롯 → 조건부 슬롯 팔레트 + 길이 비례 governor** (DECISIONS #15): 신규 슬롯 Sensory(빛/물/향/소리)·Companion(가족/데이트/친구)·RepeatVisitor·Empathy·Reassurance (9개 언어). 더 상황적이되 TMI 없음.

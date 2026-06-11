@@ -5,6 +5,9 @@
  * Called by Vercel Cron (vercel.json) and authenticated via Authorization: Bearer <CRON_SECRET>.
  * Uses the admin Supabase client so no user session is needed.
  *
+ * 수집·적재·엔진 처리는 `syncGoogleAccountReviews`(공유 헬퍼)에 위임 → 수동 sync와
+ * 완전히 동일한 경로. 수집된 모든 신규 리뷰가 결정론적 게이트키퍼를 100% 통과한다.
+ *
  * Security:
  *   - If CRON_SECRET env var is set, the Authorization header must match exactly.
  *   - If CRON_SECRET is not set the route is open (useful for local dev; set it in prod).
@@ -14,105 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getValidAccessToken, listGoogleReviews } from '@/lib/google/api'
-import { processReviewById } from '@/lib/processReviewById'
-
-// ── Helpers (duplicated from /api/google/sync to avoid cross-route import) ──────
-
-function starRatingToNumber(star: string): number {
-  const map: Record<string, number> = { FIVE: 5, FOUR: 4, THREE: 3, TWO: 2, ONE: 1 }
-  return map[star] ?? 0
-}
-
-function makeHash(str: string): string {
-  let h = 0
-  for (let i = 0; i < str.length; i++) {
-    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0
-  }
-  return Math.abs(h).toString(36)
-}
-
-// ── Core sync logic for a single account ────────────────────────────────────────
-
-async function syncOneAccount(
-  admin: ReturnType<typeof createAdminClient>,
-  googleAccountId: string,
-): Promise<{ imported: number; orchestrated: number }> {
-  const { data: ga } = await admin
-    .from('google_accounts')
-    .select('*')
-    .eq('id', googleAccountId)
-    .single()
-
-  if (!ga) throw new Error('계정을 찾을 수 없습니다.')
-  if (!ga.branch_code) throw new Error('지점(branch_code)이 설정되지 않았습니다.')
-  if (!ga.google_location_name) throw new Error('Location name이 설정되지 않았습니다.')
-
-  const token = await getValidAccessToken(googleAccountId)
-  let imported = 0
-  let nextPageToken: string | undefined
-  const newReviewIds: string[] = []  // IDs of genuinely new (non-duplicate) inserts
-
-  do {
-    const data = await listGoogleReviews(ga.google_location_name, token, nextPageToken)
-    const reviews = data.reviews ?? []
-    nextPageToken = data.nextPageToken
-
-    for (const review of reviews) {
-      const sourceId: string = review.name
-      const hash = makeHash(sourceId)
-
-      // With ignoreDuplicates:true, maybeSingle() returns the inserted row for new
-      // reviews and null for duplicates — lets us identify truly new reviews.
-      const { data: upserted, error } = await admin.from('reviews').upsert(
-        {
-          branch_code: ga.branch_code,
-          channel_code: 'google',
-          source_review_id: sourceId,
-          reviewer_name: review.reviewer?.displayName ?? '익명',
-          rating: starRatingToNumber(review.starRating),
-          review_text: review.comment ?? null,
-          review_language: review.comment
-            ? /[가-힯]/.test(review.comment) ? 'ko' : 'en'
-            : null,
-          review_created_at: review.createTime ?? null,
-          status: 'new',
-          normalized_hash: hash,
-        },
-        { onConflict: 'branch_code,channel_code,normalized_hash', ignoreDuplicates: true },
-      ).select('id').maybeSingle()
-
-      if (!error && upserted?.id) {
-        imported++
-        newReviewIds.push(upserted.id)
-      }
-    }
-  } while (nextPageToken)
-
-  await admin
-    .from('google_accounts')
-    .update({ last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-    .eq('id', googleAccountId)
-
-  // ── 신규 리뷰 결정론적 게이트키퍼 처리 (제한 동시성 = 3) ─────────────────
-  let orchestrated = 0
-  const CONCURRENCY = 3
-  for (let i = 0; i < newReviewIds.length; i += CONCURRENCY) {
-    const batch = newReviewIds.slice(i, i + CONCURRENCY)
-    const results = await Promise.allSettled(
-      batch.map((id) => processReviewById(id, 'system:cron', admin)),
-    )
-    for (const r of results) {
-      if (r.status === 'fulfilled') {
-        orchestrated++
-      } else {
-        console.error('[cron/sync-all] processReviewById failed:', r.reason)
-      }
-    }
-  }
-
-  return { imported, orchestrated }
-}
+import { syncGoogleAccountReviews } from '@/lib/google/syncReviews'
 
 // ── Auth guard ───────────────────────────────────────────────────────────────────
 
@@ -154,7 +59,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   for (const account of accounts) {
     const key = account.google_account_email ?? account.id
     try {
-      results[key] = await syncOneAccount(admin, account.id)
+      results[key] = await syncGoogleAccountReviews(admin, account.id, 'system:cron')
     } catch (err: unknown) {
       results[key] = { error: err instanceof Error ? err.message : String(err) }
     }

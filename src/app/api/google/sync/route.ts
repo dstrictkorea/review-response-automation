@@ -1,78 +1,47 @@
+/**
+ * POST /api/google/sync — 수동 "리뷰 가져오기" (단일 계정)
+ *
+ * 외부 Google Business Profile에서 리뷰를 수집·적재한 직후, 수집된 모든 신규 리뷰를
+ * `syncGoogleAccountReviews`(공유 헬퍼)가 결정론적 게이트키퍼(`processReviewById`)로
+ * 전수 처리한다 → 9개 언어 governed 다중 슬롯 + 3-Tier Risk Routing 100% 적용.
+ * (cron/sync-all과 동일한 수집·처리 경로를 공유 — 누락 구간 없음.)
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getValidAccessToken, listGoogleReviews } from '@/lib/google/api'
-
-function starRatingToNumber(star: string): number {
-  const map: Record<string, number> = { FIVE: 5, FOUR: 4, THREE: 3, TWO: 2, ONE: 1 }
-  return map[star] ?? 0
-}
-
-function makeHash(str: string): string {
-  let h = 0
-  for (let i = 0; i < str.length; i++) {
-    h = Math.imul(31, h) + str.charCodeAt(i) | 0
-  }
-  return Math.abs(h).toString(36)
-}
+import { syncGoogleAccountReviews } from '@/lib/google/syncReviews'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { googleAccountId } = await req.json()
+  let googleAccountId: string
+  try {
+    ({ googleAccountId } = await req.json())
+  } catch {
+    return NextResponse.json({ error: '요청 형식이 올바르지 않습니다.' }, { status: 400 })
+  }
+  if (!googleAccountId) return NextResponse.json({ error: 'googleAccountId가 필요합니다.' }, { status: 400 })
+
   const admin = createAdminClient()
 
-  const { data: ga } = await admin
-    .from('google_accounts')
-    .select('*')
-    .eq('id', googleAccountId)
-    .single()
-
-  if (!ga) return NextResponse.json({ error: '계정을 찾을 수 없습니다.' }, { status: 404 })
-  if (!ga.branch_code) return NextResponse.json({ error: '지점이 설정되지 않았습니다.' }, { status: 400 })
-
   try {
-    const token = await getValidAccessToken(googleAccountId)
-    let imported = 0
-    let nextPageToken: string | undefined
-
-    do {
-      const data = await listGoogleReviews(ga.google_location_name, token, nextPageToken)
-      const reviews = data.reviews ?? []
-      nextPageToken = data.nextPageToken
-
-      for (const review of reviews) {
-        const sourceId: string = review.name
-        const hash = makeHash(sourceId)
-
-        const { error } = await admin.from('reviews').upsert({
-          branch_code: ga.branch_code,
-          channel_code: 'google',
-          source_review_id: sourceId,
-          reviewer_name: review.reviewer?.displayName ?? '익명',
-          rating: starRatingToNumber(review.starRating),
-          review_text: review.comment ?? null,
-          review_language: review.comment
-            ? (/[가-힯]/.test(review.comment) ? 'ko' : 'en')
-            : null,
-          review_created_at: review.createTime ?? null,
-          status: 'new',
-          normalized_hash: hash,
-        }, { onConflict: 'branch_code,channel_code,normalized_hash', ignoreDuplicates: true })
-
-        if (!error) imported++
-      }
-    } while (nextPageToken)
-
-    await admin
-      .from('google_accounts')
-      .update({ last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq('id', googleAccountId)
-
-    return NextResponse.json({ success: true, imported })
+    const { imported, orchestrated } = await syncGoogleAccountReviews(
+      admin,
+      googleAccountId,
+      user.email ?? 'system:manual-sync',
+    )
+    await admin.from('activity_logs').insert({
+      review_id: null,
+      actor_name: user.email ?? 'system:manual-sync',
+      action: 'google_sync_manual',
+      detail: { google_account_id: googleAccountId, imported, orchestrated },
+    })
+    return NextResponse.json({ success: true, imported, orchestrated })
   } catch (err: unknown) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
+    const message = err instanceof Error ? err.message : String(err)
+    const status = message.includes('찾을 수 없') ? 404 : message.includes('설정되지') ? 400 : 500
+    return NextResponse.json({ error: message }, { status })
   }
 }

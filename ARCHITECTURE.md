@@ -127,8 +127,9 @@ npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는 리뷰:"   # 0/
 | `POST /api/review/bulk-delete` | Gmail식 필터 페이로드 일괄 soft delete |
 | `GET /api/review/export` | CSV 내보내기 |
 | `GET/POST /api/admin/rules` | DB 규칙 CRUD (`automation_rules`/`response_templates`, 관리자) |
-| `/api/google/{sync,reply}` `/api/auth/google[/callback]` | GBP 동기화/게시 보조 |
-| `GET /api/cron/sync-all` | 일간 동기화 + 신규 리뷰 자동 분류 |
+| `POST /api/google/sync` | 수동 "리뷰 가져오기" → 수집·적재 후 **전수 `processReviewById`** (수집분도 엔진 100% 통과) |
+| `GET/POST /api/cron/sync-all` | 일간/수동 동기화 — `google/sync`와 **동일 헬퍼** `syncGoogleAccountReviews` 공유 |
+| `/api/google/reply` `/api/auth/google[/callback]` | GBP 게시/인증 보조 |
 | `/api/ai/generate-reply` | ⚠ 레거시 LLM 직행 경로 — 게이트키퍼 수렴 예정 |
 
 ## 6. DB (Supabase) — 적용 상태는 `CLAUDE_CONTEXT.md` §4가 SSOT
@@ -162,7 +163,8 @@ src/lib/
   replyTemplates.ts       buildStaticReply governed 다중 슬롯 조립 + Kill-Switch
   branchMetadata.ts       지점 토큰 팩토리 + DEFAULT 9개 언어 + KO 조사 보정
   branches.ts             지점 코드 SSOT (도시명/시그니처 작품, EN 폴백)
-  processReviewById.ts    admin-context 단건 처리 공통 헬퍼 (bulk/re-process/cron)
+  processReviewById.ts    admin-context 단건 처리 공통 헬퍼 (bulk/re-process/cron/sync) + 빈텍스트·rating 가드
+  google/syncReviews.ts   Google 수집→적재→엔진 단일 출처 (수동 sync + cron 공유) + detectReviewLanguage(9-lang)
   rulesCache.ts           DB 규칙 인메모리 캐시 (TTL 60s)
 src/services/
   filterService.ts        인입 키워드 필터 (5개 국어 위험 패턴, 보고화법 제외 처리)
