@@ -1,17 +1,23 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-06-01 · commit range: `86c1c2e` → (Wave 13)
+> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → `bd8dbdf` (Wave 17 / 딥러닝 루프 R41)
+> ⚠️ 적용 마이그레이션 SSOT는 `CLAUDE_CONTEXT.md` §4. 현행 아키텍처는 `ARCHITECTURE.md`.
+
+## 🌊 Wave 17 — 다국어 딥러닝 루프 고도화 (R36–R41, 완료)
+- **9개 핵심 언어 네이티브 답변** (ko/en/ja/zh/es/ru/ar/hi/tl): 전 슬롯 풀 + SLOT_C_PIVOTS 13종 + JA/ZH contextMirror echo. `src/lib/replyLanguage.ts` 타입 SSOT 신설 (per-file shadow 제거 → Vercel 빌드 복구 `50e911b`).
+- **안전 게이트 3종**: ★1-2+긍정→AMBIGUOUS 격리(무승인 ai_done 차단) · 서비스질문 `[질문]` 태그 격리 · 환불 보고화법 EMERGENCY 오탐 제외.
+- **미등록 지점 DEFAULT 토큰 9개 언어 현지화** + **한국어 조사 자동 보정** (GANGNEUNG를→을, FOREST을→를, WHALE를→을…).
+- **품질 게이트**: deep-learning-loop **655건/30개 언어/14종 검출기 0건** — 엔진/템플릿 변경의 머지 기준 (DECISIONS #14). 신규 검출기 5종: UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·ARTIFACT·APPROVAL_BYPASS.
+- commits: `4480507`(R36) `9c80951`(R37-39) `5e8e83d`(R40) `9176488` `50e911b` `101b16c` `bd8dbdf`(R41)
 
 ## ⚠️ 라이브 DB 스키마 드리프트 (중요)
-- 라이브 Supabase(`vmrvyqqlebviaczsgapn`)는 repo 마이그레이션과 **불일치** 상태였음.
-- **적용 완료(Wave 13)**: 006(reply_drafts 텔레메트리 컬럼), 007(branches 11개 시드+country_code).
-- **✅ 적용 완료(Wave 14)**: 005(Algorithm-First) — pg_trgm + review_intents(20) + intent_keywords(226) + reply_template_variants(69) + detect_review_intent RPC. 라이브 검증: '정말 너무 좋아요' → positive_overall conf 1.00. 알고리즘 우선 엔진 가동 (LLM 토큰 90% 절감 목표 활성화).
+- 적용 상태 표는 **`CLAUDE_CONTEXT.md` §4가 단일 출처** (001–007, 009A, 010–015 적용 · 009B RLS GATED · 016 파일만).
+- 005의 레거시 테이블(intent_keywords 등)은 migration 015에서 DROP — Algorithm-First는 현재 `waterfallRegexEngine` + `automation_rules`(013) 체계.
 - **불필요**: 004의 단독 normalized_hash 인덱스 — CSV import onConflict를 기존 3컬럼 인덱스에 맞춰 코드로 해결.
 
-## 🌊 결정론적 하이브리드 파이프라인 (진행 중)
-- **현재 문제점**: 단건/배치 답변 생성이 LLM 의존적이라 (1) 비결정적 환각, (2) 톤 파편화(short/careful 변형), (3) 토큰 비용 부담.
-- **Phase 1 완료**: 다국어(KO/EN) 폭포수 정규식 엔진 도입 준비 — 분류/템플릿/LLM 호출부(IntelligentOrchestrator·generate-reply·aiService) 및 타입(`Review.categories`=태그, `ReplyDraft.pipeline_engine`) 매핑 완료. `reviews`에 별도 tone/tags 컬럼 없음 → `categories` 재사용(마이그레이션 불필요).
-- **목표 구조**: Algorithm-First(인입 필터) → Algorithm-Second(안전 리뷰 = 정적 템플릿 자동 응답, **LLM 미사용**) → LLM(불만/모호/위험 전용 **격리 Fallback**, 태그 주입 + 승인 대기).
+## 🌊 결정론적 하이브리드 파이프라인 (✅ 가동 중)
+- **구조**: Algorithm-First(인입 즉시 결정론 분류) → SAFE/COMPLIMENT/COMPLAINT-Tier1 = 정적 5-슬롯 자동 응답(**LLM 미사용, ai_done**) → LLM은 AMBIGUOUS-Tier1 전용 **격리 Fallback**(태그 주입 + 항상 승인 대기) → 전 출력 `scanForbidden` Double-Check.
+- 상세 플로우/게이트는 `ARCHITECTURE.md` §2 참조.
 
 
 ---

@@ -46,6 +46,19 @@ Humans approve every reply before it goes public.
 - Desktop-first layout, must also be usable on mobile
 - Admin-facing only — no public-facing pages
 
+## Reply Engine Languages (UI와 분리)
+
+- UI Language = ko/en/ja/zh (`src/lib/i18n`). **Reply Language = 9개** — ko/en/ja/zh/es/ru/ar/hi/tl.
+- 타입 SSOT는 `src/lib/replyLanguage.ts` 하나뿐 — 파일별 로컬 `type Language` 섀도잉 금지 (빌드 깨짐 전력).
+- 비코어 언어 리뷰는 ko 폴백 초안 → 운영자가 번역 후 게시.
+
+## Quality Gate (엔진/템플릿 변경 시 필수)
+
+- `npx tsx scripts/deep-learning-loop.ts` → **"이슈 있는 리뷰: 0/655"** 가 머지 조건 (DECISIONS #14)
+- `npx tsx scripts/validate-waterfall.ts` → ALL PASS
+- `npx tsc --noEmit` → 0 (next build가 scripts/**까지 타입체크 — tsx 통과 ≠ 빌드 통과)
+- 버그 수정 시 그 버그를 재현하는 합성 리뷰를 루프 데이터셋에 추가 (회귀 고정)
+
 ---
 
 ## Compact Instructions

@@ -1,6 +1,6 @@
 # DECISIONS.md — Locked architectural decisions
-> Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-04.
-> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency)
+> Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-11.
+> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate
 
 ---
 ## 1. Algorithm-First (template before LLM)
@@ -101,3 +101,30 @@
 - **Why rejected:** (a) every keyword tweak needs a deploy + a developer; (b) DB tampering (e.g. via the anon key) could silently disable the safety net — unacceptable.
 - **Consequences:** New tables have **RLS on** (authenticated read; writes via service-role) — safer than the older `intent_keywords`/`reply_template_variants` (RLS off — a known exposure to revisit). Overlap with legacy `app_settings.risk_keywords` + migration-005 `intent_keywords`/`reply_template_variants` → those are **legacy to converge**, not parallel SSOTs. Cache is per-serverless-instance + TTL ⇒ cross-instance propagation is eventual (≤60s).
 - **Files:** `supabase/migrations/013_automation_rules.sql`, `src/lib/rulesCache.ts`, `src/app/api/admin/rules/route.ts`, `src/lib/waterfallRegexEngine.ts` (immutable emergency).
+
+## 12. ReplyLanguage SSOT — UI 언어(4)와 답변 언어(9) 분리
+- **Status:** LOCKED (2026-06-11, commits `50e911b`/`9176488`)
+- **Decision:** UI `Language`(`'ko'|'en'|'ja'|'zh'`, `i18n/index.ts`)는 화면 라벨 전용으로 유지하고, 답변 엔진은 별도 `ReplyLanguage`(UI 4 + `'es'|'ru'|'ar'|'hi'|'tl'`)를 `src/lib/replyLanguage.ts` 단일 모듈에서 가져다 쓴다. DB 언어 문자열 → `toReplyLanguage()` (미지원 → `'ko'` 폴백). **파일별 로컬 `type Language = ...` 섀도잉 금지.**
+- **Reason:** UI 9개 언어 번역 없이 답변만 9개 언어로 확장해야 했다. per-file shadow 방식은 모듈 경계(`processReview`, `branchOfficialName` 등)에서 i18n 타입과 충돌해 **타입 에러 163건 + Vercel 빌드 실패**를 일으켰다 — `next build`는 `scripts/**`까지 타입체크하므로 단일 출처가 필수.
+- **Alternatives:** (a) i18n `Language`를 9개로 확장; (b) per-file 로컬 타입 유지; (c) `string` 사용.
+- **Why rejected:** (a) UI 사전(DICT) 9개 언어 강제 — 범위 밖; (b) 실제로 빌드를 깨뜨림; (c) 타입 안전성 상실(슬롯 풀 키 누락을 컴파일이 못 잡음).
+- **Consequences:** `branches.ts`의 4-언어 데이터는 확장 언어에서 **EN 고유명사 폴백**. 미등록 지점 `DEFAULT_TOKENS`는 9개 언어 현지화 + 한국어는 조사(을/를·이/가) 자동 보정(`fixKoreanJosa`, 영문 음독 근사 + `JONG_EXCEPTIONS`). 비코어 언어(de/fr/pt…)는 ko 폴백 초안 — 운영자가 번역 후 게시.
+- **Files:** `src/lib/replyLanguage.ts`, `src/lib/{staticTemplates,replyTemplates,reviewProcessor,branchMetadata,branches,processReviewById}.ts`, `src/app/api/review/generate/route.ts`.
+
+## 13. 저평점·질문 격리 게이트 (무승인 자동완료 차단)
+- **Status:** LOCKED (2026-06-11, commits `101b16c`/`bd8dbdf`)
+- **Decision:** ① ★1–2 + 긍정 패턴 본문 = 별점·본문 충돌 → **AMBIGUOUS 격리** (SAFE/COMPLIMENT `ai_done` 금지). ② 서비스 질문(유모차/주차/예약/할인…) 포함 리뷰는 `[질문]` 태그 + 고평점이어도 정적 COMPLIMENT 격상 차단 → LLM/사람이 답변. ③ EMERGENCY 환불 키워드는 보고 화법("환불했다는/했대/얘기")을 negative lookahead로 제외 — 요구형은 전부 유지.
+- **Reason:** 루프 검출기(APPROVAL_BYPASS)가 실제 구멍 4건을 적발 — 티바 대기/락커 부족/"too commercial" 불만이 정규식 미탐지로 SAFE→무승인 자동완료되어 명랑한 감사 답변이 나갔다. 질문 리뷰는 정적 템플릿이 답을 못 하므로(시설 정보 날조 위험) 사람 응대가 유일하게 안전하다. ★5 호평이 "친구가 환불했다는 얘기" 인용만으로 EMERGENCY 격리되는 오탐도 동시 수정.
+- **Alternatives:** (a) ★≤2 전부 COMPLAINT 강제; (b) 질문 무시하고 감사 답변; (c) 환불 키워드 전부 유지.
+- **Why rejected:** (a) 혼합 뉘앙스 리뷰에 일률 사과문 — 부정확; (b) 직접 질문 무시는 "말도 안 되는 답변"의 대표 사례; (c) 보고 화법 오탐은 EMERGENCY 큐 신뢰도를 깎는다.
+- **Consequences:** 저평점 모호 리뷰의 LLM/수동 처리량 증가(의도된 트레이드오프 — 안전 우선). `SERVICE_QUESTION` 패턴은 수사적 감탄("예쁘죠?")과 구분되어야 하므로 시설/운영 명사 기반으로만 확장할 것.
+- **Files:** `src/lib/waterfallRegexEngine.ts` (rating gate, SERVICE_QUESTION, refund lookahead), `src/services/filterService.ts` (KO 환불 패턴).
+
+## 14. deep-learning-loop 0건 = 엔진/템플릿 변경의 머지 게이트
+- **Status:** LOCKED (2026-06-11)
+- **Decision:** `scripts/deep-learning-loop.ts`(655건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
+- **Reason:** 답변 품질 결함(언어 혼입, 토큰 노출, 무승인 우회, 타 지점명)은 단위 테스트로는 못 잡고 전수 조립 출력에서만 드러난다. 0건 기준선이 있어야 "수정이 다른 언어를 깨뜨렸는지"를 1커맨드로 안다.
+- **Alternatives:** (a) validate-waterfall(분류 단위 테스트)만; (b) 수동 샘플 검수.
+- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 655×9언어 수동 검수는 불가능.
+- **Consequences:** 데이터셋/검출기가 자라며 루프 실행 ~30s. `npx tsx`는 타입체크를 안 하므로 **루프 통과 ≠ 빌드 통과** — `tsc --noEmit` 별도 필수. 의도된 폴백(비코어 언어 ko 답변)은 검출기에서 명시적으로 제외해 두었다.
+- **Files:** `scripts/deep-learning-loop.ts`, `scripts/validate-waterfall.ts`.

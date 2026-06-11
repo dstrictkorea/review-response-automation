@@ -1,7 +1,8 @@
 # REPORT.md — Repository & Context-Efficiency Audit
 > Generated 2026-06-04 · read-only analysis of actual code (not doc claims) · no code modified
 > Repo: `dstrictkorea/review-response-automation` · App: Next.js 16 App Router + Supabase + LLM
-> **Status 2026-06-05:** recommended doc architecture adopted (`CLAUDE_CONTEXT.md` = first read). Since the audit, shipped: deterministic `WaterfallRegexEngine` + hybrid pipeline, ingestion-time classification, archive/safe-hard-delete, reason display + rating-aware triage + CSV export. **In progress:** DB-driven dynamic rules engine — PHASE 1 (migration 013 `automation_rules`/`response_templates` + `/api/admin/rules`) done; PHASE 2–4 pending. See `CURRENT_TASK.md` / `DECISIONS.md #11`.
+> **Status 2026-06-05:** recommended doc architecture adopted (`CLAUDE_CONTEXT.md` = first read). Since the audit, shipped: deterministic `WaterfallRegexEngine` + hybrid pipeline, ingestion-time classification, archive/safe-hard-delete, reason display + rating-aware triage + CSV export. DB-driven dynamic rules engine PHASE 1 (migration 013 + `/api/admin/rules`) done.
+> **Status 2026-06-11:** audit recommendations #1/#3/#5 done (`CLAUDE_CONTEXT.md` first-read 정착, migration table 유지, `ARCHITECTURE.md`/`OPERATIONAL_GUIDE.md` 신설). Since then shipped: DB rules PHASE 2–4 (engine wiring + `/settings/rules` + simulator), 3-Tier risk routing, legacy purge (migration 015, IntelligentOrchestrator/templateEngineService 삭제 — §1.2/§2의 해당 행은 역사 기록), **9-language reply engine (`replyLanguage.ts` SSOT) + deep-learning loop 655×14 detectors = merge gate (0 issues)**, low-star/question isolation gates, Vercel build 복구. **Remaining from this audit:** #2 planning-tree archive (102 files — 최대 토큰 낭비원), `PROJECT_STATE.md` slimming, `risk_level` ordinal sort. See `CURRENT_TASK.md`.
 
 ---
 

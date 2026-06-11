@@ -1,5 +1,11 @@
 # ARTE Review Automation — Light MVP 실행 계획서
 
+> ⚠️ **STATUS (2026-06-11): 이 문서는 2026-05-06 기획 시점의 계획서다 — 구현 완료, 현행 스펙 아님.**
+> MVP 목표 5가지(수집·AI분류/초안·승인·아카이브·프론트 설정)는 전부 출시되었고, 이후
+> 결정론적 WaterfallRegexEngine(LLM-미사용 기본 경로) + 9개 언어 답변 엔진 + 딥러닝 품질 루프로 고도화됐다.
+> **현행 구조 = [ARCHITECTURE.md](./ARCHITECTURE.md) · 진행 상태 = [CURRENT_TASK.md](./CURRENT_TASK.md) ·
+> 운영 = [OPERATIONAL_GUIDE.md](./OPERATIONAL_GUIDE.md).** 본문과 현행이 다르면 현행 문서가 우선한다.
+
 작성일: 2026-05-06  
 목적: 기존 `arte_review_automation_e2e_v2` 문서팩을 바탕으로, **초기 제작 속도와 실제 운영 가능성**을 우선하는 가벼운 MVP 방향을 확정한다.  
 핵심 원칙: **빨리 만들고, 안전하게 운영하고, 운영 데이터와 히스토리를 쌓으며, 프론트엔드에서 계속 고도화 가능하게 만든다.**
