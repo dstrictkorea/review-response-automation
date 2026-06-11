@@ -16,7 +16,7 @@ These rules exist to prevent context bloat that triggers usage limits mid-sessio
 - **Large files in this repo** (read by range, never whole-file unless editing):
   - `src/lib/staticTemplates.ts` — ~2,900 lines (9-lang slot pools); grep the slot/tag/lang you need
   - `src/lib/waterfallRegexEngine.ts` — 500+ lines; grep the function/pattern
-  - `scripts/deep-learning-loop.ts` — ~4,000 lines (655 synthetic reviews + 14 detectors); grep by scenario name or `Round NN`
+  - `scripts/deep-learning-loop.ts` — ~4,000 lines (683 synthetic reviews + 14 detectors); grep by scenario name or `Round NN`
   - `scripts/validate-waterfall.ts` — 300+ lines; grep test block by label (S4, C9, etc.)
   - `src/app/(admin)/reviews/ReviewsListClient.tsx` — ~900 lines
 
@@ -24,7 +24,7 @@ These rules exist to prevent context bloat that triggers usage limits mid-sessio
 - `npm run build` — only errors and route table matter; ignore full compilation log. **NOTE: build type-checks `scripts/**` too — `npx tsx` passing does NOT mean the build passes.**
 - `npx tsc --noEmit` — only error lines matter; ignore "no errors found" verbosity
 - `npx tsx scripts/validate-waterfall.ts` — only PASS/FAIL counts and any FAIL detail matter
-- `npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는 리뷰:"` — **0/655 is the merge bar** for engine/template changes; on failure grep the scenario name for detail
+- `npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는 리뷰:"` — **0/683 is the merge bar** for engine/template changes; on failure grep the scenario name for detail
 - If a command would dump > 100 lines of output and only the last 5–10 lines are actionable, add `| tail -20` or `| grep -E "error|FAIL|✗"` inline
 
 ### Context Hygiene

@@ -1,13 +1,20 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → `bd8dbdf` (Wave 17 / 딥러닝 루프 R41)
+> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → `6fb8354` (Wave 18 / 다중 슬롯 R43)
 > ⚠️ 적용 마이그레이션 SSOT는 `CLAUDE_CONTEXT.md` §4. 현행 아키텍처는 `ARCHITECTURE.md`.
+
+## 🌊 Wave 18 — Governed 다중 슬롯 조립 (R42–R43, 완료)
+- **5-슬롯 → 조건부 슬롯 팔레트 + 길이 비례 governor** (DECISIONS #15): 신규 슬롯 Sensory(빛/물/향/소리)·Companion(가족/데이트/친구)·RepeatVisitor·Empathy·Reassurance (9개 언어). 더 상황적이되 TMI 없음.
+- **신호 추출 확장**: `extractSensoryFocus`/`extractCompanion` 신설, 미활용 `isRepeatVisitor` 활성화.
+- **버그 3건 (루프 적발)**: "lost track of time" 긴급 오탐 · 긍정 재방문 REVISIT_COMPLAINT 오탐 · "빛으로" 감각 미탐지 — 모두 수정 + 회귀 케이스.
+- **품질 게이트**: deep-learning-loop **683건/30개 언어/14종 검출기 0건** 유지 (R42–43 28건 추가).
+- commits: `75d68b2`(슬롯 확장) `4da94be`(R42+fix) `6fb8354`(R43)
 
 ## 🌊 Wave 17 — 다국어 딥러닝 루프 고도화 (R36–R41, 완료)
 - **9개 핵심 언어 네이티브 답변** (ko/en/ja/zh/es/ru/ar/hi/tl): 전 슬롯 풀 + SLOT_C_PIVOTS 13종 + JA/ZH contextMirror echo. `src/lib/replyLanguage.ts` 타입 SSOT 신설 (per-file shadow 제거 → Vercel 빌드 복구 `50e911b`).
 - **안전 게이트 3종**: ★1-2+긍정→AMBIGUOUS 격리(무승인 ai_done 차단) · 서비스질문 `[질문]` 태그 격리 · 환불 보고화법 EMERGENCY 오탐 제외.
 - **미등록 지점 DEFAULT 토큰 9개 언어 현지화** + **한국어 조사 자동 보정** (GANGNEUNG를→을, FOREST을→를, WHALE를→을…).
-- **품질 게이트**: deep-learning-loop **655건/30개 언어/14종 검출기 0건** — 엔진/템플릿 변경의 머지 기준 (DECISIONS #14). 신규 검출기 5종: UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·ARTIFACT·APPROVAL_BYPASS.
+- **품질 게이트**: deep-learning-loop **683건/30개 언어/14종 검출기 0건** — 엔진/템플릿 변경의 머지 기준 (DECISIONS #14). 신규 검출기 5종: UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·ARTIFACT·APPROVAL_BYPASS.
 - commits: `4480507`(R36) `9c80951`(R37-39) `5e8e83d`(R40) `9176488` `50e911b` `101b16c` `bd8dbdf`(R41)
 
 ## ⚠️ 라이브 DB 스키마 드리프트 (중요)

@@ -32,9 +32,9 @@
 ### 다국어 답변 엔진
 
 - **9개 핵심 언어 네이티브 답변**: 한국어·영어·일본어·중국어·스페인어·러시아어·아랍어·힌디어·필리핀어
-- 5-슬롯 조립(인사/감정응답/맥락피벗/피크힌트/클로징) × 리뷰ID 해시 변형 — 같은 문장 반복 방지
+- governed 다중 슬롯 조립(인사·감정·감각(빛/물/향/소리)·동반자·재방문·작품·클로징) × 리뷰ID 해시 변형 — 같은 문장 반복 방지
 - 리뷰 맥락 echo(힐링/데이트/가족/생일), 한국어 조사 자동 보정, 지점 메타데이터 토큰
-- 품질 게이트: 합성 리뷰 655건 × 14종 검출기 **0건** 기준선 (`scripts/deep-learning-loop.ts`)
+- 품질 게이트: 합성 리뷰 683건 × 14종 검출기 **0건** 기준선 (`scripts/deep-learning-loop.ts`)
 
 ---
 
@@ -99,7 +99,7 @@ npm run dev
 | Styling | Tailwind CSS v4 |
 | Charts | recharts |
 | Database & Auth | Supabase (PostgreSQL + RLS) |
-| 분류/답변 | 결정론적 WaterfallRegexEngine + 5-슬롯 정적 조립 (기본) |
+| 분류/답변 | 결정론적 WaterfallRegexEngine + governed 다중 슬롯 조립 (기본) |
 | AI (예외 전용) | OpenAI 호환 SDK — Groq llama-3.3-70b / Gemini / GPT-4o (불만·모호 격리 폴백) |
 | Deploy | Vercel (main push → 자동 배포) |
 
@@ -122,7 +122,7 @@ npx tsc --noEmit                          # TypeScript (scripts/** 포함 — Ve
 npm run lint                              # ESLint
 npm run build                             # Next.js 프로덕션 빌드
 npx tsx scripts/validate-waterfall.ts     # 분류 TDD 116+ 케이스
-npx tsx scripts/deep-learning-loop.ts     # 품질 게이트 — "이슈 있는 리뷰: 0/655" 필수
+npx tsx scripts/deep-learning-loop.ts     # 품질 게이트 — "이슈 있는 리뷰: 0/683" 필수
 ```
 
 ## 문서 인덱스
@@ -132,7 +132,7 @@ npx tsx scripts/deep-learning-loop.ts     # 품질 게이트 — "이슈 있는 
 | [CLAUDE_CONTEXT.md](./CLAUDE_CONTEXT.md) | **첫 진입점** — 환경/마이그레이션 상태/파일 맵 |
 | [CURRENT_TASK.md](./CURRENT_TASK.md) | 현재 작업 컨텍스트 + 락/가드레일 |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | 현행 시스템 구조 (파이프라인/엔진/검출기) |
-| [DECISIONS.md](./DECISIONS.md) | 확정 설계 결정 14건 (재논의 금지) |
+| [DECISIONS.md](./DECISIONS.md) | 확정 설계 결정 15건 (재논의 금지) |
 | [OPERATIONAL_GUIDE.md](./OPERATIONAL_GUIDE.md) | 운영자용 가이드 (상태/격리/문제해결) |
 | [PROJECT_STATE.md](./PROJECT_STATE.md) | Wave별 마일스톤 이력 |
 | `00_`–`12_` 트리 | ⚠️ 과거 기획 아카이브 — 현행 스펙 아님 |

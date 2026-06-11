@@ -1,6 +1,6 @@
 # DECISIONS.md — Locked architectural decisions
 > Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-11.
-> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate
+> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly
 
 ---
 ## 1. Algorithm-First (template before LLM)
@@ -122,9 +122,18 @@
 
 ## 14. deep-learning-loop 0건 = 엔진/템플릿 변경의 머지 게이트
 - **Status:** LOCKED (2026-06-11)
-- **Decision:** `scripts/deep-learning-loop.ts`(655건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
+- **Decision:** `scripts/deep-learning-loop.ts`(683건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
 - **Reason:** 답변 품질 결함(언어 혼입, 토큰 노출, 무승인 우회, 타 지점명)은 단위 테스트로는 못 잡고 전수 조립 출력에서만 드러난다. 0건 기준선이 있어야 "수정이 다른 언어를 깨뜨렸는지"를 1커맨드로 안다.
 - **Alternatives:** (a) validate-waterfall(분류 단위 테스트)만; (b) 수동 샘플 검수.
-- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 655×9언어 수동 검수는 불가능.
+- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 683×9언어 수동 검수는 불가능.
 - **Consequences:** 데이터셋/검출기가 자라며 루프 실행 ~30s. `npx tsx`는 타입체크를 안 하므로 **루프 통과 ≠ 빌드 통과** — `tsc --noEmit` 별도 필수. 의도된 폴백(비코어 언어 ko 답변)은 검출기에서 명시적으로 제외해 두었다.
 - **Files:** `scripts/deep-learning-loop.ts`, `scripts/validate-waterfall.ts`.
+
+## 15. Governed 다중 슬롯 조립 (5-슬롯 → 조건부 팔레트 + 길이 비례 governor)
+- **Status:** LOCKED (2026-06-11, commits `75d68b2`…`6fb8354`)
+- **Decision:** 답변 조립을 고정 5-슬롯에서 **조건부 상황 본문 슬롯 팔레트**로 확장한다. 고정은 A(인사/사과)+B(감정/수용)+E(클로징)뿐이고, 사이 본문은 신호에 따라 선택: COMPLIMENT={Sensory(빛/물/향/소리)·Companion(가족/데이트/친구)·RepeatVisitor·Artwork/General·Peak}, COMPLAINT={Empathy·Tag-Pivot·Peak·Reassurance}. **Governor**가 리뷰 길이 비례 `bodyBudget`(COMPLIMENT 1~3, COMPLAINT 재량 0~2, pivot은 항상)으로 가장 상황적인 슬롯만 선택한다. 슬롯이 많아져도 답변 길이는 리뷰 풍부도에 비례할 뿐 일률적으로 늘지 않는다.
+- **Reason:** "AI같고 같은말만 반복" + "TMI" 두 피드백을 동시에 해결. 더 많은 슬롯 = 특정 리뷰에 더 정확히 맞춤(라이트·미디어 아트 감각 echo, 동반자 맥락, 단골 인정) — 더 길어지는 게 아니라. 미활용이던 `isRepeatVisitor` 신호도 활성화.
+- **Alternatives:** (a) 5-슬롯 유지; (b) 모든 슬롯 무조건 삽입(10-슬롯 고정); (c) LLM으로 다양성 확보.
+- **Why rejected:** (a) 감각/동반자/재방문을 반영 못 함 — 제네릭; (b) 길이 폭증 = TMI, 안전 규칙 위반 위험; (c) 결정론·무비용·감사가능성 상실(DECISIONS #1).
+- **Consequences:** 신규 슬롯은 전부 9개 언어 변형(미커버 언어 '' → governor 스킵, WRONG_SCRIPT 방어). 중복 echo 차단: `companionContext === contextMirror`이면 Companion 생략. 긴급은 공감/안심 슬롯 차단(건조 유지) — 안전 posture 보존. 슬롯 추가 시 deep-learning-loop 0건 필수(#14). 감각 탐지 패턴은 한국어 조사 전반 커버하되 '취향/방향' 등 오탐 회피.
+- **Files:** `src/lib/synonymEngine.ts` (extractSensoryFocus/extractCompanion), `src/lib/waterfallRegexEngine.ts` (sensoryFocus/companionContext 신호), `src/lib/staticTemplates.ts` (slotSensory/slotCompanion/slotRepeatVisitor/slotEmpathy/slotReassurance), `src/lib/replyTemplates.ts` (buildStaticReply governor).
