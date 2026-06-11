@@ -233,7 +233,7 @@ export function extractContextMirror(text: string): string | null {
   // 데이트 관련 — 커플/연인 맥락
   if (/데이트|연인과|파트너와/.test(t)) return '데이트'
   if (/\bdate\s*(?:night|spot|place)\b|\bromantic\b/.test(t)) return '데이트'
-  if (/パートナー|彼氏|彼女|カップル|デート/.test(t)) return '데이트'
+  if (/パートナー|彼氏|彼女|カップル|デート|恋人/.test(t)) return '데이트'
   if (/伴侣|男朋友|女朋友|约会|情侣/.test(t)) return '데이트'
   if (/पार्टनर|प्रेमी|प्रेमिका/.test(t)) return '데이트'
   if (/романтич\S*|с\s*(?:партнёром|любимым|любимой)/.test(t)) return '데이트'
@@ -335,7 +335,7 @@ export function extractCompanion(text: string): string | null {
   // 데이트/커플
   if (/데이트|연인과|파트너와|커플/.test(t)) return '데이트'
   if (/\bdate\s*(?:night|spot|place)?\b|\bromantic\b|\bpartner\b|\bboyfriend\b|\bgirlfriend\b/i.test(t)) return '데이트'
-  if (/パートナー|彼氏|彼女|カップル|デート/.test(t)) return '데이트'
+  if (/パートナー|彼氏|彼女|カップル|デート|恋人/.test(t)) return '데이트'
   if (/伴侣|男朋友|女朋友|约会|情侣/.test(t)) return '데이트'
   if (/पार्टनर|प्रेमी|प्रेमिका/.test(t)) return '데이트'
   if (/романтич\w*|с\s*(?:партнёром|любимым|любимой)/i.test(t)) return '데이트'
