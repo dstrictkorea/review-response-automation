@@ -281,8 +281,8 @@ export function extractContextMirror(text: string): string | null {
 // ════════════════════════════════════════════════════════════════════════════════
 export function extractSensoryFocus(text: string): string | null {
   const t = text ?? ''
-  // 빛/조명
-  if (/빛이|빛의|빛에|빛\s|조명|불빛|라이트\s*(?:쇼|아트)/.test(t)) return '빛'
+  // 빛/조명 — 다양한 조사 커버 ("빛으로 가득한", "빛을", "빛이" 등). 빛=light로 모호성 낮음.
+  if (/빛(?:으로|을|이|의|에|과|도|만|들|\s)|불빛|조명|라이트\s*(?:쇼|아트)/.test(t)) return '빛'
   if (/\blight(?:s|ing)?\b|\bluminous\b|\bglow(?:ing)?\b/i.test(t)) return '빛'
   if (/光の|光が|照明|ライト/.test(t)) return '빛'
   if (/灯光|光影|光线/.test(t)) return '빛'
@@ -301,8 +301,8 @@ export function extractSensoryFocus(text: string): string | null {
   if (/\bcascada\b|\bolas?\b|\boc[eé]ano\b/i.test(t)) return '물'
   if (/волн\w*|водопад/i.test(t)) return '물'
   if (/\balon\b|\btalon\s*ng\s*tubig/i.test(t)) return '물'
-  // 향/향기
-  if (/향기|향이|향에|향긋|아로마/.test(t)) return '향'
+  // 향/향기 — '취향/방향/영향' 등 오탐 방지: 향기/향긋/아로마는 무조건, 향이/향은 긍정 후행어 동반 시만
+  if (/향기|향긋|아로마|냄새가?\s*(?:좋|은은|향긋)|향이\s*(?:좋|은은|진하|가득|나|퍼|감돌)/.test(t)) return '향'
   if (/\bscent(?:ed)?\b|\bfragrance\b|\baroma\b|\bsmell(?:ed|s)?\b/i.test(t)) return '향'
   if (/香り|香りが|匂い/.test(t)) return '향'
   if (/香味|香气|气味/.test(t)) return '향'
