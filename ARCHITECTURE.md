@@ -32,11 +32,13 @@ WaterfallRegexEngine (5-Layer, LLM 미사용)
   Layer 4  Sentiment  — 긍정/질문/작품감상 + contextMirror 추출
   ▼
 Rating Override & 안전 게이트 (waterfallRegexEngine.ts 최종 판정부)
+  • ★4-5 + 긍정 + 대조(는데/but/但是) → Hybrid COMPLAINT 정적 자동완료 (사과+긍정인정+개선; DECISIONS #18)
   • ★4-5 + 불만태그 <2  → COMPLIMENT (건설적 피드백 완화)
-  • ★4-5 + 불만태그 ≥2  → AMBIGUOUS (잠재 사캐즘 → LLM)
+  • ★4-5 + 불만태그 ≥2 (대조 없음=사캐즘) → AMBIGUOUS (LLM)
   • ★1-2 + 긍정 본문     → AMBIGUOUS (별점·본문 충돌 = 미탐지 불만 가능성, 무승인 ai_done 차단)
+  • ★1-2 + 무긍정(정확+fuzzy)·무태그 → COMPLAINT 격상 (다국어 미탐지 불만 정적 사과 회수)
   • 서비스 질문(유모차/주차/예약…) → [질문] 태그 + AMBIGUOUS (정적 격상 금지, 사람이 답변)
-  • ★1 + 무긍정·무태그   → COMPLAINT 격상
+  • 감성 신호: contextMirror + fuzzyPositive(오탈자 흡수, 긍정 보강 전용)
   ▼
 reviewProcessor (3-Tier 스마트 라우팅)
   EMERGENCY            → route='manual'  건조 사과 초안 + pending_approval
@@ -103,7 +105,7 @@ COMPLAINT/AMBIGUOUS 라우팅 전 3-Tier 독성 평가 (KO + EN/JA/ZH 글로벌 
 
 ## 4. 품질 검증 루프 — `scripts/deep-learning-loop.ts`
 
-713건 합성 리뷰 (30개 언어 × 다인종/연령/시나리오) → `processReview()` 전수 통과 → 14종 검출기:
+813건 합성 리뷰 (30개 언어 × 다인종/연령/시나리오) → `processReview()` 전수 통과 → 14종 검출기:
 
 | # | 검출기 | 심각도 | 내용 |
 |---|---|---|---|
@@ -122,9 +124,9 @@ COMPLAINT/AMBIGUOUS 라우팅 전 3-Tier 독성 평가 (KO + EN/JA/ZH 글로벌 
 | 13 | ARTIFACT | P1 | 빈 슬롯/이중 개행/공백 아티팩트 |
 | 14 | APPROVAL_BYPASS | P0 | ★≤2 COMPLIMENT/SAFE 무승인 자동완료 |
 
-**현재 기준선: 0/713 이슈.** 엔진/템플릿 수정 시 이 루프가 회귀 게이트다:
+**현재 기준선: 0/813 이슈.** 엔진/템플릿 수정 시 이 루프가 회귀 게이트다:
 ```bash
-npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는 리뷰:"   # 0/713 필수
+npx tsx scripts/deep-learning-loop.ts 2>&1 | grep "이슈 있는 리뷰:"   # 0/813 필수
 ```
 
 ## 5. API 라우트 (실제 구현)
@@ -182,7 +184,7 @@ src/services/
   filterService.ts        인입 키워드 필터 (5개 국어 위험 패턴, 보고화법 제외 처리)
   aiService.ts            국가별 문화 프로파일 + LLM 프롬프트 SSOT
 scripts/
-  deep-learning-loop.ts   713건 합성 리뷰 × 14종 검출기 회귀 게이트
+  deep-learning-loop.ts   813건 합성 리뷰 × 14종 검출기 회귀 게이트
   validate-waterfall.ts   116+ TDD 분류/슬롯 케이스 (S1~S20)
   regression-guard.ts     통합 회귀 방어 게이트 (tsc + validate-waterfall + loop, 1개라도 FAIL→차단)
 ```

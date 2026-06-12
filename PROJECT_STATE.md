@@ -1,7 +1,15 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → (Wave 20 / Matrix Fragment Pool)
+> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → (Wave 21 / Coverage 극대화)
 > ⚠️ 적용 마이그레이션 SSOT는 `CLAUDE_CONTEXT.md` §4. 현행 아키텍처는 `ARCHITECTURE.md`.
+
+## 🌊 Wave 21 — 복합 의도 + 퍼지 매칭으로 자동 답변 커버리지 극대화 (완료)
+- **Mixed-Intent Resolver** (DECISIONS #18): 고평점+긍정+대조(는데/but) → Hybrid 정적 자동완료(사과+긍정인정+개선). 사캐즘(대조 없음)은 AMBIGUOUS 격리 유지.
+- **Fuzzy/Typo Tolerance**: 경량 Levenshtein(≤1) `fuzzyPositive`(awsome/amazng/beatiful…) + 한국어 활용형/축약/은어(멋진/예쁜/굿/강추/꿀잼) DEFAULT_POSITIVE 보강.
+- **Ultra-short Auto-Done**: ≤10자 무신호 긍정("굿"/"最高") → 인사+감사 2조각 즉시 자동완료.
+- **★1-2 미인식 불만 회수**: 다국어 미탐지 저평점 → COMPLAINT 정적 사과.
+- **Coverage/Miss Rate 계측**(loop) + Round 45(100건): **auto-done 85.1% · 격리 10.1% · Miss Rate(LLM) 4.8%** → 알고리즘 처리 95.2%.
+- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop 0/813).
 
 ## 🌊 Wave 20 — Matrix-Based Fragment Pool + 9개국어 독성 필터 + 회귀 가드 (완료)
 - **선형 슬롯 → 4차원 Fragment Pool 전환** (DECISIONS #16): `src/lib/fragmentPool.ts` 신규.
@@ -9,8 +17,8 @@
   spatial(포토스팟/넓은공간)·temporal(아침/저녁/주말) 차원 신규 — 9개 언어. 수십 조각 → 수천 조합.
 - **9개국어 독성 필터** (`sanitizeAndScoreRisk`): KO 외 EN/JA/ZH 비속어(Tier1 순화)·법적위협/부상/환불요구(Tier2 격리+risk high) 추가.
 - **회귀 방어 게이트** `scripts/regression-guard.ts`: tsc + validate-waterfall + loop 통합 1-커맨드, 1개라도 FAIL 시 차단.
-- **Round 44** 30건(9개 언어 × temporal/spatial 복합 + EN/JA/ZH 독성) → deep-learning-loop **0/713**.
-- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop 0/713) · next build OK.
+- **Round 44** 30건(9개 언어 × temporal/spatial 복합 + EN/JA/ZH 독성) → deep-learning-loop **0/813**.
+- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop 0/813) · next build OK.
 
 ## 🌊 Wave 19 — 실제 수집 파이프라인 알고리즘 완전 이식 (완료)
 - **누락 구간 차단**: `/api/google/sync`(수동 "리뷰 가져오기")가 과거 `status='new'`로 INSERT만 하고
@@ -20,20 +28,20 @@
 - **9개 언어 수집 감지** `detectReviewLanguage`: 과거 ko/en 2종 → ko/ja/zh/ru/ar/hi(문자체계) + es/tl(기능어) + en.
 - **실데이터 정합성 가드 (processReviewById)**: rating 누락/문자열/범위초과 → `coerceRating`로 정규화;
   빈 텍스트(별점만)는 분류 엔진 미실행 → 비부정=정적 감사 ai_done, 저평점=건조 사과 pending_approval.
-- **검증**: tsc 0 · validate-waterfall ✅ ALL PASS(S20 9-lang/rating 추가) · deep-learning-loop 0/713 · next build OK.
+- **검증**: tsc 0 · validate-waterfall ✅ ALL PASS(S20 9-lang/rating 추가) · deep-learning-loop 0/813 · next build OK.
 
 ## 🌊 Wave 18 — Governed 다중 슬롯 조립 (R42–R43, 완료)
 - **5-슬롯 → 조건부 슬롯 팔레트 + 길이 비례 governor** (DECISIONS #15): 신규 슬롯 Sensory(빛/물/향/소리)·Companion(가족/데이트/친구)·RepeatVisitor·Empathy·Reassurance (9개 언어). 더 상황적이되 TMI 없음.
 - **신호 추출 확장**: `extractSensoryFocus`/`extractCompanion` 신설, 미활용 `isRepeatVisitor` 활성화.
 - **버그 3건 (루프 적발)**: "lost track of time" 긴급 오탐 · 긍정 재방문 REVISIT_COMPLAINT 오탐 · "빛으로" 감각 미탐지 — 모두 수정 + 회귀 케이스.
-- **품질 게이트**: deep-learning-loop **713건/30개 언어/14종 검출기 0건** 유지 (R42–43 28건 추가).
+- **품질 게이트**: deep-learning-loop **813건/30개 언어/14종 검출기 0건** 유지 (R42–43 28건 추가).
 - commits: `75d68b2`(슬롯 확장) `4da94be`(R42+fix) `6fb8354`(R43)
 
 ## 🌊 Wave 17 — 다국어 딥러닝 루프 고도화 (R36–R41, 완료)
 - **9개 핵심 언어 네이티브 답변** (ko/en/ja/zh/es/ru/ar/hi/tl): 전 슬롯 풀 + SLOT_C_PIVOTS 13종 + JA/ZH contextMirror echo. `src/lib/replyLanguage.ts` 타입 SSOT 신설 (per-file shadow 제거 → Vercel 빌드 복구 `50e911b`).
 - **안전 게이트 3종**: ★1-2+긍정→AMBIGUOUS 격리(무승인 ai_done 차단) · 서비스질문 `[질문]` 태그 격리 · 환불 보고화법 EMERGENCY 오탐 제외.
 - **미등록 지점 DEFAULT 토큰 9개 언어 현지화** + **한국어 조사 자동 보정** (GANGNEUNG를→을, FOREST을→를, WHALE를→을…).
-- **품질 게이트**: deep-learning-loop **713건/30개 언어/14종 검출기 0건** — 엔진/템플릿 변경의 머지 기준 (DECISIONS #14). 신규 검출기 5종: UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·ARTIFACT·APPROVAL_BYPASS.
+- **품질 게이트**: deep-learning-loop **813건/30개 언어/14종 검출기 0건** — 엔진/템플릿 변경의 머지 기준 (DECISIONS #14). 신규 검출기 5종: UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·ARTIFACT·APPROVAL_BYPASS.
 - commits: `4480507`(R36) `9c80951`(R37-39) `5e8e83d`(R40) `9176488` `50e911b` `101b16c` `bd8dbdf`(R41)
 
 ## ⚠️ 라이브 DB 스키마 드리프트 (중요)

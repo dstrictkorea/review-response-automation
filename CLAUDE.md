@@ -54,7 +54,7 @@ Humans approve every reply before it goes public.
 
 ## Quality Gate (엔진/템플릿 변경 시 필수)
 
-- `npx tsx scripts/deep-learning-loop.ts` → **"이슈 있는 리뷰: 0/713"** 가 머지 조건 (DECISIONS #14)
+- `npx tsx scripts/deep-learning-loop.ts` → **"이슈 있는 리뷰: 0/813"** 가 머지 조건 (DECISIONS #14)
 - `npx tsx scripts/validate-waterfall.ts` → ALL PASS
 - `npx tsc --noEmit` → 0 (next build가 scripts/**까지 타입체크 — tsx 통과 ≠ 빌드 통과)
 - 버그 수정 시 그 버그를 재현하는 합성 리뷰를 루프 데이터셋에 추가 (회귀 고정)

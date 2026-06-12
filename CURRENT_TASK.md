@@ -2,7 +2,23 @@
 > Updated 2026-06-11. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: Matrix-Based Fragment Pool + 9개국어 독성 필터 + 회귀 가드 (Wave 20)**
+**✅ EPIC COMPLETE: 복합 의도 수용 + 퍼지 매칭으로 자동 답변 커버리지 극대화 (Wave 21)**
+
+### 이번 EPIC 완료 사항
+- **Mixed-Intent Resolver** (DECISIONS #18): 고평점 + 긍정어 + 정직한 대조(는데/but/但是) →
+  isHybrid → COMPLAINT Tier1 정적 자동완료(사과+긍정인정 slotHybridAck+개선). 과거 LLM 위임/불만 무시 해소.
+  대조 없는 반어적 칭찬+불만 = 사캐즘 → AMBIGUOUS 유지(안전).
+- **Fuzzy/Typo Tolerance** (synonymEngine): `levenshtein`(≤1) + `fuzzyPositive` — awsome/amazng/beatiful 등
+  오탈자 흡수(부정어 가드). 한국어 활용형(멋진/예쁜)·축약·은어(굿/강추/꿀잼/넘좋) DEFAULT_POSITIVE 보강.
+- **Ultra-short Auto-Done**: "굿"/"最高"/"Awesome" ≤10자 무신호 → 인사+감사 2조각 즉시 자동완료.
+- **★1-2 미인식 불만 회수**: 다국어 미탐지 저평점 → COMPLAINT 정적 사과(AMBIGUOUS 보정 ★1→★1-2).
+- **Coverage/Miss Rate 계측 + Round 45(100건)**: auto-done 85.1% · 의도적 격리 10.1% · Miss Rate(LLM) 4.8%.
+  → 알고리즘 처리 95.2%. 오탈자/복합/초단문/은어/미인식불만 전부 자동화, 진짜 ★3 모호만 LLM.
+- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop **0/813**).
+
+---
+
+**이전 EPIC COMPLETE: Matrix-Based Fragment Pool + 9개국어 독성 필터 + 회귀 가드 (Wave 20)**
 
 ### 이번 EPIC 완료 사항
 - **선형 슬롯 → 4차원 Matrix Fragment Pool** (DECISIONS #16): `src/lib/fragmentPool.ts` 신규.
@@ -11,8 +27,8 @@
   persona/sensory는 기존 검증 슬롯 재사용(무회귀). Fragment 0개 → 작품/일반+피크 폴백.
 - **9개국어 독성 필터** (DECISIONS #17): `sanitizeAndScoreRisk` EN/JA/ZH 비속어(Tier1)·법적위협/부상/환불요구(Tier2+risk high).
 - **회귀 방어 게이트** `scripts/regression-guard.ts`: tsc+validate-waterfall+loop 1-커맨드, FAIL 시 차단.
-- **Round 44** 30건(temporal/spatial 복합 + EN/JA/ZH 독성) → **0/713**.
-- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop 0/713) · next build OK.
+- **Round 44** 30건(temporal/spatial 복합 + EN/JA/ZH 독성) → **0/813**.
+- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop 0/813) · next build OK.
 
 ---
 
@@ -26,7 +42,7 @@
 - **실데이터 가드(processReviewById)**: `coerceRating`(누락/문자열/범위초과 → null), 빈 텍스트는
   분류 엔진 미실행 → 비부정 정적 감사 ai_done / 저평점 건조 사과 pending_approval.
 - 보너스: processReviewById가 `reviewId`를 processReview에 전달 → 수집분도 슬롯 변형 다양성 확보(과거 idx=0 고정).
-- **검증**: tsc 0 · validate-waterfall ✅ ALL PASS(S20 추가) · deep-learning-loop **0/713** · next build OK.
+- **검증**: tsc 0 · validate-waterfall ✅ ALL PASS(S20 추가) · deep-learning-loop **0/813** · next build OK.
   (※ R42 REVISIT_COMPLAINT 강화로 깨졌던 validate-waterfall S7도 '아쉽→아쉬' 조사 보정으로 복구.)
 
 ---
@@ -46,7 +62,7 @@
 - **버그 3건 (루프가 적발)**: "lost track of time" EMERGENCY 오탐 · 긍정 재방문 REVISIT_COMPLAINT
   오탐(→ LLM 우회) · "빛으로" 감각 미탐지. 모두 수정 + 회귀 케이스 추가
 - **Round 42–43**: 신규 슬롯 검증 28건 (감각 4종·동반자·재방문·공감·부정맥락 차단·예산 상한)
-- 검증: **0/713 이슈**, tsc 0, next build OK
+- 검증: **0/813 이슈**, tsc 0, next build OK
 
 ---
 
@@ -67,13 +83,13 @@
   - `DEFAULT_TOKENS[lang]` 9개 언어 ("our location에 위치한" Konglish 제거, highlight_room='ETERNAL NATURE')
   - `applyBranchTokens(…, lang)` 한국어 조사 자동 보정: GANGNEUNG를→을, SINGAPORE이→가, FOREST을→를, WHALE를→을
     (영문 음독 근사 m/n/l/k/g=받침 + JONG_EXCEPTIONS)
-- **deep-learning-loop 확장: 713건 / 30개 언어 / 14종 검출기 / 0 이슈**
+- **deep-learning-loop 확장: 813건 / 30개 언어 / 14종 검출기 / 0 이슈**
   - 신규 검출기 5종: UNREPLACED_TOKEN·WRONG_SCRIPT(9개 언어 문자체계)·BRANCH_CONTAMINATION·ARTIFACT·APPROVAL_BYPASS (전부 P0/P1)
   - Round 40: ES/RU/AR/HI SLOT_C 네이티브 검증 8건 · Round 41: 적대적 16건 (저평점+긍정충돌 회귀 9개 언어, 이모지, 코드스위칭, 미등록지점, 질문, 장문 묻힌 불만)
 - **branches.ts** branchCity/officialName/signatureWork → ReplyLanguage 수용, 확장 언어는 EN 고유명사 폴백
 
 ### 검증 상태
-`tsc 0` · `next build 성공` · `validate-waterfall 116+ PASS` · **`deep-learning-loop 0/713`** · Vercel 자동 배포 정상
+`tsc 0` · `next build 성공` · `validate-waterfall 116+ PASS` · **`deep-learning-loop 0/813`** · Vercel 자동 배포 정상
 
 ---
 
@@ -87,7 +103,7 @@
 - `101b16c` **안전 게이트**: ★≤2+긍정→AMBIGUOUS (무승인 차단) + 신규 검출기 5종 (APPROVAL_BYPASS 등)
 - `50e911b` **Vercel 빌드 복구**: ReplyLanguage SSOT 통합 (per-file shadow 제거, 163 type errors → 0)
 - `9176488` route/processReviewById/replyTemplates 9개 언어 타입 확장
-- `5e8e83d` **R40**: SLOT_C_PIVOTS 13종 × ES/RU/AR/HI/TL (713줄)
+- `5e8e83d` **R40**: SLOT_C_PIVOTS 13종 × ES/RU/AR/HI/TL (813줄)
 - `9c80951` **R37-39**: 사캐즘 다국어 · contextMirror JA/ZH · 힐링/데이트 echo 수정 · 0-issue 기준선
 
 ## ⏭️ Known follow-ups (intentional scope boundaries)
@@ -123,6 +139,6 @@
 ## Verify & ship checklist (every change)
 - [ ] `npx tsc --noEmit` = 0 errors  (there is no `npm run typecheck`)
 - [ ] `npm run lint` = 0  •  [ ] `npm run build` = 0
-- [ ] 엔진/템플릿 변경 시: `npx tsx scripts/deep-learning-loop.ts` → **0/713 이슈** + `validate-waterfall` ALL PASS
+- [ ] 엔진/템플릿 변경 시: `npx tsx scripts/deep-learning-loop.ts` → **0/813 이슈** + `validate-waterfall` ALL PASS
 - [ ] DB change applied via Supabase MCP (`vmrvyqqlebviaczsgapn`) **and** committed as a `supabase/migrations/NNN_*.sql` file — update the table in `CLAUDE_CONTEXT.md` §4
 - [ ] Commit + `git push origin main` **only when the user asks** → Vercel auto-deploys

@@ -1,6 +1,6 @@
 # DECISIONS.md — Locked architectural decisions
 > Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-11.
-> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly · 16 Matrix Fragment Pool · 17 9-Lang Sanitization + Regression Guard
+> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly · 16 Matrix Fragment Pool · 17 9-Lang Sanitization + Regression Guard · 18 Mixed-Intent Hybrid + Fuzzy Coverage
 
 ---
 ## 1. Algorithm-First (template before LLM)
@@ -122,10 +122,10 @@
 
 ## 14. deep-learning-loop 0건 = 엔진/템플릿 변경의 머지 게이트
 - **Status:** LOCKED (2026-06-11)
-- **Decision:** `scripts/deep-learning-loop.ts`(713건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
+- **Decision:** `scripts/deep-learning-loop.ts`(813건 합성 리뷰 / 30개 언어 / 14종 검출기)에서 **이슈 0건**이 waterfall/slot/필터 변경의 통과 조건이다. 새 버그를 고치면 반드시 그 버그를 재현하는 리뷰 케이스를 데이터셋에 추가한다(회귀 고정). 검출기 P0 = MISCLASSIFY·FORBIDDEN·UNREPLACED_TOKEN·WRONG_SCRIPT·BRANCH_CONTAMINATION·APPROVAL_BYPASS.
 - **Reason:** 답변 품질 결함(언어 혼입, 토큰 노출, 무승인 우회, 타 지점명)은 단위 테스트로는 못 잡고 전수 조립 출력에서만 드러난다. 0건 기준선이 있어야 "수정이 다른 언어를 깨뜨렸는지"를 1커맨드로 안다.
 - **Alternatives:** (a) validate-waterfall(분류 단위 테스트)만; (b) 수동 샘플 검수.
-- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 713×9언어 수동 검수는 불가능.
+- **Why rejected:** (a) 분류는 맞아도 조립 출력이 깨지는 클래스(josa, 토큰, 슬롯 언어)를 못 본다; (b) 813×9언어 수동 검수는 불가능.
 - **Consequences:** 데이터셋/검출기가 자라며 루프 실행 ~30s. `npx tsx`는 타입체크를 안 하므로 **루프 통과 ≠ 빌드 통과** — `tsc --noEmit` 별도 필수. 의도된 폴백(비코어 언어 ko 답변)은 검출기에서 명시적으로 제외해 두었다.
 - **Files:** `scripts/deep-learning-loop.ts`, `scripts/validate-waterfall.ts`.
 
@@ -155,3 +155,12 @@
 - **Why rejected:** (a) waterfall EMERGENCY는 인입 분류용 — 라우팅 직전 sanitizer 보완망이 별도로 필요(특히 욕설 순화·환불요구 격리); (b) 수동 실행은 누락 위험 — 단일 게이트가 회귀 방어를 강제.
 - **Consequences:** Tier2 환불은 '요구/거부' 맥락만(보고화법 제외) → 오격리 방지. `\b`는 라틴(EN/ES/TL)에만 — CJK는 평문 교차(비ASCII 워드바운더리 버그 회피). regression-guard는 ~1~2분 소요(loop 포함). 검출기 SSOT는 여전히 #14.
 - **Files:** `src/lib/synonymEngine.ts`(TIER1_SANITIZE/TIER2_CRITICAL 9-lang), `src/lib/processReviewById.ts`(riskTier floor), `scripts/regression-guard.ts`.
+
+## 18. Mixed-Intent Hybrid + Fuzzy Coverage (자동 처리 커버리지 극대화)
+- **Status:** LOCKED (2026-06-11)
+- **Decision:** 자동 처리(auto-done) 커버리지를 높이기 위해 세 가지를 도입한다. (1) **Mixed-Intent Hybrid**: 고평점(★4-5) + 긍정어 + 정직한 대조 접속(는데/지만/but/但是/pero…) 동반 시 `isHybrid` → COMPLAINT Tier1 정적 자동완료(사과 A + 긍정 인정 `slotHybridAck` + 개선 pivot + 클로징). 대조 없는 반어적 칭찬+불만 나열은 사캐즘으로 보아 AMBIGUOUS(LLM) 유지. (2) **Fuzzy/Typo Tolerance**: 경량 Levenshtein(거리≤1) `fuzzyPositive`로 구별성 높은 긍정어(awesome/amazing/beautiful…) 오탈자 흡수 + 한국어 활용형(멋진/예쁜)·축약/은어(굿/강추/꿀잼) 보강. (3) **저평점 회수**: ★1-2 + 긍정(정확+fuzzy) 없음 + 태그 없음 → COMPLAINT 정적 사과(다국어 미탐지 불만 회수).
+- **Reason:** 정규식 단일 감정 인식의 경직성(오탈자/복합 감정 미수용)으로 LLM/사람 대기열로 새던 리뷰를 정적 자동완료로 흡수. 측정: deep-learning-loop의 Coverage/Miss Rate(auto-done ~85% · 격리 ~10% · LLM ~5%).
+- **Alternatives:** (a) ★4-5+복합불만 전부 LLM(기존); (b) 모든 불만 정적 사과; (c) 전면 퍼지(모든 패턴 Levenshtein).
+- **Why rejected:** (a) 진짜 복합 의도(긍정+경미 불만)까지 LLM — 비용·지연; (b) 사캐즘/심각 불만을 무비판 자동완료 = 안전 위험; (c) 불만/긴급에 퍼지 적용 시 오탐 = 안전 위험.
+- **Consequences:** 안전 경계 — fuzzy는 **긍정 보강 전용**(불만/긴급은 정확 매칭 유지) + 부정어 직후 토큰 제외. Hybrid는 ★5라도 불만 부분 사과가 정당 → 루프 검출기(5STAR_COMPLAINT/5STAR_HAS_APOLOGY)는 isHybrid 면제. ★3 진짜 모호·★5 사캐즘·★1-2+긍정충돌은 여전히 LLM/사람 격리(의도된 미스). 새 긍정어 추가 시 저평점 사캐즘 오격리 주의 — regression-guard 필수(#14/#17).
+- **Files:** `src/lib/waterfallRegexEngine.ts`(MIXED_CONTRAST/isHybrid/DEFAULT_POSITIVE 확장/★1-2 회수), `src/lib/synonymEngine.ts`(levenshtein/fuzzyPositive), `src/lib/staticTemplates.ts`(slotHybridAck), `src/lib/replyTemplates.ts`(Hybrid 조립/ultra-short), `scripts/deep-learning-loop.ts`(Coverage/Miss Rate).

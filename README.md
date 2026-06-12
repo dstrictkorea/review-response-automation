@@ -34,7 +34,7 @@
 - **9개 핵심 언어 네이티브 답변**: 한국어·영어·일본어·중국어·스페인어·러시아어·아랍어·힌디어·필리핀어
 - Matrix Fragment Pool 조립(persona·sensory·spatial·temporal 4차원 가중치 거버너 top-N) × 리뷰ID 해시 변형 — 수십 조각→수천 조합
 - 리뷰 맥락 echo(힐링/데이트/가족/생일), 한국어 조사 자동 보정, 지점 메타데이터 토큰
-- 품질 게이트: 합성 리뷰 713건 × 14종 검출기 **0건** 기준선 (`scripts/deep-learning-loop.ts`)
+- 품질 게이트: 합성 리뷰 813건 × 14종 검출기 **0건** 기준선 (`scripts/deep-learning-loop.ts`)
 
 ---
 
@@ -122,7 +122,7 @@ npx tsc --noEmit                          # TypeScript (scripts/** 포함 — Ve
 npm run lint                              # ESLint
 npm run build                             # Next.js 프로덕션 빌드
 npx tsx scripts/validate-waterfall.ts     # 분류 TDD 116+ 케이스
-npx tsx scripts/deep-learning-loop.ts     # 품질 게이트 — "이슈 있는 리뷰: 0/713" 필수
+npx tsx scripts/deep-learning-loop.ts     # 품질 게이트 — "이슈 있는 리뷰: 0/813" 필수
 ```
 
 ## 문서 인덱스
