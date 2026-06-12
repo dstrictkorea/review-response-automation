@@ -464,13 +464,14 @@ export function analyzeReview(
     } else if (serviceQuestion && !isComplaint) {
       requiresLLM = true
       reason = '리뷰 내 시설/운영 질문 감지 → 답변 필요, LLM/사람 응대 격리'
-    } else if (typeof rating === 'number' && rating <= 1 && !C.positive.test(text) && tags.length === 0) {
-      // 1★ + 원문에 긍정 신호 전혀 없음 + 분류 태그 없음 → COMPLAINT 격상
-      // !hasPositive 대신 원문(raw) 기준으로 판정: 필러 제거 후에만 긍정이 사라지는 경우(S3b) 방어
+    } else if (typeof rating === 'number' && rating <= 2 && !C.positive.test(text) && !fuzzyPositive(text) && tags.length === 0) {
+      // ★1-2 + 원문에 긍정 신호 전혀 없음(정확+fuzzy) + 분류 태그 없음 → COMPLAINT 격상.
+      //   다국어 불만 미탐지(예: tl/hi 불만)로 AMBIGUOUS에 빠진 저평점 리뷰를 정적 사과로 회수
+      //   (커버리지 확대). 긍정 본문이 있는 ★1-2는 위 저평점 게이트가 이미 AMBIGUOUS로 격리.
       isComplaint = true
       status = 'COMPLAINT'
       requiresLLM = true
-      reason = '최저 별점(1점), 긍정/분류 태그 없음 → COMPLAINT 격상'
+      reason = '저평점(1·2점), 긍정/분류 태그 없음 → COMPLAINT 격상(정적 사과)'
       tags.push('저평점_부정신호')
     }
   }

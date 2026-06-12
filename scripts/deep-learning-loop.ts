@@ -3761,6 +3761,121 @@ const SYNTHETIC_REVIEWS: SyntheticReview[] = [
     reviewer_name: '小川健太', review_text: '週末に家族で訪れ、光に包まれた部屋に子供たちが大興奮でした。広々とした空間で、混雑していてもゆったり楽しめました。' },
   { rating: 5, location: 'AMSG', lang: 'zh', demographic: '28세 중국인 여성, 아침 공간 소리', scenario: 'zh-morning-spacious-sound',
     reviewer_name: '何晓雯', review_text: '早上来的，空间很宽敞，音乐和光影交织在一起非常治愈。清晨人少，可以慢慢欣赏，强烈推荐。' },
+
+  // ════════════════════════════════════════════════════════════════════════════════
+  // Round 45: 커버리지 스트레스 100건 — 오탈자/축약/복합대조/초단문/모호 (9개 언어 혼합)
+  // ════════════════════════════════════════════════════════════════════════════════
+  // ── (A) 오탈자 긍정 — fuzzy 매칭 흡수 → COMPLIMENT 자동완료 기대 (≈22) ──
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: 'typo', scenario: 'r45-typo-1', reviewer_name: 'Tyler M', review_text: 'Absolutely awsome experience, the lights were beatiful!' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'typo', scenario: 'r45-typo-2', reviewer_name: 'Grace P', review_text: 'amazng place, so gorgous and relaxng. loved it.' },
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: 'typo', scenario: 'r45-typo-3', reviewer_name: 'Liam O', review_text: 'wonderfull and magcal, truly stunnig art everywhere.' },
+  { rating: 5, location: 'AMSG', lang: 'en', demographic: 'typo', scenario: 'r45-typo-4', reviewer_name: 'Noah K', review_text: 'incredibel and mesmrizing, a fantasic afternoon.' },
+  { rating: 5, location: 'AMTK', lang: 'en', demographic: 'typo', scenario: 'r45-typo-5', reviewer_name: 'Ava S', review_text: 'such a beautifull and immersve space, spectacuar!' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'typo', scenario: 'r45-typo-6', reviewer_name: 'Ethan R', review_text: 'phenomanal exhibit, delightfull from start to finish.' },
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: 'typo', scenario: 'r45-typo-7', reviewer_name: 'Mia T', review_text: 'excelent and breathtakng, i enjoied every room.' },
+  { rating: 5, location: 'AMDB', lang: 'es', demographic: 'typo', scenario: 'r45-typo-8', reviewer_name: 'Hugo V', review_text: 'Un lugar increible y hermozo, espectaculer de verdad.' },
+  { rating: 5, location: 'AMSG', lang: 'es', demographic: 'typo', scenario: 'r45-typo-9', reviewer_name: 'Lola C', review_text: 'maravilloso y precioza, lo disfrute muchisimo.' },
+  { rating: 5, location: 'AMSG', lang: 'tl', demographic: 'typo', scenario: 'r45-typo-10', reviewer_name: 'Jun D', review_text: 'Napakaganda talaga, sobrang ganda ng mga ilaw dito.' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'typo', scenario: 'r45-typo-11', reviewer_name: 'Owen B', review_text: 'Gorgous and amazng, would deffinitely come back.' },
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: 'typo', scenario: 'r45-typo-12', reviewer_name: 'Zoe F', review_text: 'Stuning visuals, an awsome and relaxing visit.' },
+  { rating: 5, location: 'AMTK', lang: 'en', demographic: 'typo', scenario: 'r45-typo-13', reviewer_name: 'Leo H', review_text: 'Magcal and wonderfull, the immersve rooms are incredibel.' },
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: 'typo', scenario: 'r45-typo-14', reviewer_name: 'Ella W', review_text: 'Beatiful and delightfull, such a mesmrizing experience.' },
+  { rating: 5, location: 'AMSG', lang: 'en', demographic: 'typo', scenario: 'r45-typo-15', reviewer_name: 'Max L', review_text: 'Fantasic exhibit, gorgous lighting, truly spectaculer.' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'typo', scenario: 'r45-typo-16', reviewer_name: 'Ivy N', review_text: 'amazng amazng amazng, the most beatiful place ever.' },
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: 'typo', scenario: 'r45-typo-17', reviewer_name: 'Sam G', review_text: 'Incredibel space, enjoied it so much, very relaxng.' },
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: 'typo', scenario: 'r45-typo-18', reviewer_name: 'Nora A', review_text: 'Wonderfull and immersve, a phenomanal afternoon out.' },
+  { rating: 5, location: 'AMTK', lang: 'en', demographic: 'typo', scenario: 'r45-typo-19', reviewer_name: 'Kai J', review_text: 'stunnig and magcal, the art is breathtakng.' },
+  { rating: 5, location: 'AMSG', lang: 'es', demographic: 'typo', scenario: 'r45-typo-20', reviewer_name: 'Ana P', review_text: 'Espectaculer y maravilloza, un sitio increible.' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'typo', scenario: 'r45-typo-21', reviewer_name: 'Cole D', review_text: 'Excelent, gorgous, delightfull. Loved evry room.' },
+  { rating: 5, location: 'AMLV', lang: 'tl', demographic: 'typo', scenario: 'r45-typo-22', reviewer_name: 'Rho M', review_text: 'Sobrang ganda, napakaganda ng karanasan dito talaga.' },
+
+  // ── (B) 복합 의도(긍정+불만 대조) — Hybrid 자동완료 기대 (≈24) ──
+  { rating: 4, location: 'AMLV', lang: 'ko', demographic: 'mixed', scenario: 'r45-mix-1', reviewer_name: '강민호', review_text: '작품은 멋진데 사람이 너무 많아서 좀 정신없었어요.' },
+  { rating: 4, location: 'AMNY', lang: 'ko', demographic: 'mixed', scenario: 'r45-mix-2', reviewer_name: '윤서영', review_text: '전시는 예쁜데 입장료가 좀 비싼 편이네요. 그래도 볼만했어요.' },
+  { rating: 4, location: 'AMDB', lang: 'ko', demographic: 'mixed', scenario: 'r45-mix-3', reviewer_name: '한도윤', review_text: '빛이 정말 아름다운데 대기 줄이 너무 길어서 아쉬웠어요.' },
+  { rating: 5, location: 'AMSG', lang: 'ko', demographic: 'mixed', scenario: 'r45-mix-4', reviewer_name: '오지안', review_text: '몰입감은 최고인데 안내 동선이 살짝 헷갈렸어요. 그래도 강추!' },
+  { rating: 4, location: 'AMTK', lang: 'ko', demographic: 'mixed', scenario: 'r45-mix-5', reviewer_name: '백서린', review_text: '분위기는 좋은데 음향이 좀 커서 아이가 깜짝 놀랐어요.' },
+  { rating: 4, location: 'AMLV', lang: 'en', demographic: 'mixed', scenario: 'r45-mix-6', reviewer_name: 'Dana W', review_text: 'The art is gorgeous but the lines were really long.' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'mixed', scenario: 'r45-mix-7', reviewer_name: 'Rob T', review_text: 'Beautiful and immersive, though the cafe was a bit pricey.' },
+  { rating: 4, location: 'AMDB', lang: 'en', demographic: 'mixed', scenario: 'r45-mix-8', reviewer_name: 'Kim S', review_text: 'Loved the waterfall room, however it got too crowded fast.' },
+  { rating: 4, location: 'AMSG', lang: 'en', demographic: 'mixed', scenario: 'r45-mix-9', reviewer_name: 'Paul N', review_text: 'Stunning visuals, yet the audio guide was hard to follow.' },
+  { rating: 5, location: 'AMTK', lang: 'ja', demographic: 'mixed', scenario: 'r45-mix-10', reviewer_name: '森田', review_text: '映像は素晴らしいけど、待ち時間が長かったです。でも満足。' },
+  { rating: 4, location: 'AMTK', lang: 'ja', demographic: 'mixed', scenario: 'r45-mix-11', reviewer_name: '岡本', review_text: '光は綺麗だけど、音が少し大きすぎると感じました。' },
+  { rating: 4, location: 'AMSG', lang: 'zh', demographic: 'mixed', scenario: 'r45-mix-12', reviewer_name: '赵丽', review_text: '灯光很美，但是人太多了，排队排了好久。不过还是值得。' },
+  { rating: 5, location: 'AMSG', lang: 'zh', demographic: 'mixed', scenario: 'r45-mix-13', reviewer_name: '孙强', review_text: '沉浸感很棒，不过门票价格有点贵。整体还是推荐的。' },
+  { rating: 4, location: 'AMDB', lang: 'es', demographic: 'mixed', scenario: 'r45-mix-14', reviewer_name: 'Iker R', review_text: 'Las luces son preciosas, pero había demasiada gente.' },
+  { rating: 5, location: 'AMDB', lang: 'es', demographic: 'mixed', scenario: 'r45-mix-15', reviewer_name: 'Vera L', review_text: 'Hermoso y envolvente, aunque la espera fue un poco larga.' },
+  { rating: 4, location: 'AMNY', lang: 'ru', demographic: 'mixed', scenario: 'r45-mix-16', reviewer_name: 'Pavel K', review_text: 'Свет красивый, но было слишком много людей. Всё равно понравилось.' },
+  { rating: 5, location: 'AMNY', lang: 'ru', demographic: 'mixed', scenario: 'r45-mix-17', reviewer_name: 'Yana M', review_text: 'Очень атмосферно, однако билет дороговат. Но стоит того.' },
+  { rating: 4, location: 'AMDB', lang: 'ar', demographic: 'mixed', scenario: 'r45-mix-18', reviewer_name: 'Omar H', review_text: 'الإضاءة جميلة لكن المكان كان مزدحماً قليلاً. لكنه يستحق الزيارة.' },
+  { rating: 5, location: 'AMDB', lang: 'ar', demographic: 'mixed', scenario: 'r45-mix-19', reviewer_name: 'Hana A', review_text: 'تجربة غامرة ورائعة، ولكن وقت الانتظار كان طويلاً بعض الشيء.' },
+  { rating: 4, location: 'AMSG', lang: 'hi', demographic: 'mixed', scenario: 'r45-mix-20', reviewer_name: 'Rohit S', review_text: 'रोशनी बहुत सुंदर है लेकिन भीड़ बहुत ज्यादा थी। फिर भी अच्छा लगा।' },
+  { rating: 5, location: 'AMSG', lang: 'hi', demographic: 'mixed', scenario: 'r45-mix-21', reviewer_name: 'Neha K', review_text: 'अनुभव शानदार था, मगर टिकट थोड़ा महंगा है। फिर भी सिफारिश करती हूं।' },
+  { rating: 4, location: 'AMSG', lang: 'tl', demographic: 'mixed', scenario: 'r45-mix-22', reviewer_name: 'Mia R', review_text: 'Maganda ang mga ilaw pero ang daming tao, ngunit sulit pa rin.' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'mixed', scenario: 'r45-mix-23', reviewer_name: 'Tess B', review_text: 'Magical rooms, but parking was a nightmare. Still worth it.' },
+  { rating: 4, location: 'AMLV', lang: 'ko', demographic: 'mixed', scenario: 'r45-mix-24', reviewer_name: '서지호', review_text: '아이랑 갔는데 빛은 너무 예쁜데 주차장이 좀 멀어서 불편했어요.' },
+
+  // ── (C) 초단문 긍정 — ultra-short 자동완료 기대 (≈16) ──
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: 'short', scenario: 'r45-short-1', reviewer_name: '김O', review_text: '굿' },
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: 'short', scenario: 'r45-short-2', reviewer_name: '이O', review_text: '최고' },
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: 'short', scenario: 'r45-short-3', reviewer_name: '박O', review_text: '대박!' },
+  { rating: 5, location: 'AMSG', lang: 'ko', demographic: 'short', scenario: 'r45-short-4', reviewer_name: '최O', review_text: '강추' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'short', scenario: 'r45-short-5', reviewer_name: 'A', review_text: 'Awesome' },
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: 'short', scenario: 'r45-short-6', reviewer_name: 'B', review_text: 'Amazing!' },
+  { rating: 5, location: 'AMDB', lang: 'en', demographic: 'short', scenario: 'r45-short-7', reviewer_name: 'C', review_text: 'Loved it' },
+  { rating: 5, location: 'AMSG', lang: 'en', demographic: 'short', scenario: 'r45-short-8', reviewer_name: 'D', review_text: 'Gorgeous' },
+  { rating: 5, location: 'AMTK', lang: 'ja', demographic: 'short', scenario: 'r45-short-9', reviewer_name: '田', review_text: '最高' },
+  { rating: 5, location: 'AMTK', lang: 'ja', demographic: 'short', scenario: 'r45-short-10', reviewer_name: '佐', review_text: '素敵！' },
+  { rating: 5, location: 'AMSG', lang: 'zh', demographic: 'short', scenario: 'r45-short-11', reviewer_name: '王', review_text: '很棒' },
+  { rating: 5, location: 'AMSG', lang: 'zh', demographic: 'short', scenario: 'r45-short-12', reviewer_name: '李', review_text: '太美了' },
+  { rating: 5, location: 'AMDB', lang: 'es', demographic: 'short', scenario: 'r45-short-13', reviewer_name: 'E', review_text: 'Increíble' },
+  { rating: 5, location: 'AMNY', lang: 'ru', demographic: 'short', scenario: 'r45-short-14', reviewer_name: 'F', review_text: 'Потрясающе' },
+  { rating: 5, location: 'AMSG', lang: 'tl', demographic: 'short', scenario: 'r45-short-15', reviewer_name: 'G', review_text: 'Ang ganda' },
+  { rating: 5, location: 'AMDB', lang: 'hi', demographic: 'short', scenario: 'r45-short-16', reviewer_name: 'H', review_text: 'बहुत बढ़िया' },
+
+  // ── (D) 축약/은어 긍정 — 자동완료 기대 (≈8) ──
+  { rating: 5, location: 'AMLV', lang: 'ko', demographic: 'slang', scenario: 'r45-slang-1', reviewer_name: '정수아', review_text: '여기 진짜 넘 좋아요 꿀잼이에요 ㅎㅎ' },
+  { rating: 5, location: 'AMNY', lang: 'ko', demographic: 'slang', scenario: 'r45-slang-2', reviewer_name: '문하준', review_text: '개좋음 인생샷 건짐 ㅇㅈ' },
+  { rating: 5, location: 'AMDB', lang: 'ko', demographic: 'slang', scenario: 'r45-slang-3', reviewer_name: '신예나', review_text: '존좋 강추강추 분위기 미쳤어요' },
+  { rating: 5, location: 'AMNY', lang: 'en', demographic: 'slang', scenario: 'r45-slang-4', reviewer_name: 'Brad K', review_text: 'so cool, def worth it, vibes were immaculate' },
+  { rating: 5, location: 'AMLV', lang: 'en', demographic: 'slang', scenario: 'r45-slang-5', reviewer_name: 'Jen L', review_text: '10/10 amazing, would recommend to everyone!!' },
+  { rating: 5, location: 'AMSG', lang: 'en', demographic: 'slang', scenario: 'r45-slang-6', reviewer_name: 'Tom H', review_text: 'absolutely loved it, such a vibe, gorgeous spot' },
+  { rating: 5, location: 'AMTK', lang: 'ja', demographic: 'slang', scenario: 'r45-slang-7', reviewer_name: '中', review_text: 'マジ最高すぎた！めっちゃ綺麗で映える' },
+  { rating: 5, location: 'AMSG', lang: 'zh', demographic: 'slang', scenario: 'r45-slang-8', reviewer_name: '陈', review_text: '绝绝子！太赞了，强烈安利' },
+
+  // ── (E) 미인식 저평점 불만 — ★2 회수 → COMPLAINT 정적 사과 기대 (≈12) ──
+  { rating: 2, location: 'AMLV', lang: 'tl', demographic: 'complaint', scenario: 'r45-cmpl-1', reviewer_name: 'Cris P', review_text: 'Nakakadismaya, ang tagal ng pila at masikip masyado.' },
+  { rating: 2, location: 'AMSG', lang: 'hi', demographic: 'complaint', scenario: 'r45-cmpl-2', reviewer_name: 'Vijay M', review_text: 'बहुत भीड़ थी और कुछ कमरे काम नहीं कर रहे थे। निराशाजनक।' },
+  { rating: 2, location: 'AMNY', lang: 'ru', demographic: 'complaint', scenario: 'r45-cmpl-3', reviewer_name: 'Oleg D', review_text: 'Слишком много людей, ничего толком не увидел. Жаль.' },
+  { rating: 2, location: 'AMDB', lang: 'ar', demographic: 'complaint', scenario: 'r45-cmpl-4', reviewer_name: 'Said F', review_text: 'مزدحم جداً ولم أستطع الاستمتاع. مخيب للآمال.' },
+  { rating: 2, location: 'AMDB', lang: 'es', demographic: 'complaint', scenario: 'r45-cmpl-5', reviewer_name: 'Beto R', review_text: 'Demasiada gente y la espera fue eterna. Decepcionante.' },
+  { rating: 1, location: 'AMTK', lang: 'ja', demographic: 'complaint', scenario: 'r45-cmpl-6', reviewer_name: '高', review_text: '混みすぎて何も見えなかった。残念でした。' },
+  { rating: 2, location: 'AMSG', lang: 'tl', demographic: 'complaint', scenario: 'r45-cmpl-7', reviewer_name: 'Lara V', review_text: 'Hindi sulit, masyadong mahal para sa maikling karanasan.' },
+  { rating: 2, location: 'AMNY', lang: 'hi', demographic: 'complaint', scenario: 'r45-cmpl-8', reviewer_name: 'Sana K', review_text: 'टिकट बहुत महंगा और अनुभव छोटा था। पैसे की बर्बादी।' },
+  { rating: 2, location: 'AMLV', lang: 'ru', demographic: 'complaint', scenario: 'r45-cmpl-9', reviewer_name: 'Inna P', review_text: 'Очень дорого за такое короткое посещение. Не советую.' },
+  { rating: 2, location: 'AMDB', lang: 'es', demographic: 'complaint', scenario: 'r45-cmpl-10', reviewer_name: 'Tito G', review_text: 'No vale el precio, muy caro para lo poco que dura.' },
+  { rating: 2, location: 'AMSG', lang: 'zh', demographic: 'complaint', scenario: 'r45-cmpl-11', reviewer_name: '吴', review_text: '太挤了，根本没法好好看，有点失望。' },
+  { rating: 2, location: 'AMTK', lang: 'ja', demographic: 'complaint', scenario: 'r45-cmpl-12', reviewer_name: '林', review_text: '人が多すぎてゆっくり見られなかった。' },
+
+  // ── (F) 진짜 모호 ★3 중립 — LLM/사람 격리 정상 (≈18) ──
+  { rating: 3, location: 'AMLV', lang: 'ko', demographic: 'neutral', scenario: 'r45-neu-1', reviewer_name: '권나라', review_text: '그냥 그랬어요. 나쁘지도 좋지도 않은 정도.' },
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: 'neutral', scenario: 'r45-neu-2', reviewer_name: '남기훈', review_text: '한 번쯤은 볼 만하지만 또 갈지는 모르겠네요.' },
+  { rating: 3, location: 'AMDB', lang: 'en', demographic: 'neutral', scenario: 'r45-neu-3', reviewer_name: 'Cara W', review_text: 'It was okay. Not sure it lived up to the hype for me.' },
+  { rating: 3, location: 'AMSG', lang: 'en', demographic: 'neutral', scenario: 'r45-neu-4', reviewer_name: 'Dean M', review_text: 'Interesting concept, though I expected something different.' },
+  { rating: 3, location: 'AMTK', lang: 'ja', demographic: 'neutral', scenario: 'r45-neu-5', reviewer_name: '原', review_text: '普通でした。可もなく不可もなくという感じ。' },
+  { rating: 3, location: 'AMSG', lang: 'zh', demographic: 'neutral', scenario: 'r45-neu-6', reviewer_name: '冯', review_text: '一般般吧，没有想象中那么惊艳。' },
+  { rating: 3, location: 'AMDB', lang: 'es', demographic: 'neutral', scenario: 'r45-neu-7', reviewer_name: 'Rita N', review_text: 'Estuvo bien, aunque no sé si lo recomendaría del todo.' },
+  { rating: 3, location: 'AMNY', lang: 'ru', demographic: 'neutral', scenario: 'r45-neu-8', reviewer_name: 'Lev S', review_text: 'Нормально, но ничего особенного, если честно.' },
+  { rating: 3, location: 'AMDB', lang: 'ar', demographic: 'neutral', scenario: 'r45-neu-9', reviewer_name: 'Nada Q', review_text: 'كان جيداً، لكنه لم يكن استثنائياً كما توقعت.' },
+  { rating: 3, location: 'AMSG', lang: 'hi', demographic: 'neutral', scenario: 'r45-neu-10', reviewer_name: 'Anil R', review_text: 'ठीक-ठाक था, उतना खास नहीं लगा जितना सोचा था।' },
+  { rating: 3, location: 'AMSG', lang: 'tl', demographic: 'neutral', scenario: 'r45-neu-11', reviewer_name: 'Joy A', review_text: 'Okay lang, hindi naman ganun ka-espesyal para sa akin.' },
+  { rating: 3, location: 'AMLV', lang: 'en', demographic: 'neutral', scenario: 'r45-neu-12', reviewer_name: 'Pat D', review_text: 'Mixed feelings, some rooms great, others forgettable.' },
+  { rating: 3, location: 'AMNY', lang: 'ko', demographic: 'neutral', scenario: 'r45-neu-13', reviewer_name: '하은우', review_text: '사진은 잘 나오는데 생각보다 금방 끝나는 느낌이에요.' },
+  { rating: 3, location: 'AMDB', lang: 'en', demographic: 'neutral', scenario: 'r45-neu-14', reviewer_name: 'Mona L', review_text: 'Pretty but felt a bit commercial, hard to say.' },
+  { rating: 3, location: 'AMTK', lang: 'ja', demographic: 'neutral', scenario: 'r45-neu-15', reviewer_name: '島', review_text: '悪くはないけど、もう一度行くかは微妙かな。' },
+  { rating: 3, location: 'AMSG', lang: 'zh', demographic: 'neutral', scenario: 'r45-neu-16', reviewer_name: '段', review_text: '还行，拍照不错，但内容稍微少了点。' },
+  { rating: 3, location: 'AMLV', lang: 'es', demographic: 'neutral', scenario: 'r45-neu-17', reviewer_name: 'Eli V', review_text: 'Ni bien ni mal, simplemente correcto, supongo.' },
+  { rating: 3, location: 'AMNY', lang: 'en', demographic: 'neutral', scenario: 'r45-neu-18', reviewer_name: 'Russ T', review_text: 'Hmm, not sure how I feel about it honestly.' },
 ]
 
 // ═══════════════════════════════════════════════════════════════
@@ -3779,6 +3894,8 @@ interface ReviewResult {
   review: SyntheticReview
   status: string
   route: string
+  requiresApproval: boolean
+  isHybrid: boolean
   tags: string[]
   primaryIntent: string | null | undefined
   reply: string
@@ -4122,6 +4239,8 @@ for (let i = 0; i < SYNTHETIC_REVIEWS.length; i++) {
     review: r,
     status: decision.classification.status,
     route: decision.route,
+    requiresApproval: decision.requiresApproval,
+    isHybrid: !!decision.classification.isHybrid,
     tags: decision.classification.tags,
     primaryIntent: decision.primaryIntent,
     reply,
@@ -4164,6 +4283,28 @@ const routeCount: Record<string, number> = {}
 for (const r of allResults) routeCount[r.route] = (routeCount[r.route] || 0) + 1
 console.log('\n[ 라우팅 현황 ]')
 for (const [k, v] of Object.entries(routeCount)) console.log(`  ${k.padEnd(20)} ${v}건`)
+
+// ── 커버리지 / Miss Rate (PHASE 3) ────────────────────────────────────────────
+//   autoDone = 사람/LLM 개입 없이 즉시 자동완료 (route='static' & 승인 불필요; hybrid 포함)
+//   humanIso = 의도적 격리 (EMERGENCY/독성/저평점/질문 — 안전상 정상, '미스' 아님)
+//   llmFallback = 알고리즘 미확신 → LLM 위임 ('Miss Rate'의 핵심 — 줄여야 할 대상)
+const total = allResults.length
+const autoDone    = allResults.filter(r => r.route === 'static' && !r.requiresApproval).length
+const llmFallback = allResults.filter(r => r.route === 'llm').length
+const humanIso    = total - autoDone - llmFallback
+const pct = (n: number) => `${((n / total) * 100).toFixed(1)}%`
+console.log('\n[ 커버리지 / Miss Rate ]')
+console.log(`  ✅ auto-done(정적 자동완료)      ${String(autoDone).padStart(3)}건  ${pct(autoDone)}`)
+console.log(`  🟡 human-review(의도적 격리)     ${String(humanIso).padStart(3)}건  ${pct(humanIso)}   ← EMERGENCY/독성/저평점/질문(정상)`)
+console.log(`  ❌ LLM-fallback(알고리즘 미확신)  ${String(llmFallback).padStart(3)}건  ${pct(llmFallback)}   ← Miss Rate`)
+console.log(`  ───────────────────────────────────────────`)
+console.log(`  ▶ Miss Rate(LLM fallback): ${pct(llmFallback)}   |   Auto-Done Coverage: ${pct(autoDone)}`)
+if (llmFallback > 0) {
+  console.log('  · LLM-fallback 시나리오(미인식 패턴 분석 대상):')
+  for (const r of allResults.filter(x => x.route === 'llm')) {
+    console.log(`      [#${r.idx}] ★${r.review.rating} ${r.review.lang} ${r.review.scenario}`)
+  }
+}
 
 console.log('\n[ 이슈 집계 ]')
 const sorted = Object.entries(issueCount).sort((a,b) => b[1]-a[1])
