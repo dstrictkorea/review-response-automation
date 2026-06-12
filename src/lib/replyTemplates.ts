@@ -182,6 +182,10 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
     const hasSignal   = result.isArtworkFocused || result.hasPeakHours || !!mirror || signals.length > 0
     const useShortMode = (result.status === 'SAFE' || (result.status === 'COMPLIMENT' && isVeryShort)) && !hasSignal
 
+    // ULTRA-SHORT: "굿"/"최고"/"Awesome"처럼 극단적 단답(≤10자) + 무신호 → 인사+감사 2조각만
+    //   즉시 자동완료. 5-슬롯을 무리하게 채우지 않는다.
+    const isUltraShort = useShortMode && len <= 10
+
     let body: string[]
     if (useShortMode) {
       body = []
@@ -202,7 +206,7 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
         if (result.hasPeakHours && body.length < budget) body.push(slotD_peak_hours(lang, ix.idxD))
       }
     }
-    rawReply = [a, b, ...body, e].join('\n\n')
+    rawReply = isUltraShort ? [a, b].join('\n\n') : [a, b, ...body, e].join('\n\n')
   }
 
   // ── 토큰 치환 파이프라인 ───────────────────────────────────────────────────────

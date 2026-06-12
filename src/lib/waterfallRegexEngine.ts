@@ -21,7 +21,7 @@ import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 // 순수 데이터 모듈 — 클라이언트 번들 안전
 import { getBranchTokens } from '@/lib/branchMetadata'
 // Zero-Cost NLP 모사: 유의어 사전 + 필러 패턴 + 맥락 거울 추출
-import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror, extractSensoryFocus, extractCompanion, extractTemporal, extractSpatial } from '@/lib/synonymEngine'
+import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror, extractSensoryFocus, extractCompanion, extractTemporal, extractSpatial, fuzzyPositive } from '@/lib/synonymEngine'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -382,7 +382,8 @@ export function analyzeReview(
     tags.push('저평점_부정신호')
   }
 
-  const hasPositive = sarcasmPositive || C.positive.test(textForPositive)
+  // fuzzy: 정확 정규식이 놓친 긍정 오탈자(awsome/amazng 등) 흡수 (긍정 보강 전용)
+  const hasPositive = sarcasmPositive || C.positive.test(textForPositive) || fuzzyPositive(textForPositive)
   const isQuestion = C.question.test(text)
   if (!isComplaint && hasPositive && C.artwork.test(text)) {
     isArtworkFocused = true

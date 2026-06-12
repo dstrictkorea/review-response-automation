@@ -362,6 +362,65 @@ export function extractCompanion(text: string): string | null {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+//  Fuzzy 매칭 — 경량 레벤슈타인(거리 ≤1)으로 긍정어 오탈자 흡수 (Typo Tolerance)
+//
+//  목적: "awsome/amazng/beatiful" 같은 흔한 오탈자를 긍정으로 인식해 자동 처리 커버리지 확대.
+//  안전 원칙: (1) 긍정 신호만 추가 — 불만/긴급 탐지엔 절대 사용 안 함(정확 매칭 유지).
+//            (2) 부정어(not/안/못 등) 직후 토큰은 제외. (3) 오탐 적은 '구별성 높은' 긴 단어만.
+// ════════════════════════════════════════════════════════════════════════════════
+
+/** 경계값 레벤슈타인 — max 초과 시 조기 종료(max+1 반환). 짧은 토큰 대상이라 경량. */
+export function levenshtein(a: string, b: string, max = 1): number {
+  const al = a.length, bl = b.length
+  if (Math.abs(al - bl) > max) return max + 1
+  let prev = Array.from({ length: bl + 1 }, (_, i) => i)
+  for (let i = 1; i <= al; i++) {
+    const cur: number[] = [i]
+    let best = i
+    for (let j = 1; j <= bl; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      const v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+      cur[j] = v
+      if (v < best) best = v
+    }
+    if (best > max) return max + 1
+    prev = cur
+  }
+  return prev[bl]
+}
+
+// 구별성 높은 긍정어(≥6자) — 오탈자 1글자 이웃에 흔한 부정어가 거의 없어 fuzzy 안전.
+// (짧고 모호한 great/nice/cool 등은 제외 — 정확 정규식이 이미 처리, fuzzy 시 오탐 위험.)
+const FUZZY_POSITIVE_WORDS = [
+  'awesome', 'amazing', 'beautiful', 'wonderful', 'gorgeous', 'stunning', 'fantastic',
+  'incredible', 'excellent', 'magical', 'breathtaking', 'mesmerizing', 'spectacular',
+  'enjoyed', 'relaxing', 'immersive', 'delightful', 'phenomenal',
+  'increíble', 'hermoso', 'maravilloso', 'precioso', 'espectacular',
+  'napakaganda', 'maganda',
+]
+const FUZZY_NEGATOR = /^(?:not|no|never|wasn'?t|isn'?t|aren'?t|don'?t|didn'?t|hardly|barely|안|못|不|没|不太|ない|なかった)$/i
+
+/**
+ * fuzzyPositive — 토큰별 레벤슈타인≤1로 긍정 오탈자 탐지. 부정어 직후 토큰은 제외.
+ * 긍정 분류 보강 전용(불만/긴급 미사용). 라틴/한글 토큰 위주(공백 분절).
+ */
+export function fuzzyPositive(text: string): boolean {
+  const tokens = (text ?? '').split(/[\s,.!?;:"'()[\]~…]+/).filter(Boolean)
+  for (let k = 0; k < tokens.length; k++) {
+    const low = tokens[k].toLowerCase()
+    if (low.length < 5 || low.length > 14) continue
+    for (const w of FUZZY_POSITIVE_WORDS) {
+      if (Math.abs(low.length - w.length) > 1) continue
+      if (levenshtein(low, w, 1) <= 1) {
+        if (FUZZY_NEGATOR.test((tokens[k - 1] ?? '').toLowerCase())) break  // 부정어 직후 → 제외
+        return true
+      }
+    }
+  }
+  return false
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 //  extractTemporal — 방문 시간대 추출 (아침/저녁/주말) — Fragment Pool 'temporal' 차원
 //  명시적 시간 언급이 있을 때만. \b는 라틴(EN/ES/TL)에만, CJK/키릴/아랍/데바나가리는 평문.
 // ════════════════════════════════════════════════════════════════════════════════
