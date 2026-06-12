@@ -3851,7 +3851,7 @@ function detectLength(reply: string, status: string, reviewText?: string): strin
 }
 
 // ── 톤 미스매치 탐지 ────────────────────────────────────────────
-function detectToneMismatch(reply: string, status: string, rating: number, lang: string): string | null {
+function detectToneMismatch(reply: string, status: string, rating: number, lang: string, isHybrid = false): string | null {
   // COMPLIMENT인데 사과 표현이 있는 경우
   if (status === 'COMPLIMENT' && lang === 'ko' && /사과드립니다|죄송합니다/.test(reply)) {
     return 'COMPLIMENT_HAS_APOLOGY'
@@ -3863,11 +3863,11 @@ function detectToneMismatch(reply: string, status: string, rating: number, lang:
   if (status === 'COMPLAINT' && lang === 'ko' && /정말\s*기쁩니다|너무\s*기뻐요/.test(reply)) {
     return 'COMPLAINT_TOO_CHEERFUL'
   }
-  // 5★ 리뷰에 사과 표현
-  if (rating >= 5 && lang === 'ko' && /불편을\s*드린\s*점.*사과/.test(reply)) {
+  // 5★ 리뷰에 사과 표현 — Hybrid(복합 의도)는 ★5라도 불만 부분에 사과가 정당하므로 면제
+  if (!isHybrid && rating >= 5 && lang === 'ko' && /불편을\s*드린\s*점.*사과/.test(reply)) {
     return '5STAR_HAS_APOLOGY'
   }
-  if (rating >= 5 && lang === 'en' && /inconvenience.*apologize/i.test(reply)) {
+  if (!isHybrid && rating >= 5 && lang === 'en' && /inconvenience.*apologize/i.test(reply)) {
     return '5STAR_HAS_APOLOGY'
   }
   return null
@@ -3892,9 +3892,9 @@ function detectMissedEcho(reviewText: string, reply: string, lang: string, statu
 }
 
 // ── 오분류 탐지 ────────────────────────────────────────────────
-function detectMisclassification(status: string, rating: number, tags: string[]): string | null {
-  // 5★ COMPLAINT
-  if (rating >= 5 && status === 'COMPLAINT') return `5STAR_COMPLAINT: ${tags.join(',')}`
+function detectMisclassification(status: string, rating: number, tags: string[], isHybrid = false): string | null {
+  // 5★ COMPLAINT — Hybrid(긍정+불만 대조)는 의도적 COMPLAINT 자동완료이므로 면제
+  if (!isHybrid && rating >= 5 && status === 'COMPLAINT') return `5STAR_COMPLAINT: ${tags.join(',')}`
   // 5★ EMERGENCY (긍정 리뷰가 EMERGENCY로 분류 → 오탐)
   if (rating >= 5 && status === 'EMERGENCY') return `5STAR_EMERGENCY: ${tags.join(',')}`
   // 4★ EMERGENCY
@@ -4054,7 +4054,8 @@ for (let i = 0; i < SYNTHETIC_REVIEWS.length; i++) {
   const issues: QualityIssue[] = []
 
   // ── 1. 오분류 체크 ──────────────────────────────────────────
-  const mis = detectMisclassification(decision.classification.status, r.rating, decision.classification.tags)
+  const isHybrid = !!decision.classification.isHybrid
+  const mis = detectMisclassification(decision.classification.status, r.rating, decision.classification.tags, isHybrid)
   if (mis) issues.push({ code: 'MISCLASSIFY', severity: 'P0', description: mis, evidence: reply.substring(0, 60) })
 
   // ── 2. 안전 규칙 위반 ───────────────────────────────────────
@@ -4067,7 +4068,7 @@ for (let i = 0; i < SYNTHETIC_REVIEWS.length; i++) {
   if (len) issues.push({ code: 'LENGTH', severity: len.includes('TMI_MISMATCH') ? 'P2' : 'P1', description: len, evidence: reply.substring(0, 40) })
 
   // ── 4. 톤 미스매치 ─────────────────────────────────────────
-  const tone = detectToneMismatch(reply, decision.classification.status, r.rating, r.lang)
+  const tone = detectToneMismatch(reply, decision.classification.status, r.rating, r.lang, isHybrid)
   if (tone) issues.push({ code: 'TONE_MISMATCH', severity: 'P1', description: tone, evidence: reply.substring(0, 60) })
 
   // ── 5. AI 냄새 ────────────────────────────────────────────

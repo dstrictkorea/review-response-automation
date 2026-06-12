@@ -56,6 +56,8 @@ export interface WaterfallResult {
   temporalContext?: string | null
   /** 공간감(긍정) — 포토스팟/넓은공간. Fragment Pool 'spatial' 차원 (COMPLIMENT 전용). */
   spatialContext?: string | null
+  /** 복합 의도(긍정+불만 대비 구조) — Hybrid Assembly 트리거 (사과+긍정인정+개선, 자동완료). */
+  isHybrid?: boolean
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -89,7 +91,7 @@ const DEFAULT_SARCASM =
   /(안\s*아깝|아깝지\s*않|나쁘지\s*않|나쁘지않)|(not\s*(too\s*)?bad|not\s*a\s*waste|didn[''’]?t\s*disappoint)/i
 
 const DEFAULT_POSITIVE =
-  /(완벽|오아시스|대박|100점|200점|좋|최고|감동|멋지|멋있|예쁘|이쁘|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|인생\s*샷|괜찮|힐링|몰입|감격|기대\s*이상|기대\s*그\s*이상|재밌|재미있|신기|신선|특별|설레)|(beautiful|amazing|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|worth\s*(?:it|checking\s*out)|good\s*location|healing|immersive|relaxing|must[- ]?see|must[- ]?visit|pretty|charming|lovely|breathtaking|mesmerizing|outstanding|exceptional|superb|delightful)|\b(?<!not\s)(?<!wouldn[''']?t\s)great\b|\b(?<!not\s)(?<!wouldn[''']?t\s)recommend\b/i
+  /(완벽|오아시스|대박|100점|200점|좋|최고|감동|멋지|멋진|멋졌|멋있|예쁘|예쁜|예뻐|예뻤|이쁘|이쁜|이뻐|이뻤|훌륭|환상|만족|행복|즐거|추천|볼\s*만|아름답|아름다운|아름다웠|인생\s*샷|괜찮|힐링|몰입|감격|기대\s*이상|기대\s*그\s*이상|재밌|재미있|재밋|넘\s*좋|너무\s*좋|개\s*좋|존\s*좋|굿|꿀잼|강추|신기|신선|특별|설레)|(beautiful|amazing|love|wonderful|perfect|gorgeous|stunning|incredible|awesome|fantastic|enjoyed|worth\s*(?:it|checking\s*out)|good\s*location|healing|immersive|relaxing|must[- ]?see|must[- ]?visit|pretty|charming|lovely|breathtaking|mesmerizing|outstanding|exceptional|superb|delightful)|\b(?<!not\s)(?<!wouldn[''']?t\s)great\b|\b(?<!not\s)(?<!wouldn[''']?t\s)recommend\b/i
 
 const DEFAULT_QUESTION =
   /[?？]|(인가요|나요|까요|을까|ㄴ가요|어때|되나요|있나요|하나요|일까)/i
@@ -391,21 +393,35 @@ export function analyzeReview(
   let status: ReviewClass
   let requiresLLM: boolean
   let reason: string
+  let isHybrid = false
+
+  // 복합 의도(긍정+불만) 대비 구조 — 정직한 대조 접속(는데/지만/but/但是/pero…)이 긍정과 불만을
+  // 잇는 경우 = 진짜 혼합 의도(사캐즘 아님). 사캐즘은 반어적 칭찬+불만 나열일 뿐 정직한 대조가 없다.
+  // 한국어 대조 연결어미는 음절에 융합됨(멋지+ㄴ데→멋진데). 융합 형태(받침 ㄴ/ㄹ + 데)와
+  // 분리 어미(지만)·접속부사(그런데/하지만)를 모두 포괄. 그 외 8개 언어는 접속사로 포착.
+  const MIXED_CONTRAST =
+    /지만|하지만|그렇지만|그러나|그런데|근데|반면|은데|는데|진데|쁜데|싼데|운데|른데|큰데|좋긴|훌륭한데|깔끔한데|아쉬운데|괜찮은데|though|however|\bbut\b|\byet\b|けど|けれど|だが|但是?|不过|然而|却|\bpero\b|sin\s*embargo|\bно\b|однако|لكن|ولكن|लेकिन|मगर|ngunit|\bkaso\b|subalit/i
 
   // ── Rating Override — 고평점(4·5점)은 EMERGENCY가 아닌 한 건설적 피드백(COMPLIMENT)으로 완화 ──
   // ratingHigh는 Layer 3.5에서 이미 선언됨
 
   if (isComplaint) {
-    // 고평점(4·5점) 단일 경미 불만 → 건설적 피드백으로 완화(정적 응대)
-    // 예외: 2개 이상 불만 태그 = 별점·본문 강한 충돌 → 잠재 사캐즘/복합 불만 → LLM 위임
-    if (ratingHigh && tags.length < 2) {
-      status = 'COMPLIMENT'
+    // 복합 의도 해상도(최우선): 고평점 + 긍정어 + 정직한 대조 구조(는데/but/但是…) →
+    //   Hybrid(사과+긍정인정+개선) 정적 자동완료. 태그 수 무관 — "작품은 멋진데 대기가 김"(1태그)도 포함.
+    //   대조 없는 반어적 칭찬+불만 나열은 사캐즘으로 보아 아래 AMBIGUOUS로 격리.
+    if (ratingHigh && hasPositive && MIXED_CONTRAST.test(text)) {
+      status = 'COMPLAINT'          // COMPLAINT Tier1 → 정적 자동완료 (route='static', ai_done)
+      requiresLLM = false
+      isHybrid = true
+      reason = '복합 의도(긍정+불만 대조 구조) — Hybrid Assembly 정적 자동완료'
+    } else if (ratingHigh && tags.length < 2) {
+      status = 'COMPLIMENT'         // 경미 단일 불만, 대조 없음 → 건설적 피드백 완화
       requiresLLM = false
       reason = '고평점(4·5점) 건설적 피드백 — Rating Override로 완화(정적 응대)'
     } else if (ratingHigh && tags.length >= 2) {
-      status = 'AMBIGUOUS'
+      status = 'AMBIGUOUS'          // 복합 불만 + 대조 없음 → 잠재 사캐즘 → LLM/사람
       requiresLLM = true
-      reason = '고평점(4·5점) + 복합 불만 신호 — 잠재 사캐즘/강한 충돌 → LLM 위임'
+      reason = '고평점(4·5점) + 복합 불만(대조 구조 없음) — 잠재 사캐즘 → LLM 위임'
     } else {
       status = 'COMPLAINT'
       requiresLLM = true
@@ -488,6 +504,7 @@ export function analyzeReview(
     companionContext,
     temporalContext,
     spatialContext,
+    isHybrid,
   }
 }
 

@@ -1512,6 +1512,27 @@ export function slotReassurance(lang: Language, idx = 0): string {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+//  Slot H — 복합 의도 긍정 인정 (Hybrid Assembly 전용) — 불편 사과와 별개로 좋았던 점을 인정.
+//  "그럼에도 좋게 봐주셔 감사" 톤. 환호('기쁩니다') 회피(COMPLAINT_TOO_CHEERFUL 방지), 보상·약속 0.
+// ════════════════════════════════════════════════════════════════════════════════
+const HYBRID_ACK_LINES: Partial<Record<Language, string[]>> = {
+  ko: ['불편을 느끼신 점이 있었음에도 좋았던 부분을 함께 봐주셔서 진심으로 감사드립니다.', '아쉬운 점을 말씀해 주시면서도 좋은 점을 알아봐 주신 마음, 깊이 감사드립니다.'],
+  en: ['Even with the inconvenience, thank you sincerely for recognizing what you enjoyed.', 'We truly appreciate that you noticed the good amid what fell short.'],
+  ja: ['ご不便がありながらも、良かった点にも目を向けてくださり、心より感謝申し上げます。', '残念な点をお伝えいただきつつ、良い面も認めてくださったこと、深く感謝いたします。'],
+  zh: ['尽管有不便之处，仍感谢您留意到令您满意的部分。', '您在指出不足的同时也肯定了优点，我们由衷感激。'],
+  es: ['A pesar del inconveniente, le agradecemos sinceramente que reconociera lo que disfrutó.', 'Valoramos mucho que notara lo bueno en medio de lo que no estuvo a la altura.'],
+  ru: ['Несмотря на неудобства, искренне благодарим за то, что отметили и приятные моменты.', 'Мы очень ценим, что вы разглядели хорошее наряду с тем, что не оправдало ожиданий.'],
+  ar: ['رغم الإزعاج، نشكركم بصدق على ملاحظتكم لما استمتعتم به.', 'نقدّر كثيراً أنكم لاحظتم الجوانب الجيدة إلى جانب ما لم يكن في المستوى.'],
+  hi: ['असुविधा के बावजूद, आपने जो अच्छा लगा उसे भी सराहा — इसके लिए हार्दिक धन्यवाद।', 'कमियों को बताते हुए भी आपने अच्छी बातों को पहचाना, इसकी हम गहराई से सराहना करते हैं।'],
+  tl: ['Sa kabila ng abala, taos-puso kaming nagpapasalamat na napansin ninyo ang nagustuhan ninyo.', 'Pinahahalagahan namin na napansin ninyo ang maganda sa kabila ng mga kakulangan.'],
+}
+export function slotHybridAck(lang: Language, idx = 0): string {
+  const arr = HYBRID_ACK_LINES[lang]
+  if (!arr || !arr.length) return ''
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 //  Slot D — 현장 운영 힌트 (피크타임/혼잡 시간대 방문 권유)
 //  3 variants × 4 languages | {highlight_room}
 // ════════════════════════════════════════════════════════════════════════════════

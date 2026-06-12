@@ -43,6 +43,7 @@ import {
   slotE_negative,
   slotEmpathy,
   slotReassurance,
+  slotHybridAck,
 } from '@/lib/staticTemplates'
 import { selectFragments, type FragmentSignal } from '@/lib/fragmentPool'
 import { scanForbidden, type WaterfallResult } from '@/lib/waterfallRegexEngine'
@@ -136,19 +137,27 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
                  ? slotD_peak_hours(lang, ix.idxD) : ''
     const emp  = result.isEmergency ? '' : slotEmpathy(lang, ix.idxP)
     const rea  = result.isEmergency ? '' : slotReassurance(lang, ix.idxQ)
+    const hyb  = result.isHybrid ? slotHybridAck(lang, ix.idxS) : ''  // 복합 의도 긍정 인정
 
-    let body: string[]
-    if (result.isEmergency) {
-      body = [piv].filter(Boolean)            // 긴급: 건조하게 핵심 피벗만
+    if (result.isHybrid) {
+      // ── Hybrid Assembly (복합 의도): 사과(A) → 좋은 점 인정(hybAck) → 개선 약속(pivot) → 클로징(E).
+      //   수용확인(B)·공감(empathy)은 hybAck과 중복/과중이므로 생략 → 간결한 4블록 균형.
+      const hybBody: string[] = [hyb, ...(piv ? [piv] : [])]
+      rawReply = [a, ...hybBody, e].join('\n\n')
     } else {
-      // pivot(핵심 개선 약속)은 태그 있으면 항상 포함. empathy/reassurance/peak는 '재량 슬롯'으로
-      // 리뷰 길이에 비례한 예산 내에서만 — 초단문 불만에 공감/안심 덧붙여 TMI 되는 것 방지.
-      const discBudget = len <= 40 ? 0 : len <= 90 ? 1 : 2
-      const keep = new Set([emp, rea, peak].filter(Boolean).slice(0, discBudget))
-      // 서사 순서: empathy → pivot → peak → reassurance
-      body = [emp, piv, peak, rea].filter((s) => s && (s === piv || keep.has(s)))
+      let body: string[]
+      if (result.isEmergency) {
+        body = [piv].filter(Boolean)          // 긴급: 건조하게 핵심 피벗만
+      } else {
+        // pivot(핵심 개선 약속)은 태그 있으면 항상 포함. empathy/reassurance/peak는 '재량 슬롯'으로
+        // 리뷰 길이에 비례한 예산 내에서만 — 초단문 불만에 공감/안심 덧붙여 TMI 되는 것 방지.
+        const discBudget = len <= 40 ? 0 : len <= 90 ? 1 : 2
+        const keep = new Set([emp, rea, peak].filter(Boolean).slice(0, discBudget))
+        // 서사 순서: empathy → pivot → peak → reassurance
+        body = [emp, piv, peak, rea].filter((s) => s && (s === piv || keep.has(s)))
+      }
+      rawReply = [a, b, ...body, e].join('\n\n')
     }
-    rawReply = [a, b, ...body, e].join('\n\n')
   } else {
     // ── SAFE / COMPLIMENT ───────────────────────────────────────────────────
     const a = slotA_greeting(lang, name, ix.idxA)
