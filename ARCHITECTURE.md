@@ -159,7 +159,7 @@ intent_code/confidence/pipeline_engine) · `activity_logs`(전 액션 감사) ·
 | 규칙 | 강제 위치 |
 |---|---|
 | 환불/보상/CCTV/징계/법적책임 금지 | `scanForbidden` Double-Check + LLM 시스템 프롬프트 + 정적 템플릿 사전 검수 |
-| EMERGENCY 레이어 불변 | `waterfallRegexEngine.ts` 하드코딩 (DB 규칙은 additive only) |
+| EMERGENCY 레이어 불변 | `waterfallRegexEngine.ts` 하드코딩 (DB 규칙·Auto-Promotion 모두 additive only, EMERGENCY 우회 불가) |
 | ★≤2 무승인 자동완료 차단 | Rating 게이트 (`hasPositive && ratingLow → AMBIGUOUS`) |
 | 자동 공개 게시 금지 | publish 라우트는 보조 수단; 사람 승인 선행 |
 | 전 액션 감사 로그 | `activity_logs` (timestamp + actor) |
@@ -179,15 +179,35 @@ src/lib/
   branches.ts             지점 코드 SSOT (도시명/시그니처 작품, EN 폴백)
   processReviewById.ts    admin-context 단건 처리 공통 헬퍼 (bulk/re-process/cron/sync) + 빈텍스트·rating 가드
   google/syncReviews.ts   Google 수집→적재→엔진 단일 출처 (수동 sync + cron 공유) + detectReviewLanguage(9-lang)
+  promotedPatterns.ts     Auto-Promotion ADDITIVE 레지스트리 (accept 병합 대상; EMERGENCY 불가)
   rulesCache.ts           DB 규칙 인메모리 캐시 (TTL 60s)
 src/services/
   filterService.ts        인입 키워드 필터 (5개 국어 위험 패턴, 보고화법 제외 처리)
   aiService.ts            국가별 문화 프로파일 + LLM 프롬프트 SSOT
 scripts/
-  deep-learning-loop.ts   813건 합성 리뷰 × 14종 검출기 회귀 게이트
-  validate-waterfall.ts   116+ TDD 분류/슬롯 케이스 (S1~S20)
+  deep-learning-loop.ts   813건 합성 리뷰 × 14종 검출기 + Coverage/Miss Rate 회귀 게이트
+  validate-waterfall.ts   116+ TDD 분류/슬롯/승격 케이스 (S1~S21)
   regression-guard.ts     통합 회귀 방어 게이트 (tsc + validate-waterfall + loop, 1개라도 FAIL→차단)
+  data-discovery-engine.ts Shadow Data Mining → Auto-Promotion 제안(discover) / 사람 승인 병합(accept)
 ```
+
+## 9. Auto-Promotion Engine (데이터 기반 자가 진화 — DECISIONS #19)
+하드코딩 규칙 추가 한계를 넘어, 미처리 리뷰에서 트렌드를 발견·제안하고 사람 승인으로 병합한다.
+```
+LLM-fallback/사람수정 리뷰 (CSV 또는 내장 shadow 코퍼스)
+  ▼ scripts/data-discovery-engine.ts (discover)
+빈출 N-gram 역추출 + 다국어 토픽 앵커 카운트 (에어컨/오디오가이드/락커/좌석…)
+  ▼ 임계치(≥threshold) 초과 토픽
+[신규 정규식] + [9개 언어 Fragment 초안] → proposed_fragments.json (코드 변경 X)
+  ▼ 관리자 `accept <TAG>` (Human-in-the-loop)
+src/lib/promotedPatterns.ts 에 ADDITIVE 병합 → 엔진 즉시 반영
+  (Layer1 불만 태그 / 긍정 보강 / slotC_pivot 9-lang 폴백)
+  ▼ 필수
+regression-guard (tsc + validate-waterfall S21 + loop 0/813) → FAIL이면 롤백
+```
+- **안전 불변**: EMERGENCY 토픽(환불/부상/법적/징계)은 BLOCKLIST로 **자동 승격 차단** — 사람이 코드에 직접.
+  승격은 ADDITIVE only(기존 규칙·EMERGENCY 우회/약화 불가). S21이 'EMERGENCY 미우회' 상시 검증.
+- **실증**: AC(에어컨) 토픽 발견 → accept → AC 리뷰 Miss 62.5%→37.5% 회수, KO/EN 토픽별 사과 자동 생성.
 
 > **회귀 방어 워크플로**: 엔진/딕셔너리/Fragment Pool 수정 후 `npx tsx scripts/regression-guard.ts`
 > 실행 → "✅ SAFE TO COMMIT"면 유지·푸시, "❌ BLOCKED"면 즉시 롤백. 기존 통과 케이스를 깨는 수정 차단.

@@ -132,7 +132,7 @@ npx tsx scripts/deep-learning-loop.ts     # 품질 게이트 — "이슈 있는 
 | [CLAUDE_CONTEXT.md](./CLAUDE_CONTEXT.md) | **첫 진입점** — 환경/마이그레이션 상태/파일 맵 |
 | [CURRENT_TASK.md](./CURRENT_TASK.md) | 현재 작업 컨텍스트 + 락/가드레일 |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | 현행 시스템 구조 (파이프라인/엔진/검출기) |
-| [DECISIONS.md](./DECISIONS.md) | 확정 설계 결정 17건 (재논의 금지) |
+| [DECISIONS.md](./DECISIONS.md) | 확정 설계 결정 19건 (재논의 금지) |
 | [OPERATIONAL_GUIDE.md](./OPERATIONAL_GUIDE.md) | 운영자용 가이드 (상태/격리/문제해결) |
 | [PROJECT_STATE.md](./PROJECT_STATE.md) | Wave별 마일스톤 이력 |
 | `00_`–`12_` 트리 | ⚠️ 과거 기획 아카이브 — 현행 스펙 아님 |

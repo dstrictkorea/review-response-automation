@@ -1,6 +1,6 @@
 # DECISIONS.md — Locked architectural decisions
 > Read before changing architecture. Each entry is **LOCKED**: do not re-litigate without an explicit decision to reopen (change Status and append rationale). Updated 2026-06-11.
-> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly · 16 Matrix Fragment Pool · 17 9-Lang Sanitization + Regression Guard · 18 Mixed-Intent Hybrid + Fuzzy Coverage
+> Index: 1 Algorithm-First · 2 LLM Provider · 3 Supabase SSOT · 4 5-Dim Hash · 5 Google Integration · 6 Review Pipeline · 7 Branch Management · 8 Risk Classification · 9 Soft Delete · 10 RBAC Rollout · 11 DB-Driven Rules (immutable Emergency) · 12 ReplyLanguage SSOT · 13 Low-Star/Question Isolation Gates · 14 Deep-Learning Loop = Merge Gate · 15 Governed Multi-Slot Assembly · 16 Matrix Fragment Pool · 17 9-Lang Sanitization + Regression Guard · 18 Mixed-Intent Hybrid + Fuzzy Coverage · 19 Auto-Promotion Engine (human-gated)
 
 ---
 ## 1. Algorithm-First (template before LLM)
@@ -164,3 +164,12 @@
 - **Why rejected:** (a) 진짜 복합 의도(긍정+경미 불만)까지 LLM — 비용·지연; (b) 사캐즘/심각 불만을 무비판 자동완료 = 안전 위험; (c) 불만/긴급에 퍼지 적용 시 오탐 = 안전 위험.
 - **Consequences:** 안전 경계 — fuzzy는 **긍정 보강 전용**(불만/긴급은 정확 매칭 유지) + 부정어 직후 토큰 제외. Hybrid는 ★5라도 불만 부분 사과가 정당 → 루프 검출기(5STAR_COMPLAINT/5STAR_HAS_APOLOGY)는 isHybrid 면제. ★3 진짜 모호·★5 사캐즘·★1-2+긍정충돌은 여전히 LLM/사람 격리(의도된 미스). 새 긍정어 추가 시 저평점 사캐즘 오격리 주의 — regression-guard 필수(#14/#17).
 - **Files:** `src/lib/waterfallRegexEngine.ts`(MIXED_CONTRAST/isHybrid/DEFAULT_POSITIVE 확장/★1-2 회수), `src/lib/synonymEngine.ts`(levenshtein/fuzzyPositive), `src/lib/staticTemplates.ts`(slotHybridAck), `src/lib/replyTemplates.ts`(Hybrid 조립/ultra-short), `scripts/deep-learning-loop.ts`(Coverage/Miss Rate).
+
+## 19. Auto-Promotion Engine (데이터 기반 미인식 패턴 발견 — Human-in-the-loop)
+- **Status:** LOCKED (2026-06-11)
+- **Decision:** 하드코딩 규칙 추가에만 의존하지 않고, 알고리즘이 자동 처리하지 못한 리뷰(LLM-fallback/사람 수정)를 마이닝해 빈출 토픽을 발견하고 규칙·조각을 **제안**한다(`scripts/data-discovery-engine.ts`). 제안은 `proposed_fragments.json`으로만 출력하고, 관리자가 `accept <TAG>` 할 때만 ADDITIVE 레지스트리 `src/lib/promotedPatterns.ts`에 병합되어 엔진(waterfallRegexEngine Layer1 / 긍정 / slotC_pivot 폴백)에 반영된다. 즉시 코드 덮어쓰기 금지.
+- **Reason:** 글로벌 운영에서 신규 시설/트렌드 키워드(에어컨/오디오가이드/락커 등)가 누적되며 등장 — 사람이 일일이 찾기 어렵다. 데이터가 직접 미인식 패턴을 드러내게 하되, 자동 학습이 안전을 훼손하지 않도록 사람 승인 + 회귀 게이트를 강제.
+- **Alternatives:** (a) 하드코딩만; (b) 발견 즉시 자동 병합(무인 자가수정); (c) LLM 재분류 상시.
+- **Why rejected:** (a) 확장성 부족·발견 누락; (b) 사캐즘/심각 불만을 자동 학습으로 오격리/우회할 위험 — 안전 불가; (c) 비용·비결정성(DECISIONS #1).
+- **Consequences (안전 불변):** ⛔ EMERGENCY 토픽(환불/부상/법적/징계)은 BLOCKLIST로 **자동 승격 불가** — 코드 하드코딩 유지(#11). 승격은 ADDITIVE only(기존 규칙 약화/대체 금지). 모든 accept 직후 regression-guard(#14/#17) 통과 필수 — FAIL이면 롤백. validate-waterfall S21이 '승격 인식 + EMERGENCY 미우회'를 상시 검증. 긍정 승격은 안전(인식 보강), 불만 승격은 라우팅(격리/정적 사과)에만 영향. `proposed_fragments.json`은 임시 산출물(.gitignore).
+- **Files:** `scripts/data-discovery-engine.ts`(discover/accept), `src/lib/promotedPatterns.ts`(레지스트리), `src/lib/waterfallRegexEngine.ts`(additive 소비), `src/lib/staticTemplates.ts`(slotC_pivot 폴백), `scripts/validate-waterfall.ts`(S21).

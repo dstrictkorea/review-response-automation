@@ -1,7 +1,13 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → (Wave 21 / Coverage 극대화)
+> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → (Wave 22 / Auto-Promotion Engine)
 > ⚠️ 적용 마이그레이션 SSOT는 `CLAUDE_CONTEXT.md` §4. 현행 아키텍처는 `ARCHITECTURE.md`.
+
+## 🌊 Wave 22 — 데이터 기반 미인식 패턴 발견 & Fragment 자가 승격 (Auto-Promotion, 완료)
+- **Shadow Data Mining** (`scripts/data-discovery-engine.ts`): 미처리(LLM-fallback/사람) 리뷰에서 빈출 N-gram 역추출 + 다국어 토픽 앵커(에어컨/오디오가이드/락커/좌석). 내장 코퍼스 + --csv.
+- **Auto-Promotion 제안 + Human-in-the-loop**: 임계치 초과 토픽 → [신규 정규식]+[9개 언어 조각] → `proposed_fragments.json`. 관리자 `accept`만 `src/lib/promotedPatterns.ts`(ADDITIVE)에 병합 → 엔진 반영(Layer1/긍정/slotC_pivot 폴백).
+- **안전**: EMERGENCY 토픽 BLOCKLIST(자동 승격 불가) · ADDITIVE only · accept 후 regression-guard 필수. validate-waterfall **S21**(승격 인식 + EMERGENCY 미우회) 추가.
+- **실증**: AC 토픽 accept → AC 리뷰 Miss 62.5%→37.5% 회수, 토픽별 9개 언어 사과 자동 생성. regression-guard ✅ (loop 0/813).
 
 ## 🌊 Wave 21 — 복합 의도 + 퍼지 매칭으로 자동 답변 커버리지 극대화 (완료)
 - **Mixed-Intent Resolver** (DECISIONS #18): 고평점+긍정+대조(는데/but) → Hybrid 정적 자동완료(사과+긍정인정+개선). 사캐즘(대조 없음)은 AMBIGUOUS 격리 유지.

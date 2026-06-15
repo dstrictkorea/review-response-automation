@@ -2,7 +2,23 @@
 > Updated 2026-06-11. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 복합 의도 수용 + 퍼지 매칭으로 자동 답변 커버리지 극대화 (Wave 21)**
+**✅ EPIC COMPLETE: 데이터 기반 미인식 패턴 발견 & Fragment 자가 승격 (Auto-Promotion Engine, Wave 22)**
+
+### 이번 EPIC 완료 사항 (DECISIONS #19)
+- **Shadow Data Mining** `scripts/data-discovery-engine.ts`: 미처리(LLM-fallback/사람 수정) 리뷰에서
+  빈출 N-gram 역추출 + 다국어 토픽 앵커(에어컨/오디오가이드/락커/좌석). 내장 코퍼스 + `--csv`.
+- **Auto-Promotion 제안 + Human-in-the-loop**: 임계치 초과 → [신규 정규식]+[9개 언어 조각] →
+  `proposed_fragments.json`(코드 변경 X). `accept <TAG>`만 `src/lib/promotedPatterns.ts`(ADDITIVE) 병합 →
+  엔진 반영(waterfallRegexEngine Layer1·긍정 / slotC_pivot 9-lang 폴백).
+- **안전 불변**: ⛔ EMERGENCY 토픽(환불/부상/법적/징계) BLOCKLIST 자동 승격 차단 · ADDITIVE only ·
+  accept 후 regression-guard 필수. validate-waterfall **S21**(승격 인식 + EMERGENCY 미우회) 추가.
+- **실증**: discover → AC(6×)/audio(3×) 제안 → `accept FACILITY_AC_COMPLAINT` → AC 리뷰 Miss 62.5%→37.5%,
+  KO/EN 토픽별 사과 자동 생성. 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop 0/813).
+- `proposed_fragments.json`은 .gitignore (재생성 가능 임시 산출물).
+
+---
+
+**이전 EPIC COMPLETE: 복합 의도 수용 + 퍼지 매칭으로 자동 답변 커버리지 극대화 (Wave 21)**
 
 ### 이번 EPIC 완료 사항
 - **Mixed-Intent Resolver** (DECISIONS #18): 고평점 + 긍정어 + 정직한 대조(는데/but/但是) →
