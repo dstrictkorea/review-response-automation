@@ -239,8 +239,9 @@ export function extractContextMirror(text: string): string | null {
   if (/романтич\S*|с\s*(?:партнёром|любимым|любимой)/.test(t)) return '데이트'
 
   // 가족 관련 — 아이/부모/가족 맥락 (다국어)
-  if (/(?:아이|아들|딸|아기|어린이)(?:랑|이랑|과\s*함께|들과|와\s*함께)/.test(t)) return '가족'
-  if (/가족(?:이랑|과\s*함께|끼리|들과|과\s*방문)/.test(t)) return '가족'
+  if (/(?:아이|아들|딸|아기|어린이)(?:랑|이랑|과\s*함께|들과|들이|들은|들도|와\s*함께)/.test(t)) return '가족'
+  if (/가족(?:이랑|과\s*함께|끼리|들과|과\s*방문|\s*모두|\s*나들이|\s*여행|\s*다\s|\s*분)/.test(t)) return '가족'
+  if (/온\s*가족|손자|손녀|손주|[1-9삼사]\s*세대|[1-9삼사]\s*대가\s*(?:함께|같이|모)|할머니|할아버지|조부모|장인어른|장모님/.test(t)) return '가족'
   if (/\b(?:kids?|children|child|son|daughter|toddler|baby|grandkids?)\b/.test(t)) return '가족'
   if (/\bmy\s+(?:son|daughter|child|kids?|family)\b/.test(t)) return '가족'
   if (/子供|家族|お子|娘|息子|お子様|お子さん/.test(t)) return '가족'

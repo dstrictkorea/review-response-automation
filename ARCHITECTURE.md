@@ -17,7 +17,8 @@
 ## 2. 핵심 설계: Algorithm-First 하이브리드 게이트키퍼
 
 LLM은 기본 엔진이 아니다. **결정론적 5-레이어 분류 + Matrix Fragment Pool 조립**이 기본이고,
-LLM은 COMPLAINT/AMBIGUOUS 전용 격리 폴백이다 (출력은 항상 `pending_approval`).
+모든 리뷰가 결정론적 정적 초안을 갖는다(커버리지 100%). LLM은 선택적 보조 경로일 뿐이며 자동 게시는 없다.
+(Wave 23: AMBIGUOUS도 균형 정적 답변으로 처리 → 정적 답변 빈칸/LLM 의존 제거.)
 
 ```
 인입 (CSV import / 수동 등록 / Google sync)
@@ -25,8 +26,8 @@ LLM은 COMPLAINT/AMBIGUOUS 전용 격리 폴백이다 (출력은 항상 `pending
   ▼
 WaterfallRegexEngine (5-Layer, LLM 미사용)
   Layer 0  EMERGENCY  — 부상/법적위협/환불요구/언론위협 (코드 하드코딩, DB로 약화 불가)
-  Layer 1  COMPLAINT  — 11종 불만 태그 (STAFF/SYSTEM/ROOM/INTERACTIVE/VALUE/CROWD/
-                         LAYOUT/DISPLAY/DURATION/REVISIT/운영불만)
+  Layer 1  COMPLAINT  — 불만 태그 (STAFF/SYSTEM/ACCESSIBILITY/LANGUAGE_SERVICE/ROOM/INTERACTIVE/
+                         VALUE/CROWD/LAYOUT/DISPLAY/DURATION/REVISIT/운영불만/저평점_부정신호)
   Layer 2  CHURN/Repeat — 이탈위험·재방문 신호
   Layer 3  Sarcasm    — 비꼬기 복구 (★별점 충돌 검사)
   Layer 4  Sentiment  — 긍정/질문/작품감상 + contextMirror 추출
@@ -34,10 +35,10 @@ WaterfallRegexEngine (5-Layer, LLM 미사용)
 Rating Override & 안전 게이트 (waterfallRegexEngine.ts 최종 판정부)
   • ★4-5 + 긍정 + 대조(는데/but/但是) → Hybrid COMPLAINT 정적 자동완료 (사과+긍정인정+개선; DECISIONS #18)
   • ★4-5 + 불만태그 <2  → COMPLIMENT (건설적 피드백 완화)
-  • ★4-5 + 불만태그 ≥2 (대조 없음=사캐즘) → AMBIGUOUS (LLM)
-  • ★1-2 + 긍정 본문     → AMBIGUOUS (별점·본문 충돌 = 미탐지 불만 가능성, 무승인 ai_done 차단)
+  • ★4-5 + 불만태그 ≥2 (대조 없음=사캐즘) → AMBIGUOUS → 균형 정적 답변 자동완료(Wave 23)
+  • ★1-2 + 긍정 본문     → AMBIGUOUS (별점·본문 충돌 = 미탐지 불만 가능성) → 균형 초안 + 사람 승인 격리
   • ★1-2 + 무긍정(정확+fuzzy)·무태그 → COMPLAINT 격상 (다국어 미탐지 불만 정적 사과 회수)
-  • 서비스 질문(유모차/주차/예약…) → [질문] 태그 + AMBIGUOUS (정적 격상 금지, 사람이 답변)
+  • 서비스 질문(유모차/주차/예약…) → [질문] 태그 + AMBIGUOUS (정적 격상 금지, 균형 초안+사람 승인)
   • 감성 신호: contextMirror + fuzzyPositive(오탈자 흡수, 긍정 보강 전용)
   ▼
 reviewProcessor (3-Tier 스마트 라우팅)
@@ -45,7 +46,8 @@ reviewProcessor (3-Tier 스마트 라우팅)
   SAFE / COMPLIMENT    → route='static'  다중 슬롯 정적 답변 + ai_done (승인 불필요)
   COMPLAINT Tier 1     → route='static'  사전 검수 사과 템플릿 + ai_done
   COMPLAINT Tier 2/3   → route='manual'  독성/critical → pending_approval
-  AMBIGUOUS Tier 1     → route='llm'     태그·근거 주입 프롬프트 → 항상 pending_approval
+  AMBIGUOUS Tier 1 (★3+/신호)   → route='static' 균형 정적 답변(slotAmbiguousAck) + ai_done
+  AMBIGUOUS Tier 1 (★1-2/무신호 질문) → route='manual' 균형 초안 제공 + pending_approval (LLM 의존 0)
   ▼
 scanForbidden Double-Check (정적/LLM 출처 무관 전수 금칙어 검사)
   환불 약속 · 법적 책임 · CCTV · 직원 징계 — 검출 시 강제 수정 플래그

@@ -4079,7 +4079,9 @@ function detectWrongScript(reply: string, lang: string): string | null {
     case 'ar': if (arab < 10)   return `WRONG_SCRIPT: ar reply has only ${arab} Arabic chars`; break
     case 'hi': if (deva < 10)   return `WRONG_SCRIPT: hi reply has only ${deva} Devanagari chars`; break
     case 'en':
-      if (hangul > 5 || !/thank|appreciat|sorry|apolog|glad|welcome|hear|delight|honor/i.test(reply))
+      // hangul>5 catches Korean contamination; the word list confirms English-ness.
+      // Includes the full positive/sentiment vocabulary used across slot pools.
+      if (hangul > 5 || !/thank|appreciat|sorry|apolog|glad|welcome|hear|delight|honor|grateful|happy|thrill|wonderful|enjoy|pleased|lovely|love|hope/i.test(reply))
         return `WRONG_SCRIPT: en reply lang markers missing (hangul=${hangul})`
       break
     case 'es':

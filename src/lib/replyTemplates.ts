@@ -36,7 +36,6 @@ import {
   slotB_appreciation,
   slotB_acknowledgment,
   slotC_artwork,
-  slotC_general,
   slotC_pivot,
   slotD_peak_hours,
   slotE_positive,
@@ -44,6 +43,7 @@ import {
   slotEmpathy,
   slotReassurance,
   slotHybridAck,
+  slotAmbiguousAck,
 } from '@/lib/staticTemplates'
 import { selectFragments, type FragmentSignal } from '@/lib/fragmentPool'
 import { scanForbidden, type WaterfallResult } from '@/lib/waterfallRegexEngine'
@@ -63,11 +63,19 @@ export interface StaticReplyContext {
 // ── 소수 기반 독립 해시: 슬롯마다 다른 prime으로 초기화 → idx 분포 독립 보장 ──────────
 function slotHash(reviewId: string | null | undefined, prime: number): number {
   if (!reviewId) return 0
-  let h = prime
+  // FNV-1a digest of the id, then mix the slot-prime in a finalization avalanche.
+  // (Seeding with the prime up front washes out over long UUIDs → correlated indices
+  //  → far fewer effective combos than the pool sizes imply. Fold prime at the end instead.)
+  let h = 2166136261
   for (let i = 0; i < reviewId.length; i++) {
-    h = ((h * 33) ^ reviewId.charCodeAt(i)) | 0  // 32-bit signed
+    h = Math.imul(h ^ reviewId.charCodeAt(i), 16777619)
   }
-  return Math.abs(h)
+  h ^= Math.imul(prime, 0x9e3779b9)         // per-slot salt
+  h = Math.imul(h ^ (h >>> 15), 2246822519) // avalanche
+  h ^= h >>> 13
+  h = Math.imul(h, 3266489917)
+  h ^= h >>> 16
+  return Math.abs(h | 0)
 }
 
 interface SlotIndices {
@@ -144,20 +152,51 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
       //   수용확인(B)·공감(empathy)은 hybAck과 중복/과중이므로 생략 → 간결한 4블록 균형.
       const hybBody: string[] = [hyb, ...(piv ? [piv] : [])]
       rawReply = [a, ...hybBody, e].join('\n\n')
+    } else if (result.isEmergency) {
+      // 긴급: 건조하게 사과(A) + 핵심 피벗 + 클로징
+      rawReply = [a, ...(piv ? [piv] : []), e].join('\n\n')
     } else {
-      let body: string[]
-      if (result.isEmergency) {
-        body = [piv].filter(Boolean)          // 긴급: 건조하게 핵심 피벗만
-      } else {
-        // pivot(핵심 개선 약속)은 태그 있으면 항상 포함. empathy/reassurance/peak는 '재량 슬롯'으로
-        // 리뷰 길이에 비례한 예산 내에서만 — 초단문 불만에 공감/안심 덧붙여 TMI 되는 것 방지.
-        const discBudget = len <= 40 ? 0 : len <= 90 ? 1 : 2
-        const keep = new Set([emp, rea, peak].filter(Boolean).slice(0, discBudget))
+      // 일반 불만: 사과(A) → [공감] → 개선 약속(pivot) → 클로징(E). 수용확인(B)은 A·pivot과
+      //   중복이라 생략. 길이 스케일: 아주 짧은 단문 불만(≤45자, 예: "별로")은 장황 방지 위해
+      //   공감 생략(A+pivot+E), 일반 불만은 공감 1개, 상세 리뷰(>160)는 2개까지.
+      const discPool = [emp, rea, peak].filter(Boolean)  // 재량 라인 (서사 우선순위)
+      const assemble = (n: number): string => {
+        const keep = new Set(discPool.slice(0, n))
         // 서사 순서: empathy → pivot → peak → reassurance
-        body = [emp, piv, peak, rea].filter((s) => s && (s === piv || keep.has(s)))
+        const body = [emp, piv, peak, rea].filter((s) => s && (s === piv || keep.has(s)))
+        // pivot도 empathy/reassurance도 없으면(태그·예산 0) 수용확인 B로 최소 성의 표시
+        return body.length ? [a, ...body, e].join('\n\n') : [a, b, e].join('\n\n')
       }
-      rawReply = [a, b, ...body, e].join('\n\n')
+      // 불만은 사과(A)+[공감]+개선약속(pivot)+클로징(E) 4블록이면 CS상 충분.
+      //   공감+안심을 모두 넣으면 중복·장황 → 재량 라인은 최대 1개(공감). 단문(≤45자)은 0개.
+      //   (길이 바닥은 아래 floor 가드가 보장; CJK 고밀도 단문만 예외적으로 1~2개로 증액)
+      let disc = len <= 45 ? 0 : 1
+      rawReply = assemble(disc)
+      // 길이 밴드 [85, 320] 자동 적응 (언어 밀도 차이 흡수):
+      //   • 너무 길면(영어 등 다어절 언어) 재량 공감 라인을 줄여 사과+개선약속+클로징 핵심만 → 간결
+      //   • 너무 짧으면(CJK 등 고밀도 단문) 재량 라인을 늘려 CS상 '충분한 답변' 보장(TOO_SHORT 방지)
+      while (rawReply.length > 320 && disc > 0) {
+        disc -= 1
+        rawReply = assemble(disc)
+      }
+      while (rawReply.length < 85 && disc < discPool.length) {
+        disc += 1
+        rawReply = assemble(disc)
+      }
     }
+  } else if (result.status === 'AMBIGUOUS') {
+    // ── AMBIGUOUS (혼합 감정) ─────────────────────────────────────────────────
+    //   좋은 점·아쉬운 점이 섞인 리뷰 → 어느 한쪽으로 단정하지 않는 균형 답변.
+    //   인사(A) + 양가 인정/개선 의지(ambiguousAck) + 희망 클로징(E). 작품/공간 자랑(TMI)·
+    //   과한 사과·보상/법적 약속은 배제. 중립 유지를 위해 mirror는 적용하지 않는다.
+    //   ★1-2 양가는 reviewProcessor가 사람 승인(requiresApproval)으로 격리하되 이 초안을 제공.
+    const a = slotA_greeting(lang, name, ix.idxA)
+    const ack = slotAmbiguousAck(lang, ix.idxB)
+    const e = slotE_positive(lang, ix.idxE, null)
+    // 저평점(★1-2)·부정 신호가 뚜렷하면 일반 개선 약속(pivot) 한 줄을 더해 성의를 보강.
+    const lowSignal = (ctx.rating != null && ctx.rating <= 2) || result.tags.includes('저평점_부정신호')
+    const piv = lowSignal ? slotC_pivot(lang, ['저평점_부정신호'], ix.idxC) : ''
+    rawReply = [a, ack, ...(piv ? [piv] : []), e].filter(Boolean).join('\n\n')
   } else {
     // ── SAFE / COMPLIMENT ───────────────────────────────────────────────────
     const a = slotA_greeting(lang, name, ix.idxA)
@@ -186,27 +225,40 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
     //   즉시 자동완료. 5-슬롯을 무리하게 채우지 않는다.
     const isUltraShort = useShortMode && len <= 10
 
-    let body: string[]
-    if (useShortMode) {
-      body = []
-    } else {
+    // frags(일반 감각/페르소나/공간 조각)는 길이 초과 시 가지치기 대상,
+    //   artworkLine(작품 직접 언급 → 요청된 맥락)은 보존 대상으로 분리한다.
+    let frags: string[] = []
+    let artworkLine: string | null = null
+    if (!useShortMode) {
       // 길이 비례 예산 — 풍부한 리뷰일수록 더 많은 조각 (슬롯 수가 아니라 적합도 상위만 선택)
-      const budget = len <= 40 ? 1 : len <= 130 ? 2 : 3
+      //   mirror가 있으면 B·E가 이미 맥락(생일/가족/데이트 등)을 echo하므로 조각 1개 감산(장황·중복 방지).
+      const baseBudget = len <= 40 ? 1 : len <= 130 ? 2 : 3
+      // mirror가 B·E에서 맥락을 echo하면 조각 1개 감산(장황 방지). 단, mirror와 '다른' 동반자
+      //   맥락(데이트/가족 등)이 따로 있으면 그 echo 자리를 남겨야 하므로 감산하지 않는다.
+      const distinctCompanion = !!result.companionContext && result.companionContext !== mirror
+      const budget = (mirror && !distinctCompanion) ? Math.max(1, baseBudget - 1) : baseBudget
       const fragIdx = { persona: ix.idxM, sensory: ix.idxS, spatial: ix.idxQ, temporal: ix.idxP }
-      const frags = selectFragments(signals, lang, budget, fragIdx)
-      if (frags.length === 0) {
-        // Fragment 신호 없음 → 원래 동작(작품/일반 + 피크)
-        const c = result.isArtworkFocused ? slotC_artwork(lang, sig, ix.idxC) : slotC_general(lang, ix.idxC)
-        const d = result.hasPeakHours ? slotD_peak_hours(lang, ix.idxD) : ''
-        body = [c, ...(d ? [d] : [])].slice(0, budget)
-      } else {
-        body = frags
-        // 작품 중심 리뷰는 시그니처 작품 라인, 피크 언급 시 힌트를 예산 남는 만큼 보강
-        if (result.isArtworkFocused && body.length < budget) body.push(slotC_artwork(lang, sig, ix.idxC))
-        if (result.hasPeakHours && body.length < budget) body.push(slotD_peak_hours(lang, ix.idxD))
-      }
+      frags = selectFragments(signals, lang, budget, fragIdx)
+      // 작품/전시를 직접 언급한 리뷰(isArtworkFocused)에만 시그니처 작품 한 줄. 신호 없는 단순 칭찬엔
+      //   묻지 않은 공간/작품 설명을 붙이지 않는다(짧고 담백; 사용자 피드백). 피크 힌트는 칭찬에 미부착(TMI).
+      if (result.isArtworkFocused && frags.length < budget) artworkLine = slotC_artwork(lang, sig, ix.idxC)
     }
-    rawReply = isUltraShort ? [a, b].join('\n\n') : [a, b, ...body, e].join('\n\n')
+    if (isUltraShort) {
+      rawReply = [a, b].join('\n\n')
+    } else {
+      // 본문 = 동반자/감각 조각(개인화·고가치) → 작품 시그니처(범용·말미). 길이 상한 360자 초과 시
+      //   말미부터 pop → 데이트/가족 echo와 작품 echo가 함께 넘치면 작품을 먼저 덜어 개인화를 보존.
+      //   (작품만 있는 칭찬은 a+b+작품+e ≈ 340자로 상한 내 → 작품 echo 유지. selectFragments가
+      //    frags를 적합도 top-N 순으로 정렬하므로 약한 신호가 그다음으로 빠진다.)
+      const body = [...frags, ...(artworkLine ? [artworkLine] : [])]
+      const build = () => [a, b, ...body, e].join('\n\n')
+      let assembled = build()
+      while (assembled.length > 360 && body.length > 0) {
+        body.pop()
+        assembled = build()
+      }
+      rawReply = assembled
+    }
   }
 
   // ── 토큰 치환 파이프라인 ───────────────────────────────────────────────────────

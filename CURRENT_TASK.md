@@ -1,8 +1,31 @@
 # CURRENT_TASK.md — Active execution context
-> Updated 2026-06-11. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
+> Updated 2026-06-15. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 데이터 기반 미인식 패턴 발견 & Fragment 자가 승격 (Auto-Promotion Engine, Wave 22)**
+**✅ EPIC COMPLETE: 답변 간결화·중복 제거·커버리지 100%·예상 리뷰 보강 (Wave 23)**
+
+### 이번 EPIC 완료 사항 (사용자 피드백: "짧고 담백, 중복↓, 충분한 답변, 모든 리뷰에 회신")
+- **중복 근본 해결** (`replyTemplates.slotHash`): 시드-소수 폴리해시가 긴 UUID에서 상쇄되어 슬롯 인덱스가
+  상관 → 사실상 조합 수 급감이 중복의 진짜 원인. **FNV-1a + prime 아발란치 finalize**로 idxA/B/E 독립화.
+  정적 답변 exact-dup 44.5%→**~5%**, 구조적(고유 입력) dup 32%→**~4%**.
+- **길이 자동 밴드**: 불만 [85,320]자 · 칭찬 ≤360자 가드로 언어 밀도(영어 다어절 vs CJK 고밀도) 자동 흡수.
+  불만 재량 라인 최대 1개(공감)·작품 echo보다 데이트/가족 개인화 우선. **평균 392→272자, TMI 42%→15%**.
+- **묻지 않은 공간 설명 제거**: 신호 없는 단순 칭찬엔 작품/공간 블록 미부착(작품 직접 언급 시에만 slotC_artwork).
+- **커버리지 100%** (`reviewProcessor`): AMBIGUOUS Tier1의 'llm'/빈 답변 제거. ★3+·신호 → 균형 정적 답변
+  자동완료(`slotAmbiguousAck`), ★1-2·무신호 질문 → 사람 승인 격리하되 **동일 초안 제공**. 500건: 정적 456 +
+  격리 44, **LLM 0**. import genStatic·status 정합 + processReviewById 동일 → 모든 리뷰가 결정론적 초안 보유.
+- **모든 불만에 개선 약속**: 일반 폴백 pivot(`운영불만`·`저평점_부정신호`, 9개 언어) → 구체 태그 없어도 '충분한
+  답변'. 우선순위: 구체 태그 → promoted(에어컨 등) → 일반 폴백 (구체 약속이 묻히지 않도록).
+- **예상 리뷰 보강**: `ACCESSIBILITY_COMPLAINT`(휠체어/유모차/경사로)·`LANGUAGE_SERVICE_COMPLAINT`(외국어
+  안내 부재) 신규 태그 + 9개 언어 pivot + 긍정 오탐 가드. validate-waterfall **S8b/S8c** 추가.
+- **EMERGENCY 오탐 정밀화**(불변층 — 약화 아님): 한국어 '어지러울 정도로 아름답다'(긍정 비유) 격리 오탐 제거
+  (영어 `dizzy` 가드와 동일 패턴). 실제 멀미/어지럼 distress·부상·법적위협 격리는 그대로 유지.
+- **가족 echo 확대**: 손자/손녀/3대가/온 가족/할머니 등 다세대 가족 맥락 인식(MISSED_ECHO 해소).
+- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop **0/813**).
+
+---
+
+**이전 EPIC COMPLETE: 데이터 기반 미인식 패턴 발견 & Fragment 자가 승격 (Auto-Promotion Engine, Wave 22)**
 
 ### 이번 EPIC 완료 사항 (DECISIONS #19)
 - **Shadow Data Mining** `scripts/data-discovery-engine.ts`: 미처리(LLM-fallback/사람 수정) 리뷰에서

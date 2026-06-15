@@ -62,6 +62,10 @@ export function slotA_greeting(lang: Language, name: string, idx = 0): string {
       `Thank you for making {branch_name} near {landmark} part of your experience${nm ? `, ${nm}` : ''}.`,
       `Hello${nm ? ` ${nm}` : ''}, we're truly grateful you chose to spend time with us at {branch_name}.`,
       `${nm ? `${nm}, t` : 'T'}hank you for choosing {branch_name} in {landmark}.`,
+      `${nm ? `${nm}, t` : 'T'}hanks so much for taking the time to share this!`,
+      `What a lovely review${nm ? `, ${nm}` : ''} — thank you for visiting {branch_name}.`,
+      `${nm ? `${nm}, w` : 'W'}e really appreciate you stopping by {branch_name}.`,
+      `So glad you came to see us at {branch_name}${nm ? `, ${nm}` : ''}!`,
     ],
     ja: [
       `${nm ? nm + '様、' : ''}この度は{branch_name}にお越しいただき、誠にありがとうございます。`,
@@ -140,6 +144,10 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
       `${nm ? `Dear ${nm}, ` : ''}we are truly sorry to hear about your experience at {branch_name}.`,
       `Hello${nm ? ` ${nm}` : ''}, we apologize for falling short of your expectations at {branch_name}.`,
       `${nm ? `${nm}, t` : 'T'}hank you for sharing your experience at {branch_name}. We sincerely apologize for any inconvenience.`,
+      `${nm ? `${nm}, w` : 'W'}e're sorry your visit to {branch_name} didn't go the way it should have.`,
+      `Our apologies${nm ? `, ${nm}` : ''} — this isn't the experience we want anyone to have at {branch_name}.`,
+      `${nm ? `${nm}, t` : 'T'}hank you for telling us. We're sorry {branch_name} let you down this time.`,
+      `We appreciate your honesty${nm ? `, ${nm}` : ''}, and we're sorry for the trouble at {branch_name}.`,
     ],
     ja: [
       `${nm ? nm + '様、' : ''}この度は{branch_name}にてご不便をおかけし、誠に申し訳ございません。`,
@@ -335,6 +343,10 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
       'Reading your warm review truly made our day. We are so glad you enjoyed your visit.',
       'Your generous feedback encourages us all to keep doing our best. Thank you sincerely.',
       'It means the world to us to hear you had such a wonderful experience. Thank you for sharing.',
+      'We are so happy you enjoyed your time with us!',
+      'Reviews like yours genuinely make our day. Thank you.',
+      "We're thrilled it was a great visit for you.",
+      'So glad it left you with good memories — thank you for sharing.',
     ],
     ja: [
       '頂いた温かいお言葉に、スタッフ一同大変励まされております。お時間を共にしていただき、ありがとうございます。',
@@ -476,9 +488,9 @@ export function slotC_artwork(lang: Language, signature: string | null, idx = 0)
       `저희의 몰입형 미디어아트${sig ? `, 그중에서도 ${sig}` : ''}가 특별한 경험으로 남았다니 더없는 보람을 느낍니다.`,
     ],
     en: [
-      `We are especially delighted that our immersive media art — created under our philosophy of "ETERNAL NATURE"${sig ? `, particularly ${sig}` : ''} — resonated so deeply with you.`,
-      `It brings us great joy to know that our "ETERNAL NATURE" exhibition${sig ? `, especially ${sig},` : ''} left such a lasting impression on you.`,
-      `Your appreciation of our immersive "ETERNAL NATURE" installations${sig ? `, and especially ${sig},` : ''} means everything to our creative team.`,
+      `We're so glad our immersive "ETERNAL NATURE" media art${sig ? `, especially ${sig},` : ''} resonated with you.`,
+      `So glad our "ETERNAL NATURE" exhibition${sig ? `, especially ${sig},` : ''} left a lasting impression on you.`,
+      `Your love for our "ETERNAL NATURE" installations${sig ? `, especially ${sig},` : ''} means the world to our team.`,
     ],
     ja: [
       `とりわけ「ETERNAL NATURE（永遠の自然）」をテーマにした没入型メディアアート${sig ? `、中でも代表作${sig}` : ''}に深く心を動かされたとのこと、大変嬉しく存じます。`,
@@ -1323,6 +1335,216 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       'Naririnig namin kayo, at ang inyong karanasan ay naiulat na sa aming operations team para harapin nang direkta.',
     ],
   },
+  // ── 접근성(휠체어/유모차/고령자) — 민감 주제. 구체적·공감적 개선 약속. 보상/법적책임 없음.
+  ACCESSIBILITY_COMPLAINT: {
+    ko: [
+      '접근성에 불편을 드려 죄송합니다. 경사로·엘리베이터 등 편의 환경을 점검해 개선하겠습니다.',
+      '거동이 불편한 분들도 편안히 관람하실 수 있도록 동선과 편의 시설을 보완하겠습니다.',
+      '모든 관람객이 편하게 이용하실 수 있도록 접근성 개선에 더욱 힘쓰겠습니다.',
+    ],
+    en: [
+      "We're sorry the accessibility fell short. We'll review ramps, elevators, and step-free routes to do better.",
+      "We'll improve our facilities so guests with mobility needs are better supported.",
+      'We want every guest to visit comfortably and will keep improving accessibility.',
+    ],
+    ja: [
+      'アクセス面でご不便をおかけし申し訳ございません。スロープやエレベーターなどの設備を点検し改善いたします。',
+      'お身体の不自由な方も快適にご鑑賞いただけるよう、動線と設備を見直してまいります。',
+      'すべてのお客様が快適にご利用いただけるよう、バリアフリー環境の改善に努めます。',
+    ],
+    zh: [
+      '无障碍方面给您带来不便，我们深表歉意。我们将检查坡道、电梯等设施并改进。',
+      '我们会完善动线与设施，让行动不便的来宾也能舒适观展。',
+      '我们将持续改善无障碍环境，让每位来宾都能方便地参观。',
+    ],
+    es: [
+      'Lamentamos que la accesibilidad no estuviera a la altura. Revisaremos rampas, ascensores y rutas sin escalones.',
+      'Mejoraremos nuestras instalaciones para apoyar mejor a quienes tienen necesidades de movilidad.',
+      'Queremos que todos disfruten cómodamente y seguiremos mejorando la accesibilidad.',
+    ],
+    ru: [
+      'Сожалеем, что с доступностью были проблемы. Мы проверим пандусы, лифты и маршруты без ступеней.',
+      'Мы улучшим инфраструктуру, чтобы гостям с ограниченной мобильностью было удобнее.',
+      'Мы хотим, чтобы каждому было комфортно, и продолжим улучшать доступность.',
+    ],
+    ar: [
+      'نأسف لأن إمكانية الوصول لم تكن مناسبة. سنراجع المنحدرات والمصاعد والمسارات الخالية من الدرج.',
+      'سنحسّن مرافقنا لدعم الضيوف ذوي احتياجات الحركة بشكل أفضل.',
+      'نريد أن يزور الجميع بأريحية، وسنواصل تحسين إمكانية الوصول.',
+    ],
+    hi: [
+      'पहुँच में असुविधा के लिए खेद है। हम रैंप, लिफ्ट और बिना-सीढ़ी रास्तों की समीक्षा कर सुधार करेंगे।',
+      'हम अपनी सुविधाओं को बेहतर बनाएँगे ताकि चलने-फिरने में कठिनाई वालों को बेहतर सहयोग मिले।',
+      'हम चाहते हैं कि हर अतिथि आराम से आए, और पहुँच को बेहतर बनाते रहेंगे।',
+    ],
+    tl: [
+      'Paumanhin na kulang ang accessibility. Susuriin namin ang mga ramp, elevator, at step-free na ruta.',
+      'Pagbubutihin namin ang aming pasilidad para mas matulungan ang mga may mobility needs.',
+      'Gusto naming komportableng makabisita ang lahat, at patuloy naming pagbubutihin ang accessibility.',
+    ],
+  },
+  // ── 외국어/다국어 서비스 — 국제 관람객 대상. 다국어 안내 확대 약속.
+  LANGUAGE_SERVICE_COMPLAINT: {
+    ko: [
+      '외국어 안내가 부족해 불편을 드려 죄송합니다. 다국어 안내와 표기를 점차 확대하겠습니다.',
+      '언어 안내에 대한 의견 감사합니다. 외국어 안내·자막 보강을 검토하겠습니다.',
+      '더 많은 관람객이 편히 즐기실 수 있도록 다국어 서비스를 강화하겠습니다.',
+    ],
+    en: [
+      "We're sorry the language support was lacking. We'll expand multilingual signage and guidance.",
+      "Thank you for the feedback — we'll review and improve foreign-language guidance and captions.",
+      "We'll strengthen our multilingual service so more guests can enjoy the visit comfortably.",
+    ],
+    ja: [
+      '多言語案内が不足しご不便をおかけしました。多言語の案内・表記を順次拡充してまいります。',
+      'ご意見ありがとうございます。外国語案内や字幕の充実を検討いたします。',
+      'より多くのお客様に快適にお楽しみいただけるよう、多言語サービスを強化します。',
+    ],
+    zh: [
+      '外语指引不足，给您带来不便，深表歉意。我们将逐步扩充多语种指引与标识。',
+      '感谢您的意见，我们会研究并完善外语讲解与字幕。',
+      '我们将加强多语种服务，让更多来宾舒适地参观。',
+    ],
+    es: [
+      'Lamentamos la falta de apoyo en idiomas. Ampliaremos la señalización y la guía multilingüe.',
+      'Gracias por su comentario; revisaremos y mejoraremos la guía y los subtítulos en otros idiomas.',
+      'Reforzaremos nuestro servicio multilingüe para que más visitantes disfruten cómodamente.',
+    ],
+    ru: [
+      'Сожалеем о нехватке языковой поддержки. Мы расширим многоязычные указатели и сопровождение.',
+      'Спасибо за отзыв — мы улучшим иноязычные пояснения и субтитры.',
+      'Мы усилим многоязычный сервис, чтобы больше гостей чувствовали себя комфортно.',
+    ],
+    ar: [
+      'نأسف لنقص الدعم اللغوي. سنوسّع اللافتات والإرشادات متعددة اللغات.',
+      'شكراً لملاحظتكم — سنراجع ونحسّن الإرشاد والترجمة بلغات أجنبية.',
+      'سنعزّز خدمتنا متعددة اللغات ليستمتع المزيد من الضيوف براحة.',
+    ],
+    hi: [
+      'भाषा सहायता की कमी के लिए खेद है। हम बहुभाषी संकेत और मार्गदर्शन बढ़ाएँगे।',
+      'आपकी प्रतिक्रिया के लिए धन्यवाद — हम विदेशी-भाषा मार्गदर्शन और सबटाइटल सुधारेंगे।',
+      'हम बहुभाषी सेवा को मज़बूत करेंगे ताकि अधिक अतिथि आराम से आनंद ले सकें।',
+    ],
+    tl: [
+      'Paumanhin sa kakulangan ng suporta sa wika. Palalawakin namin ang multilingual na signage at gabay.',
+      'Salamat sa puna — susuriin at pagbubutihin namin ang gabay at subtitles sa ibang wika.',
+      'Palalakasin namin ang multilingual na serbisyo para mas marami ang komportableng makapagbisita.',
+    ],
+  },
+  // ── 일반 운영 불만 (구체 태그 미매칭 폴백) — 모든 불만이 최소한의 '개선 약속'을 갖도록 보장.
+  운영불만: {
+    ko: [
+      '말씀하신 부분을 점검하고 더 나은 관람 환경을 만들겠습니다.',
+      '불편을 드려 죄송합니다. 운영을 다시 살펴 개선하겠습니다.',
+      '주신 의견을 운영 개선에 꼭 반영하겠습니다.',
+      '같은 불편이 반복되지 않도록 운영을 점검하겠습니다.',
+    ],
+    en: [
+      'We will look into this and improve our on-site experience.',
+      "We're sorry for the inconvenience and will work to do better.",
+      'Your feedback will go straight into improving our operations.',
+      "We'll review how we operate so this doesn't happen again.",
+    ],
+    ja: [
+      'ご指摘の点を確認し、より良い観覧環境を整えてまいります。',
+      'ご不便をおかけし申し訳ございません。運営を見直し改善いたします。',
+      'いただいたご意見を運営改善に必ず活かしてまいります。',
+      '同じご不便がないよう、運営を点検いたします。',
+    ],
+    zh: [
+      '我们会核查相关问题，改进现场观展体验。',
+      '给您带来不便，我们深表歉意，将重新审视并改进运营。',
+      '您的意见将切实用于改进我们的运营。',
+      '我们会检查运营流程，避免同样的情况再次发生。',
+    ],
+    es: [
+      'Revisaremos esto y mejoraremos la experiencia en el lugar.',
+      'Lamentamos las molestias y trabajaremos para mejorar.',
+      'Su comentario servirá para mejorar nuestras operaciones.',
+      'Revisaremos cómo operamos para que no vuelva a ocurrir.',
+    ],
+    ru: [
+      'Мы проверим это и улучшим качество посещения.',
+      'Приносим извинения за неудобства и будем работать лучше.',
+      'Ваш отзыв поможет улучшить нашу работу.',
+      'Мы пересмотрим организацию, чтобы это не повторилось.',
+    ],
+    ar: [
+      'سنراجع هذا الأمر ونحسّن تجربة الزيارة في الموقع.',
+      'نعتذر عن الإزعاج وسنعمل على التحسين.',
+      'ستسهم ملاحظاتكم في تحسين عملنا.',
+      'سنراجع طريقة عملنا حتى لا يتكرر ذلك.',
+    ],
+    hi: [
+      'हम इसकी समीक्षा कर ऑन-साइट अनुभव बेहतर करेंगे।',
+      'असुविधा के लिए खेद है; हम सुधार के लिए काम करेंगे।',
+      'आपकी प्रतिक्रिया हमारे संचालन को बेहतर बनाएगी।',
+      'हम अपनी प्रक्रिया की समीक्षा करेंगे ताकि यह दोबारा न हो।',
+    ],
+    tl: [
+      'Susuriin namin ito at pagbubutihin ang karanasan sa lugar.',
+      'Paumanhin sa abala; magsisikap kaming gumanda.',
+      'Gagamitin ang inyong puna sa pagpapabuti ng operasyon.',
+      'Susuriin namin ang aming proseso upang hindi maulit ito.',
+    ],
+  },
+  // ── 저평점·모호한 부정 신호 (구체 불만 없음) 폴백 — 진심 어린 사과 + 개선 의지.
+  저평점_부정신호: {
+    ko: [
+      '기대에 못 미쳐 죄송합니다. 더 나은 경험으로 보답하겠습니다.',
+      '아쉬움을 드려 죄송합니다. 더 좋아지도록 노력하겠습니다.',
+      '소중한 의견 감사합니다. 깊이 새겨 개선하겠습니다.',
+      '더 나은 모습으로 다시 찾아뵙겠습니다.',
+    ],
+    en: [
+      "We're sorry it fell short and will work to do better.",
+      'Thank you for the honest feedback. We will keep improving.',
+      "We're sorry to disappoint, and we will keep getting better.",
+      'We will do better and hope to earn a better visit next time.',
+    ],
+    ja: [
+      'ご期待に沿えず申し訳ございません。より良い体験でお応えします。',
+      '残念な思いをさせて申し訳ございません。改善に努めます。',
+      '貴重なご意見をありがとうございます。深く受け止め改善します。',
+      'より良い姿で再びお迎えできるよう努めます。',
+    ],
+    zh: [
+      '未达期待，深表歉意，我们将以更好的体验回报您。',
+      '让您失望，我们很抱歉，会持续改进。',
+      '感谢您的坦诚意见，我们会认真改进。',
+      '我们会做得更好，期待下次为您带来更好的体验。',
+    ],
+    es: [
+      'Lamentamos que no cumpliera sus expectativas; mejoraremos.',
+      'Gracias por su sinceridad. Seguiremos mejorando.',
+      'Sentimos decepcionarle y seguiremos mejorando.',
+      'Lo haremos mejor y esperamos una mejor visita la próxima vez.',
+    ],
+    ru: [
+      'Сожалеем, что не оправдали ожиданий, и станем лучше.',
+      'Спасибо за честный отзыв. Мы продолжим улучшаться.',
+      'Сожалеем, что разочаровали, и будем совершенствоваться.',
+      'Мы станем лучше и надеемся на лучший визит в следующий раз.',
+    ],
+    ar: [
+      'نأسف لعدم تلبية توقعاتكم، وسنعمل على التحسّن.',
+      'شكراً لصراحتكم. سنواصل التحسين.',
+      'نأسف لخيبة أملكم وسنواصل التطوّر.',
+      'سنقدّم الأفضل ونأمل بزيارة أفضل في المرة القادمة.',
+    ],
+    hi: [
+      'खेद है कि अपेक्षा पर खरे नहीं उतरे; हम बेहतर करेंगे।',
+      'ईमानदार प्रतिक्रिया के लिए धन्यवाद। हम सुधार करते रहेंगे।',
+      'निराश करने के लिए खेद है; हम बेहतर होते रहेंगे।',
+      'हम बेहतर करेंगे और अगली बार बेहतर अनुभव की आशा करते हैं।',
+    ],
+    tl: [
+      'Paumanhin na hindi naabot ang inaasahan; gaganda kami.',
+      'Salamat sa tapat na puna. Patuloy kaming magpapabuti.',
+      'Paumanhin sa pagkabigo; patuloy kaming gaganda.',
+      'Gagawin naming mas mahusay at umaasa sa mas magandang bisita.',
+    ],
+  },
 }
 
 /** 불만 태그별 컨텍스트 피벗 문장 (Slot C — COMPLAINT/EMERGENCY dry-fallback 전용).
@@ -1333,20 +1555,28 @@ export function slotC_pivot(lang: Language, tags: string[], idx = 0): string {
     // EMERGENCY 전용 (관리자 승인 필수) — 가장 높은 우선순위
     'LEGAL_THREAT', 'COMPENSATION_DEMAND', 'PUNISHMENT_DEMAND',
     // COMPLAINT 운영 불만 (우선순위 내림차순)
-    'STAFF_COMPLAINT', 'SYSTEM_COMPLAINT', 'ROOM_SPECIFIC_COMPLAINT',
+    'STAFF_COMPLAINT', 'SYSTEM_COMPLAINT', 'ACCESSIBILITY_COMPLAINT', 'LANGUAGE_SERVICE_COMPLAINT',
+    'ROOM_SPECIFIC_COMPLAINT',
     'INTERACTIVE_COMPLAINT', 'VALUE_COMPLAINT', 'CROWD_COMPLAINT',
     'LAYOUT_COMPLAINT', 'DISPLAY_ISSUE', 'DURATION_COMPLAINT', 'REVISIT_COMPLAINT',
   ]
-  const tag = PRIORITY.find((t) => tags.includes(t))
-  if (tag) {
-    const byLang = SLOT_C_PIVOTS[tag]
+  const pick = (key: string) => {
+    const byLang = SLOT_C_PIVOTS[key]
     const arr = byLang ? (byLang[lang] ?? byLang.en ?? []) : []
-    if (arr.length) return arr[idx % arr.length]
+    return arr.length ? arr[idx % arr.length] : ''
   }
-  // Auto-Promotion 폴백: 사람 승인된 신규 불만 토픽(에어컨/오디오가이드 등)의 9개 언어 인정 조각
+  // 1) 구체 태그 (가장 정확한 개선 약속)
+  const tag = PRIORITY.find((t) => tags.includes(t))
+  if (tag) return pick(tag)
+  // 2) Auto-Promotion: 사람 승인된 신규 불만 토픽(에어컨/오디오가이드 등)의 9개 언어 인정 조각
+  //    — 일반 폴백(운영불만/저평점)보다 우선해야 구체적인 약속이 묻히지 않음.
   for (const t of tags) {
     const line = promotedComplaintLine(t, lang, idx)
     if (line) return line
+  }
+  // 3) 일반 폴백 (가장 낮은 우선순위) — 구체 태그가 없어도 모든 불만에 개선 약속을 보장
+  for (const g of ['운영불만', '저평점_부정신호']) {
+    if (tags.includes(g)) return pick(g)
   }
   return ''
 }
@@ -1534,6 +1764,64 @@ const HYBRID_ACK_LINES: Partial<Record<Language, string[]>> = {
 }
 export function slotHybridAck(lang: Language, idx = 0): string {
   const arr = HYBRID_ACK_LINES[lang]
+  if (!arr || !arr.length) return ''
+  return arr[idx % arr.length]
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  Slot — 양가(AMBIGUOUS) 균형 인정. 혼합 감정(좋은 점 + 아쉬운 점) 리뷰에 한 줄로
+//  양쪽을 함께 인정 + 개선 의지(자기완결). 보상·법적책임·CCTV·징계 약속 절대 없음.
+//  3 variants × 9 languages. 미커버 언어는 '' → 호출부가 스킵.
+// ════════════════════════════════════════════════════════════════════════════════
+const AMBIGUOUS_ACK_LINES: Partial<Record<Language, string[]>> = {
+  ko: [
+    '좋게 봐주신 부분은 감사히, 아쉬우셨던 부분은 무겁게 새기며 더 나아지겠습니다.',
+    '즐거우셨던 점과 부족했던 점 모두 솔직히 들려주셔서 감사합니다. 더 나은 모습으로 보답하겠습니다.',
+    '만족스러우셨던 부분은 지키고, 아쉬우셨던 부분은 꼭 개선하겠습니다.',
+  ],
+  en: [
+    "We're grateful for what you enjoyed and take to heart what fell short — we'll keep getting better.",
+    'Thank you for sharing both the highs and the areas we can improve. We will do better.',
+    "We'll hold on to what worked for you and work on what didn't.",
+  ],
+  ja: [
+    '良かった点は励みに、物足りなかった点は真摯に受け止め、さらに改善してまいります。',
+    '楽しめた点も至らなかった点も率直にお聞かせくださり感謝します。より良い姿でお応えします。',
+    'ご満足いただけた部分は守り、惜しいと感じられた部分は必ず改善いたします。',
+  ],
+  zh: [
+    '令您满意的部分我们倍加珍惜，不足之处我们郑重铭记，会持续改进。',
+    '感谢您坦诚分享满意与不足之处。我们会以更好的面貌回报您。',
+    '我们会保持您认可的部分，并切实改善不足之处。',
+  ],
+  es: [
+    'Agradecemos lo que disfrutó y tomamos muy en serio lo que falló — seguiremos mejorando.',
+    'Gracias por compartir tanto lo bueno como lo que podemos mejorar. Lo haremos mejor.',
+    'Mantendremos lo que le gustó y trabajaremos en lo que no.',
+  ],
+  ru: [
+    'Мы благодарны за то, что вам понравилось, и серьёзно отнесёмся к тому, что не удалось, — будем становиться лучше.',
+    'Спасибо, что поделились и хорошим, и тем, что можно улучшить. Мы станем лучше.',
+    'Мы сохраним то, что вам понравилось, и поработаем над тем, что нет.',
+  ],
+  ar: [
+    'نقدّر ما استمتعتم به ونأخذ ما لم يكن في المستوى على محمل الجد — وسنواصل التحسّن.',
+    'شكراً لمشاركتكم الإيجابيات وما يمكن تحسينه. سنقدّم الأفضل.',
+    'سنحافظ على ما نال إعجابكم ونعمل على ما لم يكن كذلك.',
+  ],
+  hi: [
+    'जो अच्छा लगा उसके लिए आभारी हैं और जो कमी रही उसे गंभीरता से लेते हैं — हम बेहतर होते रहेंगे।',
+    'अच्छाइयाँ और सुधार-योग्य बातें, दोनों साझा करने के लिए धन्यवाद। हम बेहतर करेंगे।',
+    'जो आपको पसंद आया उसे बनाए रखेंगे और जो नहीं, उस पर काम करेंगे।',
+  ],
+  tl: [
+    'Pinahahalagahan namin ang nagustuhan ninyo at isinasapuso ang mga kakulangan — patuloy kaming gaganda.',
+    'Salamat sa pagbabahagi ng maganda at ng mapapabuti pa. Gagawin naming mas mahusay.',
+    'Pananatilihin namin ang nagustuhan ninyo at pagbubutihin ang hindi.',
+  ],
+}
+export function slotAmbiguousAck(lang: Language, idx = 0): string {
+  const arr = AMBIGUOUS_ACK_LINES[lang]
   if (!arr || !arr.length) return ''
   return arr[idx % arr.length]
 }
@@ -1877,7 +2165,7 @@ export function slotE_negative(lang: Language, idx = 0): string {
       'Gracias por su honestidad. Haremos todo lo posible para que {branch_name} esté a la altura de sus expectativas.',
     ],
     ru: [
-      'Благодарим за честный отзыв. Мы приложим все усилия, чтобы стать лучше.',
+      'Мы приложим все усилия, чтобы стать лучше. Спасибо, что поделились с нами.',
       'Ещё раз приносим извинения за неудобства и надеемся предложить вам более приятный опыт в следующий раз.',
       'Ваш отзыв помогает нам совершенствоваться. Спасибо, что нашли время поделиться им.',
       'Спасибо за откровенность. Ваши слова помогут нам сделать {branch_name} лучше.',

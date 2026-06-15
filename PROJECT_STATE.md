@@ -1,7 +1,26 @@
 # PROJECT_STATE.md — ARTE Museum Review Response Automation
 > **자동 업데이트 대상 파일.** 마일스톤 달성·버그 해결 시 즉시 갱신.  
-> 최종 갱신: 2026-06-11 · commit range: `86c1c2e` → (Wave 22 / Auto-Promotion Engine)
+> 최종 갱신: 2026-06-15 · commit range: `63c4089` → (Wave 23 / 간결화·중복제거·커버리지 100%)
 > ⚠️ 적용 마이그레이션 SSOT는 `CLAUDE_CONTEXT.md` §4. 현행 아키텍처는 `ARCHITECTURE.md`.
+
+## 🌊 Wave 23 — 답변 간결화·중복 제거·커버리지 100%·예상 리뷰 보강 (완료)
+- **중복 근본 원인 제거** (`replyTemplates.slotHash`): 시드-소수 djb2가 긴 UUID에서 시드 영향이 상쇄→
+  슬롯 인덱스(idxA/B/E) 상관 → 조합 수 급감이 중복의 진짜 원인이었음. **FNV-1a + prime 아발란치**로 독립화.
+  exact-dup **44.5%→~5%**, 구조적(고유 입력) dup **32%→~4%**.
+- **길이 자동 밴드**: 불만 [85,320]자 · 칭찬 ≤360자. 언어 밀도(영어 다어절 vs CJK 고밀도) 자동 흡수.
+  단순 칭찬엔 묻지 않은 작품/공간 블록 미부착. **평균 392→272자 · >300자 233→158 · TMI 42%→15%**.
+- **커버리지 100%** (`reviewProcessor` + import + processReviewById): AMBIGUOUS Tier1의 'llm'/빈 답변 제거.
+  ★3+·신호 → 균형 정적 답변 자동완료(`slotAmbiguousAck`); ★1-2·무신호 질문 → 사람 승인 격리 + 동일 초안 제공.
+  500건: 정적 456 + 격리 44, **LLM 0** (구: 빈 답변 250건 / LLM 89건). import genStatic·status 정합 수정 →
+  인입 시점부터 모든 리뷰가 결정론적 초안 보유(과거 AMBIGUOUS→llm→genStatic false→빈 초안 버그 해소).
+- **모든 불만에 개선 약속**: 일반 폴백 pivot `운영불만`·`저평점_부정신호`(9개 언어) 추가 → 구체 태그 없어도
+  '충분한 답변'. slotC_pivot 우선순위: 구체 태그 → promoted(에어컨 등) → 일반 폴백.
+- **예상 리뷰 보강(500건 밖 대비)**: `ACCESSIBILITY_COMPLAINT`(휠체어/유모차/경사로/고령)·
+  `LANGUAGE_SERVICE_COMPLAINT`(외국어 안내 부재) 신규 검출+9개 언어 pivot+긍정 오탐 가드. validate-waterfall **S8b/S8c**.
+- **EMERGENCY 오탐 정밀화**(불변층 정밀화, 약화 아님): 한국어 '어지러울 정도로 아름답다'(긍정 비유) 격리 오탐 제거
+  — 영어 `dizzy(?!with delight)` 가드와 동일 원리. 실제 멀미/부상/법적위협 격리는 유지.
+- **다세대 가족 echo**: 손자/손녀/3대가/온 가족/할머니 등 인식(MISSED_ECHO 해소).
+- 검증: regression-guard ✅ (tsc 0 · validate-waterfall ALL PASS · loop **0/813**).
 
 ## 🌊 Wave 22 — 데이터 기반 미인식 패턴 발견 & Fragment 자가 승격 (Auto-Promotion, 완료)
 - **Shadow Data Mining** (`scripts/data-discovery-engine.ts`): 미처리(LLM-fallback/사람) 리뷰에서 빈출 N-gram 역추출 + 다국어 토픽 앵커(에어컨/오디오가이드/락커/좌석). 내장 코퍼스 + --csv.

@@ -31,8 +31,9 @@ interface ImportClass { status: string; risk: string; reason: string; genStatic:
  *   SAFE(고별점)      → ai_done (정적 알고리즘 답변)
  *   EMERGENCY         → pending_approval (격리) + 건조 사과 초안
  *   COMPLAINT         → pending_approval (격리), LLM 답변은 이후 게이트키퍼
- *   AMBIGUOUS(고별점)  → new (격리 아님 — 정상 큐에서 후속 처리. 과격리 방지)
- *   저별점(≤2)        → pending_approval (격리) + 찬양 억제 (과소격리 방지)
+ *   AMBIGUOUS(★3+ 혼합) → ai_done (좋은 점·아쉬운 점 함께 인정하는 균형 정적 답변 — LLM 미사용)
+ *   AMBIGUOUS(질문 등 무신호) → new (정상 큐, 균형 초안 제공)
+ *   저별점(≤2)        → pending_approval (격리) + 균형 초안 제공 (빈 답변 방지·과소격리 방지)
  */
 function classifyImport(d: ProcessDecision, rating: number | null, text: string): ImportClass {
   const cls = d.classification.status
@@ -42,7 +43,8 @@ function classifyImport(d: ProcessDecision, rating: number | null, text: string)
   if (cls === 'EMERGENCY' || cls === 'COMPLAINT') status = 'pending_approval'
   else if (lowRating) status = 'pending_approval'
   else if (cls === 'SAFE' || cls === 'COMPLIMENT') status = 'ai_done'  // COMPLIMENT=고평점 건설적 피드백(정적)
-  else status = 'new' // AMBIGUOUS(고별점) — 격리하지 않음
+  else if (cls === 'AMBIGUOUS' && d.route === 'static' && !d.requiresApproval) status = 'ai_done'  // ★3+ 혼합 → 균형 답변 자동완료
+  else status = 'new' // AMBIGUOUS(질문 등 무신호) — 격리하지 않되 정상 큐에서 후속 처리
 
   // 저별점 SAFE는 칭찬 답변이 부적절하므로 정적 초안 생성을 억제(EMERGENCY 건조사과는 유지)
   const suppressPraise = lowRating && cls !== 'EMERGENCY'

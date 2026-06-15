@@ -8,7 +8,9 @@
  *   COMPLAINT(Tier 1)    → 'static'  5-Slot 사과문 조립 후 AI_DONE (승인 불필요) ← 변경
  *   COMPLAINT(Tier 2/3)  → 'manual'  Critical/Unknown toxic → PENDING_APPROVAL
  *   AMBIGUOUS(Tier 2/3)  → 'manual'  리스크 격리
- *   AMBIGUOUS(Tier 1)    → 'llm'     모호성 → LLM 위임 (기존 유지)
+ *   AMBIGUOUS(Tier 1, ★3+/신호)  → 'static'  좋은 점·아쉬운 점 함께 인정하는 균형 답변 자동완료
+ *   AMBIGUOUS(Tier 1, ★1-2/무신호) → 'manual'  안전 격리(사람 승인) — 단, 균형 초안 함께 제공
+ *     ※ 빈 답변/LLM 의존 제거: 모든 리뷰가 결정론적 정적 초안을 갖는다 (커버리지 100%).
  *
  * 다중 불만 태그 → 우선순위 가중치로 primaryIntent 하나 추출:
  *   STAFF > SYSTEM > ROOM_SPECIFIC > INTERACTIVE > VALUE > CROWD > LAYOUT > DISPLAY > DURATION > REVISIT
@@ -43,6 +45,8 @@ export interface ProcessDecision {
 const INTENT_PRIORITY: ReadonlyArray<string> = [
   'STAFF_COMPLAINT',          // 1위: 직원 서비스 실패 (가장 즉각적인 대인 리스크)
   'SYSTEM_COMPLAINT',         // 2위: 기술/키오스크 장애 (운영 시스템)
+  'ACCESSIBILITY_COMPLAINT',  // 2.5위: 접근성(휠체어/유모차/고령자) — 민감·포용성
+  'LANGUAGE_SERVICE_COMPLAINT', // 2.6위: 외국어/다국어 서비스 (국제 관람객)
   'ROOM_SPECIFIC_COMPLAINT',  // 3위: 특정 구역 품질 이슈
   'INTERACTIVE_COMPLAINT',    // 4위: 인터랙션 콘텐츠 부족
   'VALUE_COMPLAINT',          // 5위: 가격 대비 가치
@@ -150,12 +154,22 @@ export function processReview(input: {
     }
   }
 
-  // AMBIGUOUS + Tier 1 → LLM (모호성은 여전히 AI 판단 필요)
+  // AMBIGUOUS + Tier 1 → 균형 정적 초안 제공 (LLM 의존 제거로 '빈 답변/미회신' 방지).
+  //   ★3+(또는 무평점): 좋은 점·아쉬운 점을 함께 인정하는 중립 균형 답변을 자동완료.
+  //   ★1-2(+긍정 신호): 안전 게이트 유지 — 사람 승인으로 격리하되 동일 초안을 함께 제공해
+  //     담당자가 빈 화면이 아닌 편집 가능한 초안에서 시작하도록 한다.
+  const ambiguousDraft = buildStaticReply(classification, ctx)
+  const lowRating = input.rating != null && input.rating <= 2
+  // 균형 자동완료 대상: 평점이 있는 ★3+ 혼합 리뷰 또는 내용 신호(태그)가 있는 모호 리뷰.
+  //   평점도 신호도 없는 모호건(예: "이게 예술인가요?" 같은 단순 질문)은 균형 답변이 어색하므로
+  //   사람 승인으로 격리하되 동일 초안을 제공(빈 화면 방지).
+  const hasContentSignal = classification.tags.length > 0
+  const autoBalance = !lowRating && (input.rating != null || hasContentSignal)
   return {
     classification,
-    route: 'llm',
-    staticReply: null,
-    requiresApproval: true,
+    route: autoBalance ? 'static' : 'manual',
+    staticReply: ambiguousDraft,
+    requiresApproval: !autoBalance,
     primaryIntent,
     riskTier: 1,
     sanitizedText: riskAssessment.sanitizedText,

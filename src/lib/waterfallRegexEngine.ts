@@ -72,7 +72,7 @@ export interface WaterfallResult {
 // ★ "field trip"(긍정 명사) 오탐 수정: trip→tripped/tripping만 (동사형 낙상 한정).
 //   "trip" 명사(field trip, business trip) 및 "trips" 오트리거 제거.
 const DEFAULT_EMERGENCY =
-  /(다쳤|넘어졌|피가|병원|119|어지러|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불(?!\s*(?:했다(?:는|대|더|던|길래)|받았다(?:는|대|더|던)|얘기|이야기))|해고해|처벌받아야|징계[^.!?\n]{0,5}내려|천식\s*발작|기도\s*막힘|호흡\s*곤란)|\b(?:hurt|injur\w*|paramedic|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback|asthma\s*attack|inhaler\s*urgently)\b|\bfell\b[^.!?\n]{0,25}(?:hit|hurt|injur\w*|floor|ground|stairs?|step\b|over\b|hard\b|down\b|on\s+(?:the\s+)?(?:floor|ground|steps?|stairs?))|\bbleed\w*\b(?!\s*[-\s]?edge\b|\s*heart\b)|\bhospital\b(?!\s*(?:nurse|worker|staff|doctor|physician|administrator|employee))|\bsue[d]?\b(?![^.!?\n]{0,30}for\s+(?:being|making|having|creating|how)\s*[^.!?\n]{0,20}(?:beautiful|amazing|gorgeous|incredible|stunning|wonderful|perfect|lovely|breathtaking|fantastic))|\bdizzy\b(?!\s+with\s+(?:delight|excitement|joy|wonder|awe|amazement))|\bdisput\w+[^.!?\n]{0,20}charge\b|\bcredit\s*card[^.!?\n]{0,15}disput\w*\b|\b911\b|\btrip(?:ped|ping)\b|\b(?:lost|missing)\b(?!\s+(?:one|a|two|three|\d+)\s*stars?|\s+(?:my|our|their|his|her)\s+(?:mother|father|mom|dad|mum|mam|parents?|husband|wife|partner|sibling|brother|sister|son|daughter|loved\s+one|grandm\w*|grandf\w*|spouse|fianc\w+)|\s+(?:a|an|the|your|our)\s+(?:major|big|huge|great|golden|important|key|potential|promotional|business|marketing|revenue|sale\w*|opportunity|chance|customer|client|deal|contract|subscriber|follower|fan)|\s+[^.!?\n]{0,25}(?:time[\s-]+)?(?:slot|reservation|booking|seat|ticket)\b|\s+track\s+of\b)|\b(?:fire|fires)\s+(?:that|this|the)\s*(?:staff|employee|worker|guard|person)\b|staff\b[^.!?\n]{0,20}\bshould\s+be\s+fired\b|足をひねっ\w*|転倒して(?:怪我|しまい)|けが(?:をし|してしま)|怪我(?:をし|してしま)|아이[^.!?\n]{0,10}(?:보이지\s*않|없어\s*(?:서|요)|실종|찾을\s*수\s*없)|devrait\s+être\s+(?:renvoyé|viré|licencié)\w*|virez?\s+(?:cet?|ce|les)\s+(?:employé|agent|staff|personnel)\w*|sollte[^.!?\n]{0,15}(?:entlassen|gefeuert)\s+werden|müssen\s+(?:entlassen|gefeuert)\s+werden|debería\w*\s+(?:ser\s+)?despedid[ao]\w*|despidan\s+(?:a\s+)?(?:ese|al|este)\s+(?:empleado|personal|agente)\w*|зверн\S*\s+до\s+суд\S*|шахрайств\S*|\bchargeback\b|file\w*\s+a\s+(?:chargeback|dispute)|contact\w*\s+(?:the\s+)?(?:local\s+)?(?:news\b|media\b|press\b|journalist)|report\w*[^.!?\n]{0,15}health\s+(?:department|inspector|authority|official)|health\s+(?:code\s+)?(?:violation|hazard|safety\s+issue)|report\w*[^.!?\n]{0,15}(?:the\s+)?(?:authorities|regulat\w*|government\b)|rechtliche\s+Schritte\b|\bR\S*erstattung\b|弁護士[^.!？\n]{0,10}(?:相談|依頼)|法的\s*措置|محامي|رفع\s*(?:دعوى|قضية)|\bavvocato\b|azione\s+legale\b|\bquerela\b|(?:contacter|alerter|prévenir)\s+(?:les\s+)?(?:journalistes|médias|presse)\w*|porter\s+(?:une\s+)?plainte\b|acciones\s+legales\b|demanda\s+(?:judicial|legal)\b|medidas\s+legales\b|processo\s+(?:judicial|legal)\b|\badvogado\b|ação\s+(?:judicial|legal)\b|судебный\s+иск\S*|адвокат\S*|обращусь\s+(?:в\s+суд|к\s+(?:юристу|адвокату))|fire\s+(?:exit|escape)[^.!?\n]{0,30}(?:blocked|locked|shut|closed|inaccessible|missing)|पैसे\s*वापस|कोर्ट\s*(?:जाऊंगा|जाऊँगा|जाएंगे)|वकील\s*(?:करूंगा|करेंगे)|कानूनी\s*(?:कार्रवाई|नोटिस)/i
+  /(다쳤|넘어졌|피가|병원|119|어지러(?!울\s*(?:정도|만큼))|멀미|구토|발작|분실물|경찰|고소|소비자원|보상|환불(?!\s*(?:했다(?:는|대|더|던|길래)|받았다(?:는|대|더|던)|얘기|이야기))|해고해|처벌받아야|징계[^.!?\n]{0,5}내려|천식\s*발작|기도\s*막힘|호흡\s*곤란)|\b(?:hurt|injur\w*|paramedic|nausea|vomit\w*|puke|seizure|epilepsy|stolen|police|lawyer|attorney|lawsuit|refund\w*|compensat\w*|chargeback|asthma\s*attack|inhaler\s*urgently)\b|\bfell\b[^.!?\n]{0,25}(?:hit|hurt|injur\w*|floor|ground|stairs?|step\b|over\b|hard\b|down\b|on\s+(?:the\s+)?(?:floor|ground|steps?|stairs?))|\bbleed\w*\b(?!\s*[-\s]?edge\b|\s*heart\b)|\bhospital\b(?!\s*(?:nurse|worker|staff|doctor|physician|administrator|employee))|\bsue[d]?\b(?![^.!?\n]{0,30}for\s+(?:being|making|having|creating|how)\s*[^.!?\n]{0,20}(?:beautiful|amazing|gorgeous|incredible|stunning|wonderful|perfect|lovely|breathtaking|fantastic))|\bdizzy\b(?!\s+with\s+(?:delight|excitement|joy|wonder|awe|amazement))|\bdisput\w+[^.!?\n]{0,20}charge\b|\bcredit\s*card[^.!?\n]{0,15}disput\w*\b|\b911\b|\btrip(?:ped|ping)\b|\b(?:lost|missing)\b(?!\s+(?:one|a|two|three|\d+)\s*stars?|\s+(?:my|our|their|his|her)\s+(?:mother|father|mom|dad|mum|mam|parents?|husband|wife|partner|sibling|brother|sister|son|daughter|loved\s+one|grandm\w*|grandf\w*|spouse|fianc\w+)|\s+(?:a|an|the|your|our)\s+(?:major|big|huge|great|golden|important|key|potential|promotional|business|marketing|revenue|sale\w*|opportunity|chance|customer|client|deal|contract|subscriber|follower|fan)|\s+[^.!?\n]{0,25}(?:time[\s-]+)?(?:slot|reservation|booking|seat|ticket)\b|\s+track\s+of\b)|\b(?:fire|fires)\s+(?:that|this|the)\s*(?:staff|employee|worker|guard|person)\b|staff\b[^.!?\n]{0,20}\bshould\s+be\s+fired\b|足をひねっ\w*|転倒して(?:怪我|しまい)|けが(?:をし|してしま)|怪我(?:をし|してしま)|아이[^.!?\n]{0,10}(?:보이지\s*않|없어\s*(?:서|요)|실종|찾을\s*수\s*없)|devrait\s+être\s+(?:renvoyé|viré|licencié)\w*|virez?\s+(?:cet?|ce|les)\s+(?:employé|agent|staff|personnel)\w*|sollte[^.!?\n]{0,15}(?:entlassen|gefeuert)\s+werden|müssen\s+(?:entlassen|gefeuert)\s+werden|debería\w*\s+(?:ser\s+)?despedid[ao]\w*|despidan\s+(?:a\s+)?(?:ese|al|este)\s+(?:empleado|personal|agente)\w*|зверн\S*\s+до\s+суд\S*|шахрайств\S*|\bchargeback\b|file\w*\s+a\s+(?:chargeback|dispute)|contact\w*\s+(?:the\s+)?(?:local\s+)?(?:news\b|media\b|press\b|journalist)|report\w*[^.!?\n]{0,15}health\s+(?:department|inspector|authority|official)|health\s+(?:code\s+)?(?:violation|hazard|safety\s+issue)|report\w*[^.!?\n]{0,15}(?:the\s+)?(?:authorities|regulat\w*|government\b)|rechtliche\s+Schritte\b|\bR\S*erstattung\b|弁護士[^.!？\n]{0,10}(?:相談|依頼)|法的\s*措置|محامي|رفع\s*(?:دعوى|قضية)|\bavvocato\b|azione\s+legale\b|\bquerela\b|(?:contacter|alerter|prévenir)\s+(?:les\s+)?(?:journalistes|médias|presse)\w*|porter\s+(?:une\s+)?plainte\b|acciones\s+legales\b|demanda\s+(?:judicial|legal)\b|medidas\s+legales\b|processo\s+(?:judicial|legal)\b|\badvogado\b|ação\s+(?:judicial|legal)\b|судебный\s+иск\S*|адвокат\S*|обращусь\s+(?:в\s+суд|к\s+(?:юристу|адвокату))|fire\s+(?:exit|escape)[^.!?\n]{0,30}(?:blocked|locked|shut|closed|inaccessible|missing)|पैसे\s*वापस|कोर्ट\s*(?:जाऊंगा|जाऊँगा|जाएंगे)|वकील\s*(?:करूंगा|करेंगे)|कानूनी\s*(?:कार्रवाई|नोटिस)/i
 
 // 'bad'는 부정이지만 "not bad"(긍정 관용구)는 제외 (?<!not\s).
 const DEFAULT_COMPLAINT =
@@ -150,6 +150,16 @@ const DEFAULT_REVISIT_COMPLAINT =
 const DEFAULT_STAFF_COMPLAINT =
   /(?:직원[^.!?\n]{0,10}(?:태도|무시|불친절|응대[^.!?\n]{0,6}(?:나쁨|별로|불만)|인사\s*도\s*안|짜증|싸가지|ㅂ[ㅅ이]\s*짓|개\s*같|폰\s*만\s*봄|핸드폰[^.!?\n]{0,6}봄))|(?:직원|스태프)\s*(?:최악|꼰대|개판)|직원[^.!?\n]{0,15}(?:질문|대답|말)[^.!?\n]{0,8}(?:안\s*하|무시|없이|모르쇠|제대로\s*안|제대로\s*못)|직원[^.!?\n]{0,50}도와주지|도와주지[^.!?\n]{0,3}(?:않았|않아|안\s*했)|안내[^.!?\n]{0,10}제대로\s*(?:안|못)|모르겠다고\s*(?:했|하더|하면서)|(?:직원|스태프)[^.!?\n]{0,20}(?:아무도\s*제지|제지를?\s*(?:안\s*했|안\s*하)|제지하지\s*않았)|(?:staff|employee|worker|guard|host|cashier|server)[^.!?\n]{0,30}(?:rude|unfriendly|ignored?|dismissive|unhelpful|impolite|condescending|unprepared|untrained|had\s+(?:an?\s+)?attitude|(?:told|asked|made)\s+(?:us|me)\s+(?:to\s+)?(?:move|keep\s+moving|leave|hurry|rush)|rushed?\s+(?:us|me)|threw?\s+(?:our|my|the)\s+(?:cups?|drinks?|items?|things?)|could\s+not\s+(?:tell|answer|help|inform)|did\s+nothing\s+to\s+(?:help|manage|control|stop|address)|stood\s+(?:by|around)\s+and\s+(?:watched|did\s+nothing))|(?:tea\s*bar)[^.!?\n]{0,20}(?:rude|불친절|무례|unfriendly)|スタッフ[^.!?\n]{0,20}(?:対応できない|対応してもらえなかった|知らないと言われた|わかりませんと言われた)|不理会[^.!?\n]{0,8}(?:游客|顾客|访客|参观者)/i
 
+// ACCESSIBILITY_COMPLAINT: 휠체어·유모차·고령자 접근성 (경사로/엘리베이터/배리어프리 부재 등)
+//   부정 신호 동반 시에만 매칭("휠체어 접근 좋았어요" 같은 긍정 오탐 방지).
+const DEFAULT_ACCESSIBILITY =
+  /(?:휠체어|유모차|거동\s*불편|장애인|어르신|고령)[^.!?\n]{0,20}(?:없|안\s*되|불편|막혀|힘들|어렵|이용\s*(?:못|불가)|배려\s*(?:가\s*)?없|곤란)|(?:경사로|엘리베이터|승강기)[^.!?\n]{0,15}(?:없|못\s*찾|안\s*보|부족|고장)|배리어[\s-]*프리[^.!?\n]{0,10}(?:안|없|부족)|wheelchair[^.!?\n]{0,25}(?:no\b|not\b|couldn|cannot|can[''']?t|inaccessible|difficult|hard|impossible|struggl)|no\s+(?:wheelchair\s+(?:access|ramp)|ramp|elevator|lift)\b|stroller[^.!?\n]{0,20}(?:difficult|hard|couldn|cannot|no\s+access|struggl)|not\s+(?:wheelchair|disabled|stroller)[\s-]*(?:accessible|friendly)|車椅子[^.!?\n]{0,15}(?:利用できない|使えない|不便|難しい)|ベビーカー[^.!?\n]{0,15}(?:不便|難しい|入れない)|轮椅[^.!?\n]{0,12}(?:无法|不能|不便|困难)|无障碍[^.!?\n]{0,10}(?:没有|不足|缺)/i
+
+// LANGUAGE_SERVICE_COMPLAINT: 외국어 안내/통역/다국어 서비스 부재 (국제 관람객 다수 지점)
+//   "영어 안내 잘 돼 있어요" 같은 긍정 오탐 방지 — 부재/불통 신호 필수.
+const DEFAULT_LANGUAGE_SERVICE =
+  /(?:영어|중국어|일본어|외국어|다국어)[^.!?\n]{0,15}(?:안내|가이드|설명|자막|표기)?[^.!?\n]{0,10}(?:없|부족|전혀\s*안|안\s*돼|안\s*되|미비)|통역[^.!?\n]{0,10}(?:없|부족|안\s*돼)|한국어로만[^.!?\n]{0,10}(?:돼|되어|있)|(?:no|not\s+enough|lack\s+of)\s+(?:english|chinese|japanese|foreign[\s-]*language)\s+(?:guide|guidance|signage|sign|caption|subtitle|information|info|support|instruction)|staff[^.!?\n]{0,20}(?:didn[''']?t|did\s+not|couldn[''']?t|could\s+not|don[''']?t)\s+speak\s+(?:english|any\s+english)|英語[^.!?\n]{0,12}(?:案内|表記|ガイド|字幕)?[^.!?\n]{0,8}(?:な(?:い|く|かった)|通じ(?:ない|なかった|ず)|不足|困)|中文[^.!?\n]{0,10}(?:讲解|说明|指示|导览)?[^.!?\n]{0,6}(?:没有|缺|不足)|不会\s*(?:说)?\s*(?:中文|英文|英语)/i
+
 // ════════════════════════════════════════════════════════════════════════════════
 //  DynamicEngine: DB 규칙을 인메모리 컴파일하여 적용 (PHASE 2)
 // ════════════════════════════════════════════════════════════════════════════════
@@ -161,6 +171,8 @@ interface Compiled {
   interactive: RegExp; value: RegExp    // AMLV 보강
   // PHASE 3: niche complaint tags
   roomSpecific: RegExp; systemComplaint: RegExp; revisitComplaint: RegExp; staffComplaint: RegExp
+  // Wave 23: 예상 리뷰 보강 — 접근성·외국어 서비스
+  accessibility: RegExp; languageService: RegExp
 }
 
 const DEFAULTS: Compiled = {
@@ -171,6 +183,7 @@ const DEFAULTS: Compiled = {
   interactive: DEFAULT_INTERACTIVE, value: DEFAULT_VALUE,
   roomSpecific: DEFAULT_ROOM_SPECIFIC, systemComplaint: DEFAULT_SYSTEM_COMPLAINT,
   revisitComplaint: DEFAULT_REVISIT_COMPLAINT, staffComplaint: DEFAULT_STAFF_COMPLAINT,
+  accessibility: DEFAULT_ACCESSIBILITY, languageService: DEFAULT_LANGUAGE_SERVICE,
 }
 
 let COMPILED: Compiled = { ...DEFAULTS }
@@ -231,6 +244,8 @@ export function applyRulesBundle(bundle: RulesBundle | null): void {
     systemComplaint: compileCategory(byCat('SYSTEM_COMPLAINT'),        DEFAULT_SYSTEM_COMPLAINT),
     revisitComplaint:compileCategory(byCat('REVISIT_COMPLAINT'),       DEFAULT_REVISIT_COMPLAINT),
     staffComplaint:  compileCategory(byCat('STAFF_COMPLAINT'),         DEFAULT_STAFF_COMPLAINT),
+    accessibility:   compileCategory(byCat('ACCESSIBILITY_COMPLAINT'), DEFAULT_ACCESSIBILITY),
+    languageService: compileCategory(byCat('LANGUAGE_SERVICE_COMPLAINT'), DEFAULT_LANGUAGE_SERVICE),
   }
   appliedLoadedAt = bundle.loadedAt
 }
@@ -342,6 +357,9 @@ export function analyzeReview(
   if (C.systemComplaint.test(text)) { isComplaint = true; tags.push('SYSTEM_COMPLAINT') }
   if (C.revisitComplaint.test(text)){ isComplaint = true; tags.push('REVISIT_COMPLAINT') }
   if (C.staffComplaint.test(text))  { isComplaint = true; tags.push('STAFF_COMPLAINT') }
+  // Wave 23: 예상 리뷰 보강 — 접근성·외국어 서비스 (구체 개선 약속으로 '충분한 답변' 보장)
+  if (C.accessibility.test(text))   { isComplaint = true; tags.push('ACCESSIBILITY_COMPLAINT') }
+  if (C.languageService.test(text)) { isComplaint = true; tags.push('LANGUAGE_SERVICE_COMPLAINT') }
   // Auto-Promotion: 사람 승인(accept)된 운영/시설 불만 패턴 additive 적용 (EMERGENCY와 무관, DECISIONS #19)
   for (const { tag, re } of promotedComplaintRules()) {
     if (re.test(text)) { isComplaint = true; tags.push(tag) }
