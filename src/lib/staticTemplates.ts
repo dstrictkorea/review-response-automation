@@ -18,6 +18,7 @@
 
 // Reply-engine language set — broader than UI Language ('ko'|'en'|'ja'|'zh')
 import type { ReplyLanguage as Language } from '@/lib/replyLanguage'
+import { promotedComplaintLine } from '@/lib/promotedPatterns'
 
 // ── 한국어 조사 헬퍼 (받침 유무 판별) ─────────────────────────────────────────────
 function hasJong(word: string): boolean {
@@ -1337,12 +1338,17 @@ export function slotC_pivot(lang: Language, tags: string[], idx = 0): string {
     'LAYOUT_COMPLAINT', 'DISPLAY_ISSUE', 'DURATION_COMPLAINT', 'REVISIT_COMPLAINT',
   ]
   const tag = PRIORITY.find((t) => tags.includes(t))
-  if (!tag) return ''
-  const byLang = SLOT_C_PIVOTS[tag]
-  if (!byLang) return ''
-  const arr = byLang[lang] ?? byLang.en ?? []
-  if (!arr.length) return ''
-  return arr[idx % arr.length]
+  if (tag) {
+    const byLang = SLOT_C_PIVOTS[tag]
+    const arr = byLang ? (byLang[lang] ?? byLang.en ?? []) : []
+    if (arr.length) return arr[idx % arr.length]
+  }
+  // Auto-Promotion 폴백: 사람 승인된 신규 불만 토픽(에어컨/오디오가이드 등)의 9개 언어 인정 조각
+  for (const t of tags) {
+    const line = promotedComplaintLine(t, lang, idx)
+    if (line) return line
+  }
+  return ''
 }
 
 // ════════════════════════════════════════════════════════════════════════════════

@@ -482,5 +482,19 @@ import { sanitizeAndScoreRisk } from '@/lib/synonymEngine'
   check('S20 rating junk→null', starRatingToNumber('STAR_RATING_UNSPECIFIED') === null)
 }
 
+// ── S21: Auto-Promotion — 승격된 신규 토픽(FACILITY_AC) 인식 + 9개 언어 인정 조각 ─────
+// 데이터 발견 엔진이 사람 승인으로 promotedPatterns에 병합한 패턴이 엔진에 반영되는지 검증.
+{
+  const dKO = processReview({ reviewText: '에어컨이 너무 세서 실내가 추웠어요. 온도 조절이 필요합니다.', branchCode: 'AMLV', language: 'ko', rating: 2 })
+  check('S21 promoted FACILITY_AC tag', dKO.classification.tags.includes('FACILITY_AC_COMPLAINT'), dKO.classification.tags.join(','))
+  check('S21 promoted → COMPLAINT 정적 자동완료', dKO.route === 'static' && !dKO.requiresApproval, `route=${dKO.route} approval=${dKO.requiresApproval}`)
+  check('S21 promoted KO 냉방 조각 반영', /냉방|온도/.test(dKO.staticReply ?? ''), (dKO.staticReply ?? '').slice(0, 50))
+  const dEN = processReview({ reviewText: 'It was freezing inside, the air conditioning was way too strong.', branchCode: 'AMNY', language: 'en', rating: 2 })
+  check('S21 promoted EN climate 조각 반영', /climate|temperature/i.test(dEN.staticReply ?? ''), (dEN.staticReply ?? '').slice(0, 50))
+  // 안전: 승격 패턴이 EMERGENCY를 우회하지 않음 (환불요구 → 여전히 EMERGENCY 격리)
+  const dEmg = processReview({ reviewText: '에어컨도 고장났고 환불 요구합니다. 변호사와 상담하겠습니다.', branchCode: 'AMLV', language: 'ko', rating: 1 })
+  check('S21 승격이 EMERGENCY 우회 안 함', dEmg.classification.status === 'EMERGENCY' && dEmg.requiresApproval, `status=${dEmg.classification.status}`)
+}
+
 console.log(`\n${failures === 0 ? '✅ ALL PASS' : `❌ ${failures} FAILURE(S)`}`)
 process.exit(failures === 0 ? 0 : 1)

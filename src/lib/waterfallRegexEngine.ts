@@ -22,6 +22,7 @@ import type { AutomationRule, RulesBundle } from '@/lib/rulesCache'
 import { getBranchTokens } from '@/lib/branchMetadata'
 // Zero-Cost NLP 모사: 유의어 사전 + 필러 패턴 + 맥락 거울 추출
 import { FILLER_PATTERN, LOW_RATING_NEGATIVE_BODY, extractContextMirror, extractSensoryFocus, extractCompanion, extractTemporal, extractSpatial, fuzzyPositive } from '@/lib/synonymEngine'
+import { promotedPositiveRegex, promotedComplaintRules } from '@/lib/promotedPatterns'
 
 // ── 톤 단일화 (SHORT/CAUTIOUS 폐기 → STANDARD 단일 리터럴) ─────────────────────────
 export type ReplyTone = 'STANDARD'
@@ -341,6 +342,10 @@ export function analyzeReview(
   if (C.systemComplaint.test(text)) { isComplaint = true; tags.push('SYSTEM_COMPLAINT') }
   if (C.revisitComplaint.test(text)){ isComplaint = true; tags.push('REVISIT_COMPLAINT') }
   if (C.staffComplaint.test(text))  { isComplaint = true; tags.push('STAFF_COMPLAINT') }
+  // Auto-Promotion: 사람 승인(accept)된 운영/시설 불만 패턴 additive 적용 (EMERGENCY와 무관, DECISIONS #19)
+  for (const { tag, re } of promotedComplaintRules()) {
+    if (re.test(text)) { isComplaint = true; tags.push(tag) }
+  }
   if (isComplaint) isArtworkFocused = false
 
   // ── Layer 2: 재방문 / 이탈 (2-A → 2-B → 2-C 우선순위) ───────────────────────────
@@ -383,7 +388,10 @@ export function analyzeReview(
   }
 
   // fuzzy: 정확 정규식이 놓친 긍정 오탈자(awsome/amazng 등) 흡수 (긍정 보강 전용)
+  // Auto-Promotion: 사람 승인된 긍정어도 additive 적용 (긍정 인식 보강 — 안전)
+  const promotedPos = promotedPositiveRegex()
   const hasPositive = sarcasmPositive || C.positive.test(textForPositive) || fuzzyPositive(textForPositive)
+                      || (promotedPos?.test(textForPositive) ?? false)
   const isQuestion = C.question.test(text)
   if (!isComplaint && hasPositive && C.artwork.test(text)) {
     isArtworkFocused = true

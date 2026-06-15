@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Auto-Promotion discovery — 임시 제안 산출물 (discover로 재생성)
+proposed_fragments.json
