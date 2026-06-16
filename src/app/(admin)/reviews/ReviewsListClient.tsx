@@ -271,6 +271,10 @@ export default function ReviewsListClient({
   const [bulkProcDone, setBulkProcDone] = useState(0)
   const [bulkProcRemaining, setBulkProcRemaining] = useState(0)
 
+  // ── 전체 답변 재생성(엔진 업그레이드 반영) 상태 (Wave 24) ──────────────────────
+  const [regenRunning, setRegenRunning] = useState(false)
+  const [regenDone, setRegenDone] = useState(0)
+
   // ── Gmail식 일괄 선택 / Soft Delete 상태 (Wave 15) ──────────────────────────────
   const [selectAllMatching, setSelectAllMatching] = useState(false)  // 필터 조건 전체 선택
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -556,6 +560,43 @@ export default function ReviewsListClient({
     setBulkProcRunning(false)
   }
 
+  // ── 전체 답변 재생성 (Wave 24) — 엔진 업그레이드를 기존 초안에 반영 ───────────────
+  // 커서 페이지네이션으로 final 아닌 전체 리뷰를 1회 순회하며 최신 엔진으로 초안을 다시 만든다.
+  // 사람이 수정한 초안은 서버가 자동 스킵(보존). 현재 필터 범위에만 적용.
+  async function runRegenerate() {
+    if (regenRunning) return
+    if (!confirm('현재 목록(필터) 범위의 답변 초안을 최신 엔진으로 다시 생성합니다.\n사람이 수정한 초안은 보존됩니다. 계속할까요?')) return
+    abortRef.current = false
+    setRegenRunning(true)
+    setRegenDone(0)
+    const filter = server
+      ? { ...server.query, risk: server.activeRisk || undefined, rating: server.activeRating || undefined }
+      : {}
+    let cursor = ''
+    let total = 0
+    try {
+      for (let guard = 0; guard < 4000; guard++) {
+        if (abortRef.current) break
+        const res = await fetch('/api/review/regenerate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cursor, filter }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setDeleteMsg(data.error ?? 'error'); break }
+        total += data.processed ?? 0
+        setRegenDone(total)
+        cursor = data.nextCursor ?? cursor
+        if (data.done) break
+      }
+      setDeleteMsg(`✅ 답변 재생성 완료 — ${total}건 갱신됨`)
+      router.refresh()
+    } catch {
+      setDeleteMsg(t.rd_toast_server_err)
+    }
+    setRegenRunning(false)
+  }
+
   async function runAiBatch() {
     if (!selectedNew.length) return
     abortRef.current = false
@@ -706,6 +747,12 @@ export default function ReviewsListClient({
             className="ml-auto shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium border border-green-300 text-green-700 hover:bg-green-50 transition-colors">
             ⬇ {t.rv_export_excel}
           </a>
+        )}
+        {isServer && isAdmin && (
+          <button onClick={runRegenerate} disabled={regenRunning} title="최신 엔진으로 현재 필터 범위의 답변 초안을 다시 생성합니다 (사람 수정분 보존)"
+            className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors disabled:opacity-50 ${isServer ? '' : 'ml-auto'} border-purple-300 text-purple-700 hover:bg-purple-50`}>
+            {regenRunning ? `♻ 재생성 중… ${regenDone}건` : '♻ 답변 재생성'}
+          </button>
         )}
         <span className={`${isServer ? 'ml-2' : 'ml-auto'} text-xs text-gray-400 whitespace-nowrap shrink-0`}>
           {isServer ? `${server!.total}${t.stat_unit}` : `${displayed.length} / ${reviews.length}${t.stat_unit}`}

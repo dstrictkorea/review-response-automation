@@ -2,9 +2,29 @@
 > Updated 2026-06-15. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 답변 간결화·중복 제거·커버리지 100%·예상 리뷰 보강 (Wave 23)**
+**✅ EPIC COMPLETE: 작품 자랑 제거·칭찬 심플화·정적 초안 재생성 (Wave 24)**
 
-### 이번 EPIC 완료 사항 (사용자 피드백: "짧고 담백, 중복↓, 충분한 답변, 모든 리뷰에 회신")
+### 이번 EPIC 완료 사항 (사용자 피드백: "작품 자랑 빼, discover 빼, 칭찬은 심플하지만 다 다르게")
+- **작품 자랑(작품명) 전면 제거**: 모든 지점 메인 작품은 Garden이나 지점마다 컨셉이 달라 특정 작품
+  (ETERNAL NATURE/WATERFALL/STAR) 자랑은 안전하지 않음. 칭찬 답변에서 `slotC_artwork`·감각/공간/페르소나
+  조각 일절 제거. 분류(isArtworkFocused)는 유지하되 답변엔 작품명 미노출. 테스트 C9/S4는 '작품 자랑 미포함' 검증으로 반전.
+- **"there is always something new to discover" 및 "keeps evolving/share what's new" 홍보 문구 삭제** (slotE_positive).
+- **칭찬 심플화 + 다양성**: 기본 인사(A)+감사(B) 2블록(예: Liam Scott). mirror(힐링/가족/데이트) 있을 때만 맞춤
+  클로징(E) 1줄 추가. 변형은 작성자명 + A×B(×mirror) → 작성자명 포함 시 exact-dup **0.2%**, 칭찬 평균 길이 **167자**.
+- **AMBIGUOUS 톤 교정**(William Clark ★1 "staff confusing. would visit again"): 중립 인사(idx%4, "What a lovely
+  review" 같은 과한 긍정 회피) + 균형 인정 1줄 + 단순 클로징. 별도 저평점 pivot 제거 → "fell short" 중복 해소.
+- **contextMirror 우선순위 재정렬**: 동반자/특별일(생일/데이트/가족/친구) > 몰입 → "date night"가 슬롯 B/E에서 echo (별도 조각 없이 MISSED_ECHO 유지).
+- **정적 초안 재생성 기능** (`POST /api/review/regenerate` + 목록 "♻ 답변 재생성" 버튼, admin): 엔진 업그레이드가
+  **기존 처리된** 초안에 반영되지 않던 간극 해소. final·사람수정분(`human_edited_reply`) 보존, 커서 페이지네이션으로 현재 필터 범위 1회 순회 재처리.
+
+> ⚠ 운영 메모: 엔진/템플릿을 고쳐도 **이미 저장된 초안은 자동 갱신되지 않는다**(bulk-process는 status='new'만,
+> import는 중복 스킵). 배포 후 반드시 "♻ 답변 재생성"을 눌러야 기존 리뷰 초안에 반영된다.
+
+---
+
+**✅ 이전 EPIC: 답변 간결화·중복 제거·커버리지 100%·예상 리뷰 보강 (Wave 23)**
+
+### Wave 23 완료 사항 (사용자 피드백: "짧고 담백, 중복↓, 충분한 답변, 모든 리뷰에 회신")
 - **중복 근본 해결** (`replyTemplates.slotHash`): 시드-소수 폴리해시가 긴 UUID에서 상쇄되어 슬롯 인덱스가
   상관 → 사실상 조합 수 급감이 중복의 진짜 원인. **FNV-1a + prime 아발란치 finalize**로 idxA/B/E 독립화.
   정적 답변 exact-dup 44.5%→**~5%**, 구조적(고유 입력) dup 32%→**~4%**.
