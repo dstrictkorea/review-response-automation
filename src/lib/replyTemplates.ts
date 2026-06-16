@@ -28,14 +28,12 @@
 
 // Reply-engine language set — broader than UI Language ('ko'|'en'|'ja'|'zh')
 import type { ReplyLanguage as Language } from '@/lib/replyLanguage'
-import { branchSignatureWork } from '@/lib/branches'
 import { getBranchTokens, applyBranchTokens } from '@/lib/branchMetadata'
 import {
   slotA_greeting,
   slotA_apology,
   slotB_appreciation,
   slotB_acknowledgment,
-  slotC_artwork,
   slotC_pivot,
   slotD_peak_hours,
   slotE_positive,
@@ -45,7 +43,6 @@ import {
   slotHybridAck,
   slotAmbiguousAck,
 } from '@/lib/staticTemplates'
-import { selectFragments, type FragmentSignal } from '@/lib/fragmentPool'
 import { scanForbidden, type WaterfallResult } from '@/lib/waterfallRegexEngine'
 
 export interface StaticReplyContext {
@@ -125,7 +122,6 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
   const lang   = ctx.language
   const name   = (ctx.reviewerName ?? '').trim()
   const tokens = getBranchTokens(ctx.branchCode, lang)
-  const sig    = branchSignatureWork(ctx.branchCode, lang)
   const ix     = buildSlotIndices(ctx.reviewId)
   const len    = ctx.reviewTextLength ?? 999
 
@@ -185,80 +181,32 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
       }
     }
   } else if (result.status === 'AMBIGUOUS') {
-    // ── AMBIGUOUS (혼합 감정) ─────────────────────────────────────────────────
+    // ── AMBIGUOUS (혼합 감정) — 균형·중립 회신 ─────────────────────────────────
     //   좋은 점·아쉬운 점이 섞인 리뷰 → 어느 한쪽으로 단정하지 않는 균형 답변.
-    //   인사(A) + 양가 인정/개선 의지(ambiguousAck) + 희망 클로징(E). 작품/공간 자랑(TMI)·
-    //   과한 사과·보상/법적 약속은 배제. 중립 유지를 위해 mirror는 적용하지 않는다.
+    //   인사(A, 중립 변형) + 양가 인정/개선 의지(ambiguousAck) + 희망 클로징(E).
+    //   • "What a lovely review" 같은 과한 긍정 인사(idx 4~7)는 ★1-2 혼합 리뷰에 부적절 →
+    //     중립 변형(idx%4)만 사용.
+    //   • ambiguousAck가 이미 '좋았던 점 + 개선 의지' 양쪽을 담으므로 별도 개선 pivot은 더하지
+    //     않는다 → "fell short" 중복·과한 사과 방지(사용자 지적: William Clark 사례).
+    //   • 작품/공간 자랑(TMI)·보상/법적 약속 배제. 중립 유지를 위해 mirror 미적용.
     //   ★1-2 양가는 reviewProcessor가 사람 승인(requiresApproval)으로 격리하되 이 초안을 제공.
-    const a = slotA_greeting(lang, name, ix.idxA)
+    const a = slotA_greeting(lang, name, ix.idxA % 4)
     const ack = slotAmbiguousAck(lang, ix.idxB)
     const e = slotE_positive(lang, ix.idxE, null)
-    // 저평점(★1-2)·부정 신호가 뚜렷하면 일반 개선 약속(pivot) 한 줄을 더해 성의를 보강.
-    const lowSignal = (ctx.rating != null && ctx.rating <= 2) || result.tags.includes('저평점_부정신호')
-    const piv = lowSignal ? slotC_pivot(lang, ['저평점_부정신호'], ix.idxC) : ''
-    rawReply = [a, ack, ...(piv ? [piv] : []), e].filter(Boolean).join('\n\n')
+    rawReply = [a, ack, e].join('\n\n')
   } else {
-    // ── SAFE / COMPLIMENT ───────────────────────────────────────────────────
+    // ── SAFE / COMPLIMENT — 심플 회신 ─────────────────────────────────────────
+    //   인사(A) + 감사(B, mirror) + 따뜻한 클로징(E, mirror), 3블록 고정.
+    //   작품 자랑(slotC_artwork)·감각/공간/페르소나 조각은 일절 붙이지 않는다:
+    //     · 모든 지점의 메인 작품은 Garden이지만 지점마다 컨셉이 달라 특정 작품 자랑은 안전하지 않고,
+    //     · 칭찬은 짧고 담백해야 한다(사용자 지침).
+    //   다양성은 A×B×E 풀 + contextMirror 개인화로 확보(중복 최소화). 'discover'류 홍보 문구 제거.
     const a = slotA_greeting(lang, name, ix.idxA)
-    const b = slotB_appreciation(lang, ix.idxB, mirror)  // contextMirror 맞춤 감사
+    const b = slotB_appreciation(lang, ix.idxB, mirror)  // contextMirror 맞춤 감사 (힐링/가족/데이트 등)
     const e = slotE_positive(lang, ix.idxE, mirror)      // contextMirror 맞춤 클로징
-
-    // ── Matrix Fragment Pool: 다차원 신호 수집 → 가중치 거버너 top-N pruning ─────
-    //   persona/sensory/spatial/temporal 신호를 가중치와 함께 수집. companion이 contextMirror와
-    //   같으면(B/E가 이미 echo) persona 생략; spatial '포토스팟'이 mirror '사진/분위기'와 겹치면 생략.
-    const signals: FragmentSignal[] = []
-    if (result.sensoryFocus) signals.push({ dim: 'sensory', tag: result.sensoryFocus, weight: 10 })
-    if (result.companionContext && result.companionContext !== mirror) signals.push({ dim: 'persona', tag: result.companionContext, weight: 9 })
-    if (result.isRepeatVisitor) signals.push({ dim: 'persona', tag: '단골', weight: 8 })
-    if (result.spatialContext && !(result.spatialContext === '포토스팟' && (mirror === '사진' || mirror === '분위기'))) {
-      signals.push({ dim: 'spatial', tag: result.spatialContext, weight: 6 })
-    }
-    if (result.temporalContext) signals.push({ dim: 'temporal', tag: result.temporalContext, weight: 5 })
-
-    // SHORT 모드: SAFE(저·무평점) 또는 단문 COMPLIMENT(≤40자)이면서 어떤 상황 신호도 없을 때
-    //   → A + B + E (3슬롯). 단문에 자랑 블록 붙이는 TMI 방지.
-    const isVeryShort = len <= 40
-    const hasSignal   = result.isArtworkFocused || result.hasPeakHours || !!mirror || signals.length > 0
-    const useShortMode = (result.status === 'SAFE' || (result.status === 'COMPLIMENT' && isVeryShort)) && !hasSignal
-
-    // ULTRA-SHORT: "굿"/"최고"/"Awesome"처럼 극단적 단답(≤10자) + 무신호 → 인사+감사 2조각만
-    //   즉시 자동완료. 5-슬롯을 무리하게 채우지 않는다.
-    const isUltraShort = useShortMode && len <= 10
-
-    // frags(일반 감각/페르소나/공간 조각)는 길이 초과 시 가지치기 대상,
-    //   artworkLine(작품 직접 언급 → 요청된 맥락)은 보존 대상으로 분리한다.
-    let frags: string[] = []
-    let artworkLine: string | null = null
-    if (!useShortMode) {
-      // 길이 비례 예산 — 풍부한 리뷰일수록 더 많은 조각 (슬롯 수가 아니라 적합도 상위만 선택)
-      //   mirror가 있으면 B·E가 이미 맥락(생일/가족/데이트 등)을 echo하므로 조각 1개 감산(장황·중복 방지).
-      const baseBudget = len <= 40 ? 1 : len <= 130 ? 2 : 3
-      // mirror가 B·E에서 맥락을 echo하면 조각 1개 감산(장황 방지). 단, mirror와 '다른' 동반자
-      //   맥락(데이트/가족 등)이 따로 있으면 그 echo 자리를 남겨야 하므로 감산하지 않는다.
-      const distinctCompanion = !!result.companionContext && result.companionContext !== mirror
-      const budget = (mirror && !distinctCompanion) ? Math.max(1, baseBudget - 1) : baseBudget
-      const fragIdx = { persona: ix.idxM, sensory: ix.idxS, spatial: ix.idxQ, temporal: ix.idxP }
-      frags = selectFragments(signals, lang, budget, fragIdx)
-      // 작품/전시를 직접 언급한 리뷰(isArtworkFocused)에만 시그니처 작품 한 줄. 신호 없는 단순 칭찬엔
-      //   묻지 않은 공간/작품 설명을 붙이지 않는다(짧고 담백; 사용자 피드백). 피크 힌트는 칭찬에 미부착(TMI).
-      if (result.isArtworkFocused && frags.length < budget) artworkLine = slotC_artwork(lang, sig, ix.idxC)
-    }
-    if (isUltraShort) {
-      rawReply = [a, b].join('\n\n')
-    } else {
-      // 본문 = 동반자/감각 조각(개인화·고가치) → 작품 시그니처(범용·말미). 길이 상한 360자 초과 시
-      //   말미부터 pop → 데이트/가족 echo와 작품 echo가 함께 넘치면 작품을 먼저 덜어 개인화를 보존.
-      //   (작품만 있는 칭찬은 a+b+작품+e ≈ 340자로 상한 내 → 작품 echo 유지. selectFragments가
-      //    frags를 적합도 top-N 순으로 정렬하므로 약한 신호가 그다음으로 빠진다.)
-      const body = [...frags, ...(artworkLine ? [artworkLine] : [])]
-      const build = () => [a, b, ...body, e].join('\n\n')
-      let assembled = build()
-      while (assembled.length > 360 && body.length > 0) {
-        body.pop()
-        assembled = build()
-      }
-      rawReply = assembled
-    }
+    // 칭찬은 인사(A)+감사(B) 2조각이 기본(사용자 지침: 심플). 단, mirror(힐링/가족/데이트 등)가
+    //   있으면 맞춤 클로징(E)을 더해 echo 강화. 변형은 작성자명 + A×B(×mirror E)로 확보.
+    rawReply = mirror ? [a, b, e].join('\n\n') : [a, b].join('\n\n')
   }
 
   // ── 토큰 치환 파이프라인 ───────────────────────────────────────────────────────

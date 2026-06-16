@@ -215,10 +215,6 @@ export function extractContextMirror(text: string): string | null {
   if (/힐링(?!\s*(?:이\s*)?(?:안|못|부족|없|별로|실망|사라))/.test(t)) return '힐링'
   if (/\bhealing\b|\brejuvenating\b|\btherapeutic\b/.test(t)) return '힐링'
 
-  // 몰입감 관련
-  if (/몰입(?:감|이\s*최고|되는|형|돼|됩니다)/.test(t)) return '몰입'
-  if (/\bimmersive?\b|\bwas\s+(?:so\s+)?immersed?\b/.test(t)) return '몰입'
-
   // 생일/기념일 관련 — 특별한 날 방문 맥락 (가장 구체적 → 우선 검사)
   if (/생일|기념일|생일\s*파티/.test(t)) return '생일'
   if (/\bbirthday\b|\banniversar\w*\b/.test(t)) return '생일'
@@ -258,6 +254,11 @@ export function extractContextMirror(text: string): string | null {
   if (/朋友|好友/.test(t)) return '친구'
   if (/दोस्त|मित्र/.test(t)) return '친구'
   if (/с\s*друзьями|друг|подруга/.test(t)) return '친구'
+
+  // 몰입감 관련 — 동반자/특별일(생일·데이트·가족·친구) 맥락보다 뒤에 둔다.
+  //   "immersive ... date night"처럼 둘 다 있으면 동반자 echo가 더 개인적이라 우선(중복 echo 방지).
+  if (/몰입(?:감|이\s*최고|되는|형|돼|됩니다)/.test(t)) return '몰입'
+  if (/\bimmersive?\b|\bwas\s+(?:so\s+)?immersed?\b/.test(t)) return '몰입'
 
   // 사진/인생샷 관련
   if (/인생\s*샷|포토\s*스팟|사진\s*찍기/.test(t)) return '사진'

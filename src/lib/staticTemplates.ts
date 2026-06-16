@@ -1780,9 +1780,9 @@ const AMBIGUOUS_ACK_LINES: Partial<Record<Language, string[]>> = {
     '만족스러우셨던 부분은 지키고, 아쉬우셨던 부분은 꼭 개선하겠습니다.',
   ],
   en: [
-    "We're grateful for what you enjoyed and take to heart what fell short — we'll keep getting better.",
+    "We're grateful for what you enjoyed, and we've taken note of what we can improve.",
     'Thank you for sharing both the highs and the areas we can improve. We will do better.',
-    "We'll hold on to what worked for you and work on what didn't.",
+    "We'll hold on to what worked for you and keep refining the rest.",
   ],
   ja: [
     '良かった点は励みに、物足りなかった点は真摯に受け止め、さらに改善してまいります。',
@@ -2041,9 +2041,9 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
     ],
     en: [
       // 0
-      'We hope to see you again at {branch_name} soon — there is always something new to discover.',
+      'We hope to see you again at {branch_name} soon.',
       // 1
-      "Come back anytime — {branch_name} keeps evolving and we'd love to share what's new.",
+      "Come back anytime — we'd love to welcome you again.",
       // 2
       'Until next time at {branch_name}! We hope it stays with you.',
       // 3
