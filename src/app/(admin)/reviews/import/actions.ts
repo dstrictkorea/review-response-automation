@@ -6,6 +6,7 @@ import crypto from 'crypto'
 import { scanText } from '@/services/filterService'
 import { processReview, type ProcessDecision } from '@/lib/reviewProcessor'
 import { refreshEngineFromDB } from '@/lib/waterfallRegexEngine'
+import { detectBranchCode } from '@/lib/branches'
 
 type LangKey = 'ko' | 'en' | 'ja' | 'zh'
 const langKey = (l: string | null | undefined): LangKey => (['ko', 'en', 'ja', 'zh'].includes(l ?? '') ? (l as LangKey) : 'ko')
@@ -23,6 +24,14 @@ function floorRisk(a: string, b: string): string {
 
 // 별점 ≤ 이 값이면 텍스트가 안전/모호여도 사람 확인 격리(찬양 템플릿 억제). 운영 중 조정 가능.
 const LOW_RATING_ISOLATE = 2
+
+// 작성일 유연 파싱 — 다양한 포맷 허용, 파싱 불가 시 null(insert 실패 대신 빈 값). timestamptz 컬럼 보호.
+function coerceDate(raw: string | null | undefined): string | null {
+  const t = (raw ?? '').trim()
+  if (!t) return null
+  const d = new Date(t)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
 
 interface ImportClass { status: string; risk: string; reason: string; genStatic: boolean }
 
@@ -140,12 +149,57 @@ export async function importReviewsAction(
     return { error: '인증 필요', total: 0, imported: 0, duplicates: 0, errors: 0, errorDetails: [] }
   }
 
+  const fail = (error: string): ImportResult => ({ error, total: rows.length, imported: 0, duplicates: 0, errors: 0, errorDetails: [] })
+
+  // ── 0. 지점/채널 유연 해석 (FK 위반 방지) ──────────────────────────────────
+  //   batch.branch_code·channel_code 는 branches/channels FK(NOT NULL). 사용자가 기본 지점을
+  //   고르지 않고 CSV 행별 지점에 의존하면 batchInfo.branchCode 가 ''가 되어 FK가 깨진다.
+  //   → 유효 코드 집합으로 검증하고, 코드 대소문자/공백/도시명(라스베이거스·las vegas)까지 인식.
+  const [{ data: branchRows }, { data: channelRows }] = await Promise.all([
+    supabase.from('branches').select('code').eq('is_active', true),
+    supabase.from('channels').select('code').eq('is_active', true),
+  ])
+  const validBranches = new Set((branchRows ?? []).map((b) => (b as { code: string }).code))
+  const validChannels = new Set((channelRows ?? []).map((c) => (c as { code: string }).code))
+
+  // 코드(AMLV) → 대소문자/공백 정규화 → 도시명 별칭(las vegas/라스베이거스) 순으로 해석. 미해석 시 null.
+  function resolveBranch(raw: string | null | undefined): string | null {
+    const t = (raw ?? '').trim()
+    if (!t) return null
+    if (!validBranches.size) return t.toUpperCase()        // 검증 불가(쿼리 실패) → best-effort
+    if (validBranches.has(t)) return t
+    const up = t.toUpperCase()
+    if (validBranches.has(up)) return up
+    return detectBranchCode(t, validBranches)              // 도시명 등 별칭 인식
+  }
+
+  // 배치 대표 지점: (1) 명시 선택 → (2) 행별 지점 중 최다 → (3) 에러(원시 FK 메시지 대신 안내)
+  let batchBranch = resolveBranch(batchInfo.branchCode)
+  if (!batchBranch) {
+    const tally = new Map<string, number>()
+    for (const r of rows) {
+      const b = resolveBranch(r.branch_code)
+      if (b) tally.set(b, (tally.get(b) ?? 0) + 1)
+    }
+    batchBranch = [...tally.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+  }
+  if (!batchBranch) {
+    return fail('지점을 인식할 수 없습니다. 가져오기 설정에서 기본 지점을 선택하거나, CSV의 지점(branch) 값이 등록된 지점 코드(예: AMLV)·도시명인지 확인하세요.')
+  }
+
+  // 채널 검증 (NOT NULL FK). 미선택/미등록 채널은 원시 FK 대신 안내 메시지.
+  const batchChannel = (batchInfo.channelCode ?? '').trim()
+  if (!batchChannel) return fail('채널을 선택하세요.')
+  if (validChannels.size && !validChannels.has(batchChannel)) {
+    return fail(`채널 코드 '${batchChannel}'가 등록되어 있지 않습니다. 채널 관리에서 먼저 등록하거나 다른 채널을 선택하세요.`)
+  }
+
   // ── 1. 배치 레코드 생성 ────────────────────────────────────────────────────
   const { data: batch, error: batchError } = await supabase
     .from('review_import_batches')
     .insert({
-      branch_code: batchInfo.branchCode,
-      channel_code: batchInfo.channelCode,
+      branch_code: batchBranch,
+      channel_code: batchChannel,
       import_format: batchInfo.importFormat,
       original_filename: batchInfo.originalFilename || null,
       total_rows: rows.length,
@@ -176,12 +230,13 @@ export async function importReviewsAction(
     const authorIdentifier = (row.reviewer_name ?? row.external_review_id ?? '').trim().toLowerCase()
     const dateSlug         = row.review_date?.slice(0, 10) ?? ''
 
-    // 행별 지점: CSV 자동 감지값 우선, 없으면 배치 기본 지점
-    const effectiveBranch  = (row.branch_code ?? '').trim() || batchInfo.branchCode
+    // 행별 지점: CSV 값을 유연 해석(코드/대소문자/도시명) → 미해석 시 배치 대표 지점으로 폴백.
+    //   reviews.branch_code 도 branches FK(NOT NULL)이므로 모든 행이 유효 코드를 갖도록 보장한다.
+    const effectiveBranch  = resolveBranch(row.branch_code) ?? batchBranch
 
     const normalized_hash = generateContextHash(
       effectiveBranch,
-      batchInfo.channelCode,
+      batchChannel,
       authorIdentifier,
       dateSlug,
       row.review_text ?? '',
@@ -190,7 +245,7 @@ export async function importReviewsAction(
     // import_hash: 별점 포함 — 파일 내 세분화된 Row 레벨 추적용
     const import_hash = crypto
       .createHash('sha256')
-      .update(`${effectiveBranch}|${batchInfo.channelCode}|${row.rating ?? ''}|${authorIdentifier}|${dateSlug}|${cleanText(row.review_text ?? '')}`)
+      .update(`${effectiveBranch}|${batchChannel}|${row.rating ?? ''}|${authorIdentifier}|${dateSlug}|${cleanText(row.review_text ?? '')}`)
       .digest('hex')
 
     return { ...row, effectiveBranch, authorIdentifier, dateSlug, normalized_hash, import_hash, originalIndex }
@@ -209,7 +264,7 @@ export async function importReviewsAction(
           .from('reviews')
           .select('source_review_id')
           .in('source_review_id', externalIds)
-          .eq('channel_code', batchInfo.channelCode)
+          .eq('channel_code', batchChannel)
       : Promise.resolve({ data: [] as Array<{ source_review_id: string | null }> }),
     reviewUrls.length
       ? supabase.from('reviews').select('review_url').in('review_url', reviewUrls)
@@ -301,10 +356,10 @@ export async function importReviewsAction(
           const ci = ciByHash.get(row.import_hash)!
           return {
             branch_code:            row.effectiveBranch,
-            channel_code:           batchInfo.channelCode,
+            channel_code:           batchChannel,
             rating:                 row.rating,
             review_text:            row.review_text,
-            review_created_at:      row.review_date || null,
+            review_created_at:      coerceDate(row.review_date),
             review_url:             row.review_url,
             reviewer_name:          row.reviewer_name,
             review_language:        row.review_language,
@@ -451,8 +506,8 @@ export async function importReviewsAction(
       action:     'bulk_import_completed',
       detail: {
         batch_id:      batch.id,
-        branch_code:   batchInfo.branchCode,
-        channel_code:  batchInfo.channelCode,
+        branch_code:   batchBranch,
+        channel_code:  batchChannel,
         hash_version:  'ctx-v2',
         total:         rows.length,
         imported,
