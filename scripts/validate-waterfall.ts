@@ -163,15 +163,17 @@ function pr(text: string, rating: number, lang: 'ko' | 'en') {
 }
 
 // ── SLOT ENGINE TDD: 슬롯 기반 조립 + AMLV 룰셋 보강 검증 ─────────────────────────
-// Case S1: INTERACTIVE_COMPLAINT (Rating 3) → 태그 감지 + Slot B 피벗 포함
+// Case S1: ★3 긍정+경미 불만(상호작용 부족) → 균형 답변(AMBIGUOUS), 과잉 사과 금지
+//   "relaxing but not very interactive"는 호평(relaxing)+경미 피드백 → 그루블링 사과 대신 균형 인정.
+//   (직원불만/이탈징후 같은 '심각' 불만은 여전히 COMPLAINT — S2 등에서 검증.)
 {
   const text = 'The music and visuals were relaxing but not very interactive.'
   const d = processReview({ reviewText: text, branchCode: 'AMLV', language: 'en', reviewerName: 'Jane', rating: 3 })
-  check('S1 INTERACTIVE_COMPLAINT tag', d.classification.tags.includes('INTERACTIVE_COMPLAINT'), d.classification.tags.join(','))
-  check('S1 status=COMPLAINT', d.classification.status === 'COMPLAINT', d.classification.status)
-  check('S1 isComplaint=true', d.classification.isComplaint === true)
+  check('S1 INTERACTIVE_COMPLAINT tag (감지 유지)', d.classification.tags.includes('INTERACTIVE_COMPLAINT'), d.classification.tags.join(','))
+  check('S1 status=AMBIGUOUS (균형)', d.classification.status === 'AMBIGUOUS', d.classification.status)
+  check('S1 isComplaint=false (사과 경로 아님)', d.classification.isComplaint === false)
   const reply = buildStaticReply(d.classification, { branchCode: 'AMLV', language: 'en', reviewerName: 'Jane', reviewId: 'test-s1' })
-  check('S1 Slot B: interactive/sensor keyword', /interact|sensor/i.test(reply), reply.slice(0, 80))
+  check('S1 과잉 사과 없음 (no apolog/sorry)', !/apolog|sorry|sincerely/i.test(reply), reply.slice(0, 90))
 }
 
 // Case S2: VALUE_COMPLAINT (Rating 2) → 태그 감지 + COMPLAINT 경로

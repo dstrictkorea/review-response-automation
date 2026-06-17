@@ -2,9 +2,31 @@
 > Updated 2026-06-15. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 작품 자랑 제거·칭찬 심플화·정적 초안 재생성 (Wave 24)**
+**✅ EPIC COMPLETE: 답변 관련성·자연스러움 교정 (과잉 사과 제거) (Wave 25)**
 
-### 이번 EPIC 완료 사항 (사용자 피드백: "작품 자랑 빼, discover 빼, 칭찬은 심플하지만 다 다르게")
+### 이번 EPIC 완료 사항 (사용자 피드백: "ai스럽지 않은지, 중복/부자연스러움, 리뷰와 무관한 답변 조사·수정")
+- **관련성 핵심 버그 — ★3 중립 평점의 그루블링 사과 제거**: ★3 + 불만 태그가 최종 else로 빠져 COMPLAINT(전면
+  사과)가 되어, 칭찬을 무시하거나 **호평한 요소까지 사과**하는 무관 답변 발생(예: "에어컨 빵빵해서 힐링" → "냉방이
+  쾌적하지 못해 사과드립니다"). waterfallRegexEngine에 게이트 추가: `rating===3 && !이탈징후 && !STAFF_COMPLAINT`
+  → AMBIGUOUS 균형 답변(isComplaint=false). 직원불친절·이탈은 제대로 사과(COMPLAINT) 유지.
+- **★4-5 복합 불만도 사과 경로 제거**: 고평점은 전반 만족이므로 사과로 시작하면 모순. Hybrid(사과-선두)·tags≥2
+  분기를 모두 균형 답변(AMBIGUOUS, isComplaint=false)으로 통일 → ★5+불만 오분류 게이트(5STAR_COMPLAINT)도 자연 해소.
+  (isHybrid 경로 폐기 — buildStaticReply의 Hybrid 조립은 비활성.)
+- **AI 문구 제거**: "Thank you for holding us accountable", "it weighs on us that the experience fell short",
+  "reviewed internally and used to make real improvements" → 자연스러운 표현으로 교체.
+- **사과 중복(부자연) 제거**: 한 답변에 '사과'가 2~3회 쌓이던 문제 — slotEmpathy는 '사과' 대신 '감정 인정'으로,
+  저평점 일반 pivot은 '사과' 대신 '개선 의지'로 변경(사과는 인사 슬롯이 1회 담당).
+- **빈 초안 0건**: import classifyImport의 suppressPraise가 ★1-2 정당한 사과/균형 초안까지 비워 73건 빈칸 발생 →
+  `genStatic = route!=='llm'`로 모든 비-LLM 경로가 초안 생성. ★1-2는 분류상 항상 COMPLAINT/AMBIGUOUS라 칭찬 오발 없음.
+- **중복은 엔진 차원 0.2%** (작성자명 포함, 실측): export의 8.4%는 옛 엔진이 만든 **저장본**이라 발생 → "♻ 답변 재생성"으로 갱신 필요(엔진 풀 확장 불필요).
+- 잔여(의도된 동작): "almost tripped(어두워서 넘어질 뻔)"류는 안전/이슈 EMERGENCY로 격리(사과 초안+사람검토) — 정당.
+- 검증: regression-guard ✅ (tsc 0 · waterfall ALL PASS · loop **0/813**). CSV 실측: 과잉사과(긍정리뷰)=안전건만, 빈초안 0.
+
+---
+
+**✅ 이전 EPIC: 작품 자랑 제거·칭찬 심플화·정적 초안 재생성 (Wave 24)**
+
+### Wave 24 완료 사항 (사용자 피드백: "작품 자랑 빼, discover 빼, 칭찬은 심플하지만 다 다르게")
 - **작품 자랑(작품명) 전면 제거**: 모든 지점 메인 작품은 Garden이나 지점마다 컨셉이 달라 특정 작품
   (ETERNAL NATURE/WATERFALL/STAR) 자랑은 안전하지 않음. 칭찬 답변에서 `slotC_artwork`·감각/공간/페르소나
   조각 일절 제거. 분류(isArtworkFocused)는 유지하되 답변엔 작품명 미노출. 테스트 C9/S4는 '작품 자랑 미포함' 검증으로 반전.

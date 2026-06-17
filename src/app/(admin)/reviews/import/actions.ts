@@ -55,9 +55,11 @@ function classifyImport(d: ProcessDecision, rating: number | null, text: string)
   else if (cls === 'AMBIGUOUS' && d.route === 'static' && !d.requiresApproval) status = 'ai_done'  // ★3+ 혼합 → 균형 답변 자동완료
   else status = 'new' // AMBIGUOUS(질문 등 무신호) — 격리하지 않되 정상 큐에서 후속 처리
 
-  // 저별점 SAFE는 칭찬 답변이 부적절하므로 정적 초안 생성을 억제(EMERGENCY 건조사과는 유지)
-  const suppressPraise = lowRating && cls !== 'EMERGENCY'
-  const genStatic = d.route === 'manual' || (d.route === 'static' && !suppressPraise)
+  // 모든 비-LLM 경로는 정적 초안을 생성한다 — ★1-2도 '빈 초안'을 남기지 않는다.
+  //   분류가 이미 저별점을 COMPLAINT/AMBIGUOUS(긍정 본문 충돌)로 보내므로 buildStaticReply는
+  //   칭찬이 아닌 적절한 사과/균형 초안을 만든다 → 담당자가 빈 화면이 아닌 편집 가능한 초안에서 시작.
+  //   (과거: 저별점 칭찬 억제 목적의 suppressPraise가 정당한 사과/균형 초안까지 비워 73건 빈칸 발생.)
+  const genStatic = d.route !== 'llm'
 
   const base = cls === 'EMERGENCY' ? emergencyRisk(text) : cls === 'COMPLAINT' ? 'medium' : 'low'
   const risk = lowRating ? floorRisk(base, 'medium') : base

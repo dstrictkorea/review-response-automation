@@ -1488,18 +1488,19 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
       'Susuriin namin ang aming proseso upang hindi maulit ito.',
     ],
   },
-  // ── 저평점·모호한 부정 신호 (구체 불만 없음) 폴백 — 진심 어린 사과 + 개선 의지.
+  // ── 저평점·모호한 부정 신호 (구체 불만 없음) 폴백 — 개선 의지 중심(사과는 인사 슬롯이 담당,
+  //   여기서 또 사과하면 한 답변에 '죄송'이 2~3번 쌓여 부자연스럽다).
   저평점_부정신호: {
     ko: [
-      '기대에 못 미쳐 죄송합니다. 더 나은 경험으로 보답하겠습니다.',
-      '아쉬움을 드려 죄송합니다. 더 좋아지도록 노력하겠습니다.',
+      '주신 의견 깊이 새겨 더 나은 경험으로 보답하겠습니다.',
+      '말씀하신 점, 더 좋아지도록 노력하겠습니다.',
       '소중한 의견 감사합니다. 깊이 새겨 개선하겠습니다.',
       '더 나은 모습으로 다시 찾아뵙겠습니다.',
     ],
     en: [
-      "We're sorry it fell short and will work to do better.",
+      "We'll take your feedback to heart and work to do better.",
       'Thank you for the honest feedback. We will keep improving.',
-      "We're sorry to disappoint, and we will keep getting better.",
+      "We're taking this seriously and will keep getting better.",
       'We will do better and hope to earn a better visit next time.',
     ],
     ja: [
@@ -1712,7 +1713,7 @@ export function slotRepeatVisitor(lang: Language, idx = 0): string {
 // ════════════════════════════════════════════════════════════════════════════════
 const EMPATHY_LINES: Partial<Record<Language, string[]>> = {
   ko: ['기대를 안고 찾아주셨을 텐데 아쉬운 경험을 드린 것 같아 마음이 무겁습니다.', '소중한 시간을 내어 방문해 주셨는데 불편을 느끼셨다니 진심으로 안타깝습니다.'],
-  en: ['You came to us with expectations, and it weighs on us that the experience fell short.', 'You set aside precious time to visit, and we are genuinely sorry it brought you discomfort.'],
+  en: ['We can only imagine how disappointing that must have felt.', 'We completely understand why that left you frustrated.'],
   ja: ['ご期待を抱いてお越しくださったのに、心残りのある体験となってしまい胸が痛みます。', '大切なお時間を割いてご来館いただいたのに、ご不便を感じさせてしまい誠に残念に思います。'],
   zh: ['您满怀期待而来，却留下了遗憾的体验，我们深感不安。', '您特意抽出宝贵时间前来，却让您感到不便，我们由衷感到抱歉。'],
   es: ['Vino a nosotros con expectativas, y nos pesa que la experiencia no estuviera a la altura.', 'Dedicó un tiempo valioso a visitarnos, y lamentamos sinceramente que le causara incomodidad.'],
@@ -2130,11 +2131,11 @@ export function slotE_negative(lang: Language, idx = 0): string {
     ],
     en: [
       // 0: direct + action-forward
-      'We will do better. Thank you for holding us accountable.',
+      "We'll do better — thank you for taking the time to let us know.",
       // 1: next-visit focused
       'We hope to have the chance to give you a much better experience next time.',
       // 2: specific improvement promise
-      'Your experience will be reviewed internally and used to make real improvements.',
+      "We'll share this with our team so we can improve.",
       // 3: candid and warm
       'Honest feedback like yours is exactly how we get better. Thank you.',
       // 4: accountability-first

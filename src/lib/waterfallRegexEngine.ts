@@ -437,20 +437,38 @@ export function analyzeReview(
     //   Hybrid(사과+긍정인정+개선) 정적 자동완료. 태그 수 무관 — "작품은 멋진데 대기가 김"(1태그)도 포함.
     //   대조 없는 반어적 칭찬+불만 나열은 사캐즘으로 보아 아래 AMBIGUOUS로 격리.
     if (ratingHigh && hasPositive && MIXED_CONTRAST.test(text)) {
-      status = 'COMPLAINT'          // COMPLAINT Tier1 → 정적 자동완료 (route='static', ai_done)
+      // 고평점(★4-5) + 긍정 + 정직한 대조("좋은데 ~아쉬움") → 균형 답변(AMBIGUOUS). ★4-5는 전반적
+      //   만족이므로 사과로 시작하면("죄송합니다") 모순/과잉이 된다. 좋은 점 인정 + 경미 피드백 수용.
+      //   isComplaint=false 로 내려 사과가 아닌 균형 답변을 조립.
+      isComplaint = false
+      status = 'AMBIGUOUS'
       requiresLLM = false
-      isHybrid = true
-      reason = '복합 의도(긍정+불만 대조 구조) — Hybrid Assembly 정적 자동완료'
+      reason = '고평점(4·5점) + 긍정 + 대조 구조 → 균형 답변(과잉 사과 방지)'
     } else if (ratingHigh && tags.length < 2) {
       status = 'COMPLIMENT'         // 경미 단일 불만, 대조 없음 → 건설적 피드백 완화
       requiresLLM = false
       reason = '고평점(4·5점) 건설적 피드백 — Rating Override로 완화(정적 응대)'
-    } else if (ratingHigh && tags.length >= 2) {
-      status = 'AMBIGUOUS'          // 복합 불만 + 대조 없음 → 잠재 사캐즘 → LLM/사람
-      requiresLLM = true
-      reason = '고평점(4·5점) + 복합 불만(대조 구조 없음) — 잠재 사캐즘 → LLM 위임'
+    } else if (ratingHigh) {
+      // 고평점 + 복합 불만(대조 없음, 잠재 사캐즘 포함) → 균형 답변. ★4-5는 사과 경로로 보내지 않는다
+      //   (★5+불만을 COMPLAINT로 두면 오분류 게이트가 잡고, 진성 고평점엔 과잉 사과가 된다).
+      //   (과거: AMBIGUOUS인데 isComplaint=true가 남아 사과문을 조립하던 버그 → isComplaint=false.)
+      isComplaint = false
+      status = 'AMBIGUOUS'
+      requiresLLM = false
+      reason = '고평점(4·5점) + 복합 불만(대조 없음) → 균형 답변(과잉 사과 방지)'
+    } else if (rating === 3 && !isChurnRisk && !tags.includes('STAFF_COMPLAINT')) {
+      // ★3(명시적 중립 평점)의 '경미' 불만 → 균형 답변(AMBIGUOUS). 중립 평점에 그루블링 사과를 달면
+      //   칭찬을 무시하거나 호평한 요소(예: "에어컨 빵빵해서 힐링")까지 사과하는 무관/AI 답변이 된다.
+      //   긍정어가 키워드로 안 잡혀도(서술형 칭찬 "폭포 방 진짜 물 같았어요") ★3은 본디 중립이므로
+      //   균형 인정이 사과보다 안전하다. isComplaint=false 로 내려 buildStaticReply가 균형 답변을 조립.
+      //   단, '심각' 불만(직원 불친절 STAFF_COMPLAINT·이탈징후)은 제외 → 제대로 된 사과(COMPLAINT) 유지.
+      //   (무평점/★1-2 불만도 아래 COMPLAINT 유지 — 저평점은 실제 불만일 확률이 높음.)
+      isComplaint = false
+      status = 'AMBIGUOUS'
+      requiresLLM = false           // reviewProcessor가 ★3은 정적 균형 답변으로 자동완료
+      reason = '중립 평점(3점) + 경미 불만 → 균형 답변(과잉 사과·무관 사과 방지)'
     } else {
-      status = 'COMPLAINT'
+      status = 'COMPLAINT'          // ★1-2 또는 ★3 순수 불만(긍정 없음) → 공감 사과
       requiresLLM = true
       reason = '운영/서비스 불만 감지 → LLM 공감 사과문(STANDARD)'
     }
