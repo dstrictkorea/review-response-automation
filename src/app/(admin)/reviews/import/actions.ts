@@ -334,6 +334,9 @@ export async function importReviewsAction(
       language:     langKey(row.review_language),
       reviewerName: row.reviewer_name,
       rating:       row.rating,   // Rating Override: 고평점 건설적 피드백 → COMPLIMENT
+      // 행별 고유 해시를 변형 선택 시드로 사용 — 미전달 시 모든 초안이 변형 0(동일 인사+감사)로
+      //   찍혀 "너무 중복"의 주원인이 된다. import_hash는 5차원(지점/채널/작성자/날짜/텍스트) 고유값.
+      reviewId:     row.import_hash,
     })
     decisionByHash.set(row.import_hash, d)
     ciByHash.set(row.import_hash, classifyImport(d, row.rating, row.review_text ?? ''))
