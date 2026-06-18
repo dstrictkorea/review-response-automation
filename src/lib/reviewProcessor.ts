@@ -155,16 +155,14 @@ export function processReview(input: {
   }
 
   // AMBIGUOUS + Tier 1 → 균형 정적 초안 제공 (LLM 의존 제거로 '빈 답변/미회신' 방지).
-  //   ★3+(또는 무평점): 좋은 점·아쉬운 점을 함께 인정하는 중립 균형 답변을 자동완료.
-  //   ★1-2(+긍정 신호): 안전 게이트 유지 — 사람 승인으로 격리하되 동일 초안을 함께 제공해
-  //     담당자가 빈 화면이 아닌 편집 가능한 초안에서 시작하도록 한다.
+  //   사용자 정책(긴급/독성 외 전부 자동완료): ★1-2 양가(별점-본문 불일치·경미 혼합)도 균형 답변으로
+  //   자동완료한다. 긴급(EMERGENCY)·독성(Tier2/3)은 위에서 이미 사람 격리됨.
+  //   예외(사람 응대 유지): (1) 서비스 질문(주차/예약/유모차 등 — 균형 답변은 '답'이 아님),
+  //   (2) 평점·내용 신호가 모두 없는 순수 모호건("이게 예술인가요?" 류) → 균형 답변이 어색.
   const ambiguousDraft = buildStaticReply(classification, ctx)
-  const lowRating = input.rating != null && input.rating <= 2
-  // 균형 자동완료 대상: 평점이 있는 ★3+ 혼합 리뷰 또는 내용 신호(태그)가 있는 모호 리뷰.
-  //   평점도 신호도 없는 모호건(예: "이게 예술인가요?" 같은 단순 질문)은 균형 답변이 어색하므로
-  //   사람 승인으로 격리하되 동일 초안을 제공(빈 화면 방지).
+  const isServiceQuestion = classification.tags.includes('질문')
   const hasContentSignal = classification.tags.length > 0
-  const autoBalance = !lowRating && (input.rating != null || hasContentSignal)
+  const autoBalance = (input.rating != null || hasContentSignal) && !isServiceQuestion
   return {
     classification,
     route: autoBalance ? 'static' : 'manual',

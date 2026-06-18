@@ -2,7 +2,24 @@
 > Updated 2026-06-15. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 답변 관련성·자연스러움 교정 (과잉 사과 제거) (Wave 25)**
+**✅ EPIC COMPLETE: 인입 중복 근절 + 저평점 자동완료 커버리지 확대 (Wave 26)**
+
+### 이번 EPIC 완료 사항 (사용자 피드백: "중복 재조사, 자동답변 안달린 리뷰 최대한 자동화(안전하면)")
+- **중복 진짜 원인 = 인입 변형 미선택**: import의 processReview 호출에 reviewId 미전달 → buildSlotIndices(undefined)
+  → 모든 초안이 변형 0(동일 인사+감사, 이름만 다름). 재방문 작성자(JK_travels ×5)는 글자까지 동일. `reviewId:
+  row.import_hash`(행별 5차원 고유 해시) 전달 → **exact-dup 8.2%→0.4%**, 재방문자도 매번 다른 답변. (재생성
+  경로 processReviewById는 실 UUID를 넘겨 영향 없었음 — 신규 import만 문제였음.)
+- **저평점 자동완료 커버리지 확대** (사용자 선택: "긴급/독성 외 전부 자동"): ★1-2도 ai_done. 사람 검토(pending)는
+  **긴급(EMERGENCY)·독성(Tier2/3)·서비스 질문·순수 모호건**으로 한정. reviewProcessor의 AMBIGUOUS autoBalance를
+  `(평점 또는 신호) && !서비스질문`으로 변경, classifyImport는 `requiresApproval` 단일 기준으로 통일.
+  500건 기준 **ai_done 383→494, pending 117→6(긴급만)**. ⚠ 게시는 늘 사람 수동 복사-붙여넣기(안전망 유지).
+- **안전성 확인**: 자동완료 494건 전부 금칙어(환불/법적/CCTV/징계) 위반 0. 저평점은 '사과 우선'이 기본 — 자동완료
+  맥락에선 진성 불만을 가볍게 넘기는 것보다 가벼운 사과가 안전(★1-2는 본디 불만족 신호). ★3 중립만 균형 답변(Wave 25).
+- 검증: regression-guard ✅ (tsc 0 · waterfall ALL PASS · loop **0/813**).
+
+---
+
+**✅ 이전 EPIC: 답변 관련성·자연스러움 교정 (과잉 사과 제거) (Wave 25)**
 
 ### 이번 EPIC 완료 사항 (사용자 피드백: "ai스럽지 않은지, 중복/부자연스러움, 리뷰와 무관한 답변 조사·수정")
 - **관련성 핵심 버그 — ★3 중립 평점의 그루블링 사과 제거**: ★3 + 불만 태그가 최종 else로 빠져 COMPLAINT(전면

@@ -48,12 +48,11 @@ function classifyImport(d: ProcessDecision, rating: number | null, text: string)
   const cls = d.classification.status
   const lowRating = rating != null && rating <= LOW_RATING_ISOLATE
 
-  let status: string
-  if (cls === 'EMERGENCY' || cls === 'COMPLAINT') status = 'pending_approval'
-  else if (lowRating) status = 'pending_approval'
-  else if (cls === 'SAFE' || cls === 'COMPLIMENT') status = 'ai_done'  // COMPLIMENT=고평점 건설적 피드백(정적)
-  else if (cls === 'AMBIGUOUS' && d.route === 'static' && !d.requiresApproval) status = 'ai_done'  // ★3+ 혼합 → 균형 답변 자동완료
-  else status = 'new' // AMBIGUOUS(질문 등 무신호) — 격리하지 않되 정상 큐에서 후속 처리
+  // 사용자 정책(긴급/독성 외 전부 자동완료): 사람 검토(pending_approval)는 긴급(EMERGENCY)·
+  //   독성(Tier2/3)·서비스 질문·순수 모호건으로 한정하고, 그 외(COMPLAINT Tier1·저별점 양가·
+  //   SAFE·COMPLIMENT)는 모두 ai_done. reviewProcessor의 requiresApproval이 이 정책을 이미
+  //   반영하므로(질문/순수모호=true, 저별점 양가=false) 그대로 따른다. 게시는 늘 사람 수동(안전망).
+  const status = d.requiresApproval ? 'pending_approval' : 'ai_done'
 
   // 모든 비-LLM 경로는 정적 초안을 생성한다 — ★1-2도 '빈 초안'을 남기지 않는다.
   //   분류가 이미 저별점을 COMPLAINT/AMBIGUOUS(긍정 본문 충돌)로 보내므로 buildStaticReply는
