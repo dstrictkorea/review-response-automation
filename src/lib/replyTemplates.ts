@@ -42,6 +42,7 @@ import {
   slotReassurance,
   slotHybridAck,
   slotAmbiguousAck,
+  slotShortComplaint,
 } from '@/lib/staticTemplates'
 import { scanForbidden, type WaterfallResult } from '@/lib/waterfallRegexEngine'
 
@@ -151,6 +152,12 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
     } else if (result.isEmergency) {
       // 긴급: 건조하게 사과(A) + 핵심 피벗 + 클로징
       rawReply = [a, ...(piv ? [piv] : []), e].join('\n\n')
+    } else if (len <= 25 && !result.isChurnRisk && !result.tags.includes('STAFF_COMPLAINT')) {
+      // 단문 저노력 불만("Meh"/"별로"/"비싸요"/"Dreamy" 등 1~2어절) → 무거운 사과문 대신
+      //   가벼운 1문장(피드백 감사 + 개선 의지). 저별점이라도 "갈 만해요"처럼 긍정·중립이 섞인
+      //   초단문에 "진심으로 사과드립니다"는 과하고 어색하다(사용자 지침: 상황에 맞는 가벼운 톤).
+      //   직원불만·이탈은 위에서 제외되어 제대로 된 사과(아래 분기) 유지.
+      rawReply = slotShortComplaint(lang, name, ix.idxA)
     } else {
       // 일반 불만: 사과(A) → [공감] → 개선 약속(pivot) → 클로징(E). 수용확인(B)은 A·pivot과
       //   중복이라 생략. 길이 스케일: 아주 짧은 단문 불만(≤45자, 예: "별로")은 장황 방지 위해

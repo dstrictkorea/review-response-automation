@@ -3957,9 +3957,13 @@ function detectAISmell(reply: string, lang: string): string[] {
 function detectLength(reply: string, status: string, reviewText?: string): string | null {
   const len = reply.length
   if (reply.includes('null — LLM')) return null   // LLM route: 시뮬레이션 플레이스홀더 — 길이 체크 불필요
-  if (len < 30) return `TOO_SHORT (${len}자)`
+  // 단문 저노력 불만(≤25자 리뷰)의 가벼운 1문장은 30자 미만이어도 정상(상황 비례 톤·CJK 고밀도).
+  const tinyReviewComplaint = status === 'COMPLAINT' && (reviewText?.trim().length ?? 99) <= 25
+  if (len < 30 && !tinyReviewComplaint) return `TOO_SHORT (${len}자)`
   if (status === 'COMPLIMENT' && len > 600) return `OVER_LONG_COMPLIMENT (${len}자)`
-  if (status === 'COMPLAINT' && len < 80) return `TOO_SHORT_COMPLAINT (${len}자)`
+  // 단문 저노력 불만("Meh"/"별로", ≤25자)은 가벼운 1문장이 적절 → 최소 길이(80자) 면제.
+  //   (상황에 맞는 톤: 초단문 리뷰에 장문 사과는 과함. slotShortComplaint 경로.)
+  if (status === 'COMPLAINT' && len < 80 && (reviewText?.trim().length ?? 99) > 25) return `TOO_SHORT_COMPLAINT (${len}자)`
   // TMI: 리뷰가 30자 이하 단문인데 답변이 300자 넘으면 과잉 응대 (SHORT 모드 270자 미만은 허용)
   if (reviewText && reviewText.length <= 30 && len > 300) {
     return `TMI_MISMATCH: 리뷰 ${reviewText.length}자 → 답변 ${len}자 (과잉)`

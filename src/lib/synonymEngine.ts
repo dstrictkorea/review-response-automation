@@ -264,8 +264,10 @@ export function extractContextMirror(text: string): string | null {
   if (/인생\s*샷|포토\s*스팟|사진\s*찍기/.test(t)) return '사진'
   if (/\bphoto\b|\binstagram\b|\bphotos?\s+(?:were|are|came)\b/.test(t)) return '사진'
 
-  // 감동/눈물 관련
-  if (/감동|감격|뭉클|눈물/.test(t)) return '감동'
+  // 감동/눈물 관련 — 감격/뭉클/눈물은 명백한 긍정. 단, "감동도 (실망도) 아닌/없"·"감동까진/만큼은 아니"
+  //   같은 부정 맥락의 '감동'은 제외("감동도 실망도 아닌 그 사이" 중립 리뷰에 '감동' echo가 달리는 모순 방지).
+  const 감동부정 = /감동\s*(?:도|까지는?|까진|만큼은?)?\s*(?:실망도\s*)?(?:아니|아닌|없|모르|글쎄)/.test(t)
+  if (/감격|뭉클|눈물/.test(t) || (/감동/.test(t) && !감동부정)) return '감동'
 
   // 분위기 관련 — 강한 긍정 형용사와 함께할 때만 추출
   if (/분위기가?\s*(?:너무|정말|진짜|되게|완전)\s*(?:좋|예쁘|멋|훌륭|환상)/.test(t)) return '분위기'

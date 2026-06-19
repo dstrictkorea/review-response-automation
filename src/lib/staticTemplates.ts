@@ -1830,6 +1830,31 @@ export function slotAmbiguousAck(lang: Language, idx = 0): string {
 }
 
 // ════════════════════════════════════════════════════════════════════════════════
+//  단문 저노력 불만 전용 — "Meh"/"별로"/"비싸요"/"Dreamy"(저별점 오타) 같은 1~2어절 리뷰에
+//  무거운 사과문은 과하다. 사과 없이 가벼운 1문장(피드백 감사 + 개선 의지)으로 응대.
+//  긴급/직원불만/이탈은 호출부에서 제외(제대로 된 사과 유지).
+// ════════════════════════════════════════════════════════════════════════════════
+const SHORT_COMPLAINT_BODY: Record<Language, string[]> = {
+  ko: ['솔직한 의견 감사합니다. 더 좋아지도록 노력할게요.', '남겨주신 의견 잘 봤어요. 다음엔 더 나은 모습 보여드릴게요.', '들려주셔서 감사합니다. 더 좋은 경험 드릴 수 있게 준비할게요.'],
+  en: ["thanks for the honest take — we'll keep making it better.", "appreciate you sharing. We'll keep working to do better.", "thanks for the feedback. We'll aim to do better next time."],
+  ja: ['率直なご意見ありがとうございます。より良くなれるよう努めます。', 'お声を聞かせてくださり感謝します。次はもっと良い体験を。', 'ありがとうございます。改善してまいります。'],
+  zh: ['感谢您的坦诚意见，我们会继续改进。', '谢谢分享，我们会努力做得更好。', '感谢反馈，下次争取做得更好。'],
+  es: ['gracias por su sinceridad. Seguiremos mejorando.', 'gracias por compartir. Trabajaremos para mejorar.', 'gracias por el comentario. Lo haremos mejor.'],
+  ru: ['спасибо за честный отзыв. Будем работать лучше.', 'спасибо, что поделились. Постараемся стать лучше.', 'благодарим за отзыв. В следующий раз сделаем лучше.'],
+  ar: ['شكراً لصراحتكم. سنواصل التحسين.', 'شكراً لمشاركتكم. سنعمل على التحسّن.', 'شكراً لملاحظتكم. سنبذل جهداً أكبر في المرة القادمة.'],
+  hi: ['ईमानदार राय के लिए धन्यवाद। हम बेहतर करते रहेंगे।', 'साझा करने के लिए शुक्रिया। हम सुधार करेंगे।', 'प्रतिक्रिया के लिए धन्यवाद। अगली बार बेहतर करेंगे।'],
+  tl: ['salamat sa tapat na puna. Patuloy kaming magpapabuti.', 'salamat sa pagbabahagi. Sisikapin naming gumanda.', 'salamat sa feedback. Mas bubutihin namin sa susunod.'],
+}
+export function slotShortComplaint(lang: Language, name: string, idx = 0): string {
+  const arr = SHORT_COMPLAINT_BODY[lang] ?? SHORT_COMPLAINT_BODY.en
+  const body = arr[idx % arr.length]
+  const nm = name.trim()
+  if (!nm) return body.charAt(0).toUpperCase() + body.slice(1)
+  const pre: Partial<Record<Language, string>> = { ko: `${nm}님, `, ja: `${nm}様、`, zh: `${nm}，`, ar: `${nm}، ` }
+  return (pre[lang] ?? `${nm}, `) + body
+}
+
+// ════════════════════════════════════════════════════════════════════════════════
 //  Slot D — 현장 운영 힌트 (피크타임/혼잡 시간대 방문 권유)
 //  3 variants × 4 languages | {highlight_room}
 // ════════════════════════════════════════════════════════════════════════════════
