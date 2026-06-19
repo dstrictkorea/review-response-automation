@@ -163,10 +163,11 @@ export function buildStaticReply(result: WaterfallResult, ctx: StaticReplyContex
         // pivot도 empathy/reassurance도 없으면(태그·예산 0) 수용확인 B로 최소 성의 표시
         return body.length ? [a, ...body, e].join('\n\n') : [a, b, e].join('\n\n')
       }
-      // 불만은 사과(A)+[공감]+개선약속(pivot)+클로징(E) 4블록이면 CS상 충분.
-      //   공감+안심을 모두 넣으면 중복·장황 → 재량 라인은 최대 1개(공감). 단문(≤45자)은 0개.
-      //   (길이 바닥은 아래 floor 가드가 보장; CJK 고밀도 단문만 예외적으로 1~2개로 증액)
-      let disc = len <= 45 ? 0 : 1
+      // 불만 기본형 = 사과(A) + 개선 약속(pivot) + 클로징(E), 3블록. 공감 라인("마음이 무겁습니다"
+      //   /"…that left you frustrated")은 (1) 종종 없는 좌절을 가정하고 (2) AI 상담사처럼 무겁다 →
+      //   기본 미부착. 길이가 너무 짧을 때(CJK 고밀도)만 아래 floor 가드가 공감을 1개 보강.
+      //   "상황에 맞는 가벼운 톤" — 경미한 불만에 과한 공감/사과를 쌓지 않는다(사용자 지침).
+      let disc = 0
       rawReply = assemble(disc)
       // 길이 밴드 [85, 320] 자동 적응 (언어 밀도 차이 흡수):
       //   • 너무 길면(영어 등 다어절 언어) 재량 공감 라인을 줄여 사과+개선약속+클로징 핵심만 → 간결

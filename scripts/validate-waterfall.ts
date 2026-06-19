@@ -366,13 +366,18 @@ function pr(text: string, rating: number, lang: 'ko' | 'en') {
   check('S10 isComplaint=true', d.isComplaint === true)
 }
 
-// ── S11: 2★ + 가격 대비 아쉬움 → VALUE_COMPLAINT (DEFAULT_VALUE 한국어 확장) ────
-// CSV row 15 재현: rating=2, "가격 대비 만족도는 좀 아쉬웠어요. 사진 찍기에도 좋아요."
+// ── S11: 2★ + 가격 아쉬움 + 긍정("사진 좋아요") = 혼합 → 균형(AMBIGUOUS), 과한 사과 금지 ──
+// 톤 정책: ★2라도 좋은 점을 함께 말한 혼합 리뷰엔 4블록 그루블링 사과 대신 가벼운 균형 답변.
+// VALUE_COMPLAINT 태그는 그대로 감지하되, 라우팅은 균형으로(과잉 사과 방지). 순수 부정 ★2는 COMPLAINT 유지.
 {
   const text = '가격 대비 만족도는 좀 아쉬웠어요. 사진 찍기에도 좋아요.'
   const d = analyzeReview(text, 2)
-  check('S11 2★+가격불만 → COMPLAINT', d.status === 'COMPLAINT', d.status)
-  check('S11 VALUE_COMPLAINT tag', d.tags.includes('VALUE_COMPLAINT'), d.tags.join(','))
+  check('S11 VALUE_COMPLAINT tag (감지 유지)', d.tags.includes('VALUE_COMPLAINT'), d.tags.join(','))
+  check('S11 혼합 ★2 → AMBIGUOUS(균형)', d.status === 'AMBIGUOUS', d.status)
+  check('S11 isComplaint=false (사과 경로 아님)', d.isComplaint === false)
+  // 순수 부정 ★2(긍정 없음)는 여전히 COMPLAINT
+  const pure = analyzeReview('가격 대비 너무 별로였어요. 다신 안 가요.', 2)
+  check('S11 순수부정 ★2 → COMPLAINT', pure.status === 'COMPLAINT', pure.status)
 }
 
 // ── S12: 한국어 hasPeakHours 탐지 ──────────────────────────────────────────────

@@ -2,7 +2,22 @@
 > Updated 2026-06-15. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 인입 중복 근절 + 저평점 자동완료 커버리지 확대 (Wave 26)**
+**✅ EPIC COMPLETE: 말투 전면 고도화 — 과한 극존칭·극단적 사과 제거, 상황별 톤 (Wave 28)**
+
+### 이번 EPIC 완료 사항 (사용자 피드백: "과도한 친절·극존칭·극단적 사과 빼고, 자연스럽고 상황에 맞게, 너무 무겁지 않게")
+- **불만 기본형 경량화**: 사과(A)+개선(pivot)+클로징(E) 3블록 기본. 공감 라인("마음이 무겁습니다"/"…left you
+  frustrated")은 없는 좌절을 가정하고 AI 상담사처럼 무거워 **기본 미부착**(짧은 CJK만 length-floor가 1개 보강).
+  불만 평균 4블록 → **2.9블록**.
+- **★2 혼합·장단점 → 균형(가벼움)**: ★2라도 좋은 점을 함께 말한 리뷰("장점: 직원 친절 / 단점: 얕음")는 4블록
+  그루블링 사과 대신 가벼운 균형 답변. 명시적 장단점 구조(`장점:`/`Pros:`/`좋은 점`)를 긍정 신호로 인정 +
+  `rating===2 && hasPositive`도 AMBIGUOUS로 라우팅. (순수 부정 ★2·직원불만·이탈은 COMPLAINT 유지.)
+- **극존칭/과장 표현 제거**: "잊지 못할 감동을 선사하는…다시 만나뵐 그날을 기대", "큰 자랑이자 원동력",
+  "깊이 유감스럽게 생각합니다", "귀중한 시간을 내어" 등 → 담백·자연체로 교체. CSV 실측 무거운 표현 **0건**.
+- 검증: regression-guard ✅ (tsc 0 · waterfall ALL PASS · loop **0/813**). S11(★2 혼합→균형) 기대값 갱신.
+
+---
+
+**✅ 이전 EPIC: 인입 중복 근절 + 저평점 자동완료 커버리지 확대 (Wave 26)**
 
 ### 이번 EPIC 완료 사항 (사용자 피드백: "중복 재조사, 자동답변 안달린 리뷰 최대한 자동화(안전하면)")
 - **중복 진짜 원인 = 인입 변형 미선택**: import의 processReview 호출에 reviewId 미전달 → buildSlotIndices(undefined)

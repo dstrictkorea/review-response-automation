@@ -408,8 +408,11 @@ export function analyzeReview(
   // fuzzy: 정확 정규식이 놓친 긍정 오탈자(awsome/amazng 등) 흡수 (긍정 보강 전용)
   // Auto-Promotion: 사람 승인된 긍정어도 additive 적용 (긍정 인식 보강 — 안전)
   const promotedPos = promotedPositiveRegex()
+  // 명시적 장단점 구조("장점:…단점:", "Pros:…Cons:", "좋은 점/아쉬운 점")는 작성자가 직접 좋은 점을
+  //   밝힌 '혼합' 리뷰 → 긍정 신호로 인정(아래에서 균형 답변으로 라우팅 → 과한 사과 방지).
+  const prosConsStructure = /장점\s*[:：]|좋은\s*점|아쉬운\s*점|단점\s*[:：]|\bpros\s*[:：]|\bcons\s*[:：]|the\s+good\s*[:：]|the\s+bad\s*[:：]/i.test(text)
   const hasPositive = sarcasmPositive || C.positive.test(textForPositive) || fuzzyPositive(textForPositive)
-                      || (promotedPos?.test(textForPositive) ?? false)
+                      || (promotedPos?.test(textForPositive) ?? false) || prosConsStructure
   const isQuestion = C.question.test(text)
   if (!isComplaint && hasPositive && C.artwork.test(text)) {
     isArtworkFocused = true
@@ -456,8 +459,11 @@ export function analyzeReview(
       status = 'AMBIGUOUS'
       requiresLLM = false
       reason = '고평점(4·5점) + 복합 불만(대조 없음) → 균형 답변(과잉 사과 방지)'
-    } else if (rating === 3 && !isChurnRisk && !tags.includes('STAFF_COMPLAINT')) {
-      // ★3(명시적 중립 평점)의 '경미' 불만 → 균형 답변(AMBIGUOUS). 중립 평점에 그루블링 사과를 달면
+    } else if ((rating === 3 || (rating === 2 && hasPositive)) && !isChurnRisk && !tags.includes('STAFF_COMPLAINT')) {
+      // ★3(중립) 또는 ★2+긍정 본문(혼합·장단점)의 '경미' 불만 → 균형 답변(AMBIGUOUS). ★2라도 좋은 점을
+      //   함께 말한 리뷰("장점: 직원 친절… 단점: 얕음")에 4블록 그루블링 사과를 달면 과하고 무례하다.
+      //   ★1·★2 순수 부정·직원불만·이탈은 아래 COMPLAINT(사과) 유지.
+      //   ★3(명시적 중립 평점)의 '경미' 불만 → 균형 답변(AMBIGUOUS). 중립 평점에 그루블링 사과를 달면
       //   칭찬을 무시하거나 호평한 요소(예: "에어컨 빵빵해서 힐링")까지 사과하는 무관/AI 답변이 된다.
       //   긍정어가 키워드로 안 잡혀도(서술형 칭찬 "폭포 방 진짜 물 같았어요") ★3은 본디 중립이므로
       //   균형 인정이 사과보다 안전하다. isComplaint=false 로 내려 buildStaticReply가 균형 답변을 조립.
