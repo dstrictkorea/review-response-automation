@@ -1437,13 +1437,13 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   운영불만: {
     ko: [
       '말씀하신 부분을 점검하고 더 나은 관람 환경을 만들겠습니다.',
-      '불편을 드려 죄송합니다. 운영을 다시 살펴 개선하겠습니다.',
+      '운영을 다시 살펴 더 나은 경험을 만들겠습니다.',
       '주신 의견을 운영 개선에 꼭 반영하겠습니다.',
       '같은 불편이 반복되지 않도록 운영을 점검하겠습니다.',
     ],
     en: [
       'We will look into this and improve our on-site experience.',
-      "We're sorry for the inconvenience and will work to do better.",
+      "We'll take a close look and work to do better.",
       'Your feedback will go straight into improving our operations.',
       "We'll review how we operate so this doesn't happen again.",
     ],
@@ -2116,8 +2116,8 @@ export function slotE_negative(lang: Language, idx = 0): string {
     ko: [
       // 0: 직접 약속
       '더 잘하겠습니다. 솔직하게 말씀해 주셔서 감사합니다.',
-      // 1: 재방문 기대 + 사과
-      '다시 한번 불편에 대해 사과드리며, 다음에는 더 만족스러운 시간이 되도록 하겠습니다.',
+      // 1: 재방문 기대 (사과는 인사/피벗 슬롯이 담당 — 클로징은 비-사과 약속으로 중복 방지)
+      '다음에는 더 만족스러운 시간이 되도록 최선을 다하겠습니다.',
       // 2: 발전 감사
       '말씀해 주신 덕분에 저희가 더 나아질 수 있습니다. 감사합니다.',
       // 3: 행동 약속
@@ -2144,8 +2144,8 @@ export function slotE_negative(lang: Language, idx = 0): string {
       "This isn't the standard we hold ourselves to, and we appreciate you telling us.",
       // 5: concise / action
       'We hear you — changes are being made.',
-      // 6: empathy-forward close
-      'We are sorry the visit fell short, and we are committed to getting it right.',
+      // 6: forward-looking close (사과는 인사 슬롯이 담당 — 여기서 또 사과하지 않는다)
+      "We're committed to making your next visit a better one.",
       // 7: gratitude + intent
       'Thank you for giving us the feedback we needed. We will act on it.',
     ],
