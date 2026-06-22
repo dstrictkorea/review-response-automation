@@ -41,19 +41,19 @@ export function slotA_greeting(lang: Language, name: string, idx = 0): string {
   const v: Record<Language, string[]> = {
     ko: [
       // ── 0~3: 중립(평점 무관) — AMBIGUOUS(idx%4)가 저평점에도 쓰므로 '환영/기쁨' 같은 과한 긍정 배제 ──
-      // 0: 정중 표준
-      `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 방문해 주셔서 진심으로 감사드립니다.`,
-      // 1: 표준 변형 (시간 내어 선택)
-      `안녕하세요${nm ? `, ${nm}님` : ''}. 소중한 시간을 내어 {branch_name}를 선택해 주셔서 깊이 감사드립니다.`,
+      // 0: 정중 표준 (담백)
+      `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 방문해 주셔서 감사합니다.`,
+      // 1: 표준 변형 (찾아주셔서)
+      `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 찾아주셔서 감사합니다.`,
       // 2: 후기 감사 (캐주얼·중립)
       `${nm ? `${nm}님, ` : ''}리뷰 남겨주셔서 감사합니다.`,
       // 3: 경험 공유 감사 (중립)
       `${nm ? `${nm}님, ` : ''}{branch_name}에서의 경험을 공유해 주셔서 감사합니다.`,
       // ── 4~7: 따뜻함/랜드마크 강조 — COMPLIMENT 전용 톤 ──
-      // 4: 랜드마크 언급, 따뜻
-      `{branch_name}에 소중한 발걸음을 해주신${nm ? ` ${nm}님께` : ''} 진심으로 감사드립니다. {landmark}에 자리한 저희 전시관을 찾아주셔서 더욱 기쁩니다.`,
-      // 5: 지점 강조 따뜻
-      `${nm ? `${nm}님, ` : ''}{landmark}에 위치한 {branch_name}를 방문해 주셔서 진심으로 환영하며 감사드립니다.`,
+      // 4: 랜드마크 언급, 따뜻 (담백)
+      `${nm ? `${nm}님, ` : ''}{landmark}에 자리한 {branch_name}까지 찾아와 주셔서 감사합니다.`,
+      // 5: 지점 강조 따뜻 (담백)
+      `${nm ? `${nm}님, ` : ''}{landmark}에 있는 {branch_name}에 와주셔서 고맙습니다.`,
       // 6: 친근
       `안녕하세요${nm ? ` ${nm}님` : ''}! {branch_name}를 찾아주셔서 기쁩니다.`,
       // 7: 반가움 강조
@@ -124,14 +124,14 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
   const nm = name.trim()
   const v: Record<Language, string[]> = {
     ko: [
-      // 0: 정중 표준
-      `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 이용하시면서 불편을 드린 점 진심으로 사과드립니다.`,
+      // 0: 정중 표준 (담백)
+      `안녕하세요${nm ? `, ${nm}님` : ''}. {branch_name}를 이용하시면서 불편을 드려 죄송합니다.`,
       // 1: 공감 중심
-      `${nm ? `${nm}님, ` : ''}{branch_name}에서 불편한 경험을 하셨다니 진심으로 죄송합니다.`,
+      `${nm ? `${nm}님, ` : ''}{branch_name}에서 불편한 경험을 하셨다니 죄송합니다.`,
       // 2: 기대 미충족 표현 (담백)
       `안녕하세요${nm ? `, ${nm}님` : ''}. 기대에 미치지 못해 죄송합니다.`,
       // 3: 피드백 감사 + 사과
-      `${nm ? `${nm}님, ` : ''}소중한 말씀 주셔서 감사합니다. {branch_name}에서의 불편에 진심으로 사과드립니다.`,
+      `${nm ? `${nm}님, ` : ''}의견 주셔서 감사합니다. {branch_name}에서 불편을 드려 죄송합니다.`,
       // 4: SHORT + 지점명 포함
       `안녕하세요${nm ? ` ${nm}님` : ''}. {branch_name}에서 불편을 드려 정말 죄송합니다.`,
       // 5: 솔직 피드백 인정 + 지점명
@@ -139,7 +139,7 @@ export function slotA_apology(lang: Language, name: string, idx = 0): string {
       // 6: 기대 미충족 + 지점명
       `{branch_name}를 방문해 주셨는데 기대에 미치지 못해 죄송합니다${nm ? `, ${nm}님` : ''}.`,
       // 7: 진심 강조 + 지점명
-      `${nm ? `${nm}님, ` : ''}{branch_name}에서의 불편한 경험에 대해 진심으로 사과드립니다.`,
+      `${nm ? `${nm}님, ` : ''}{branch_name}에서 불편하셨던 점, 정말 죄송합니다.`,
     ],
     en: [
       `Dear ${nm || 'valued guest'}, we sincerely apologize for the inconvenience you experienced at {branch_name}.`,
@@ -223,13 +223,13 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
   if (contextMirror && lang === 'ko') {
     const echoMap: Record<string, string[]> = {
       '생일': [
-        '생일(또는 기념일)을 {branch_name}에서 함께해 주셔서 더없이 영광이었습니다.',
-        '특별한 날을 {branch_name}에서 보내주셔서 진심으로 감사드립니다. 그 날이 소중한 추억으로 남기를 바랍니다.',
-        '기념일에 저희를 선택해 주신 것, 스태프 모두 정말 뜻깊게 생각합니다.',
-        '소중한 축하 자리에 {branch_name}이 함께할 수 있어 진심으로 기쁩니다.',
+        '생일(또는 기념일)을 {branch_name}에서 보내주셔서 감사해요. 특별한 날 함께할 수 있어 기뻤습니다.',
+        '특별한 날을 {branch_name}에서 보내주셔서 감사합니다. 좋은 추억으로 남았기를 바라요.',
+        '기념일에 저희를 찾아주신 것, 스태프 모두 뜻깊게 생각합니다.',
+        '축하 자리에 {branch_name}이 함께할 수 있어 기뻤습니다.',
       ],
       '힐링': [
-        '힐링이 되셨다니 저희도 정말 기쁩니다. 이런 후기가 저희에게 큰 힘이 돼요.',
+        '힐링이 되셨다니 다행이에요. 이런 후기가 저희한테 큰 힘이 됩니다.',
         '힐링이 되셨다니 정말 다행입니다. 또 필요할 때 찾아주세요.',
         '힐링의 시간이 되었다니 스태프 모두 큰 보람을 느낍니다.',
       ],
@@ -241,7 +241,7 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
       '데이트': [
         '특별한 데이트 장소로 {branch_name}를 선택해 주셔서 감사합니다.',
         '데이트 코스로 {branch_name}을 선택해 주셔서 더욱 기쁩니다.',
-        '두 분의 소중한 데이트에 함께할 수 있어 영광입니다.',
+        '두 분의 데이트에 저희가 함께할 수 있어 기뻤어요.',
       ],
       '가족': [
         '소중한 가족과의 시간을 {branch_name}에서 함께해 주셔서 더욱 기쁩니다.',
@@ -259,12 +259,12 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
         '좋은 사진 많이 남기셨기를 바라요.',
       ],
       '감동': [
-        '감동을 받으셨다니 저희도 뭉클해지네요. 그런 경험을 드릴 수 있어 영광입니다.',
+        '감동적이셨다니 저희도 참 기쁘네요. 그렇게 느껴주셔서 감사합니다.',
         '그 감동이 오래 남기를 진심으로 바랍니다.',
         '감동을 전해주셔서 저희가 더 힘이 납니다.',
       ],
       '분위기': [
-        '분위기가 마음에 드셨다니 정말 기쁩니다.',
+        '분위기가 마음에 드셨다니 기쁘네요.',
         '분위기로 기억해 주셔서 감사해요.',
         '저희가 공들인 공간을 알아봐 주셔서 감사합니다.',
       ],
@@ -323,8 +323,8 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
 
   const v: Record<Language, string[]> = {
     ko: [
-      // 0: 정중 클래식
-      '남겨주신 따뜻한 후기를 읽으며 저희 또한 큰 힘을 얻었습니다. 소중한 시간을 함께해 주셔서 감사합니다.',
+      // 0: 정중 클래식 (담백)
+      '이렇게 후기 남겨주셔서 감사합니다. 들려주신 이야기가 저희에게 큰 힘이 됩니다.',
       // 1: 스태프 격려 중심 (담백)
       '시간 내어 후기 남겨주셔서 스태프 모두 힘이 났어요. 감사합니다.',
       // 2: 따뜻한 말씀 감사 (담백)
@@ -332,7 +332,7 @@ export function slotB_appreciation(lang: Language, idx = 0, contextMirror?: stri
       // 3: 보람 강조
       '남겨주신 격려의 말씀 덕분에 저희 모두 큰 보람을 느낍니다. 고맙습니다.',
       // 4: SHORT 직접 공감 (캐주얼)
-      '좋은 경험이 되셨다니 저희도 정말 기쁩니다.',
+      '좋은 경험이 되셨다니 저희도 기뻐요.',
       // 5: SHORT 힘 표현
       '이런 따뜻한 후기가 저희에게 정말 큰 힘이 돼요.',
       // 6: SHORT 감사 수용
@@ -664,9 +664,9 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   VALUE_COMPLAINT: {
     ko: [
-      '입장료에 비해 만족스럽지 않으셨다는 말씀을 무겁게 받아들이겠습니다. 콘텐츠 밀도와 전시 구성을 지속적으로 보강하겠습니다.',
-      '가격 대비 기대에 미치지 못했다는 소중한 피드백 감사합니다. 더욱 알찬 전시와 다양한 콘텐츠로 보답하겠습니다.',
-      '관람료 측면에서 아쉬움을 느끼셨다니 진심으로 유감스럽습니다. 콘텐츠 확충과 전시 퀄리티 향상에 최선을 다하겠습니다.',
+      '입장료에 비해 아쉬우셨다는 말씀 잘 새기겠습니다. 콘텐츠 밀도와 전시 구성을 꾸준히 보강해 가겠습니다.',
+      '가격 대비 기대에 미치지 못했다는 의견 감사합니다. 더 알찬 전시와 다양한 콘텐츠로 채워가겠습니다.',
+      '관람료에 비해 아쉬우셨던 점, 콘텐츠 확충과 전시 퀄리티를 높여 채워가겠습니다.',
       '가격 대비 가치에 관한 솔직한 의견 감사합니다. 지속적인 콘텐츠 업그레이드로 더 나은 경험을 드리겠습니다.',
     ],
     en: [
@@ -720,9 +720,9 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   CROWD_COMPLAINT: {
     ko: [
-      '방문객이 많아 쾌적한 관람에 지장이 있으셨다니 진심으로 죄송합니다. 입장 인원 관리와 운영 방식을 지속적으로 개선하겠습니다.',
-      '혼잡한 환경으로 불편을 드려 깊이 사과드립니다. 관람 환경 개선을 위해 입장 분산 및 공간 운영에 더욱 힘쓰겠습니다.',
-      '많은 방문객으로 인해 충분한 감상이 어려우셨다니 유감입니다. 쾌적한 관람 환경 조성을 위해 최선을 다하겠습니다.',
+      '방문객이 많아 쾌적하게 관람하기 어려우셨던 점, 입장 인원 관리와 운영 방식을 꾸준히 개선하겠습니다.',
+      '혼잡했던 부분은 입장 분산과 공간 운영을 손봐서 관람 환경을 개선하겠습니다.',
+      '많은 방문객으로 충분히 감상하기 어려우셨던 점, 쾌적한 관람 환경을 만드는 데 더 신경 쓰겠습니다.',
       '혼잡도 문제에 대한 솔직한 피드백 감사합니다. 예약 시스템 개선과 탄력적 입장 운영을 강화하겠습니다.',
     ],
     en: [
@@ -778,7 +778,7 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
     ko: [
       '동선 안내가 불편하셨다는 점 깊이 유감스럽게 생각합니다. 안내 표지와 동선 시스템을 지속적으로 보완하겠습니다.',
       '관람 동선에 대한 소중한 피드백 감사합니다. 안내 표지판 개선과 직관적인 동선 구성을 위해 더욱 노력하겠습니다.',
-      '동선이 복잡하게 느껴지셨다니 진심으로 사과드립니다. 직관적인 레이아웃 개선에 즉시 착수하겠습니다.',
+      '동선이 복잡하게 느껴지셨던 점, 더 직관적인 레이아웃으로 바로 개선해 보겠습니다.',
       '관람 흐름 개선을 위해 전반적인 동선 재설계를 검토하겠습니다. 소중한 의견 감사합니다.',
     ],
     en: [
@@ -832,8 +832,8 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   DISPLAY_ISSUE: {
     ko: [
-      '영상 및 디스플레이 품질에 불편을 경험하셨다니 진심으로 사과드립니다. 장비 점검과 유지 관리를 더욱 철저히 하겠습니다.',
-      '디스플레이 관련 문제를 경험하셨다니 깊이 사과드립니다. 정기 점검 강화와 신속한 유지 보수를 통해 재발 방지에 최선을 다하겠습니다.',
+      '영상·디스플레이 품질 문제는 장비 점검과 유지 관리를 더 꼼꼼히 챙기겠습니다.',
+      '디스플레이 문제는 정기 점검을 강화하고 빠르게 수리해 다시 생기지 않도록 하겠습니다.',
       '시청각 품질에 대한 피드백 감사합니다. 담당 기술팀이 즉시 점검하겠습니다.',
       '디스플레이 오류로 관람에 불편을 드린 점 사과드립니다. 장비 모니터링을 강화하겠습니다.',
     ],
@@ -1001,10 +1001,10 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   SYSTEM_COMPLAINT: {
     ko: [
-      '키오스크 및 시스템 오류로 불편을 드려 진심으로 사과드립니다. 담당 기술팀이 즉시 확인하여 조치하겠습니다.',
-      '예약 및 입장 시스템에 오류가 발생했다니 진심으로 죄송합니다. 신속한 점검을 통해 재발 방지에 최선을 다하겠습니다.',
-      '디지털 시스템 오류로 인한 불편에 깊이 사과드립니다. 기술팀이 즉각 해당 사안을 검토하겠습니다.',
-      '키오스크 및 앱 오류로 관람 전 불편을 드린 점 진심으로 사과드립니다. 시스템 안정화에 최우선으로 임하겠습니다.',
+      '키오스크·시스템 오류는 담당 기술팀이 바로 확인해서 조치하겠습니다.',
+      '예약·입장 시스템 오류는 빠르게 점검해서 다시 생기지 않도록 하겠습니다.',
+      '디지털 시스템 오류 건은 기술팀이 곧바로 살펴보겠습니다.',
+      '관람 전 키오스크·앱 오류 부분은 시스템 안정화를 우선으로 챙기겠습니다.',
     ],
     en: [
       'We sincerely apologize for the kiosk and system issues you encountered. Our technical team will investigate and resolve them immediately.',
@@ -1057,10 +1057,10 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   REVISIT_COMPLAINT: {
     ko: [
-      '재방문하셨음에도 지난번보다 아쉬운 경험을 드렸다니 진심으로 죄송합니다. 시즌별 신규 콘텐츠를 지속적으로 도입하여 매 방문이 새로운 경험이 되도록 노력하겠습니다.',
-      '다시 찾아주신 소중한 고객님께 기대에 미치지 못하는 경험을 드린 점 깊이 사과드립니다. 글로벌 순회 전시 및 시즌별 업데이트를 통해 보답하겠습니다.',
-      '재방문 시 이전과 다른 만족감을 드리지 못해 유감스럽습니다. 콘텐츠 리프레시 계획을 강화하여 매 시즌 새로운 경험을 선사하겠습니다.',
-      '다시 방문해 주셨음에도 충분한 만족을 드리지 못한 점 진심으로 사과드립니다. 지속적인 콘텐츠 갱신과 시설 개선으로 보답하겠습니다.',
+      '다시 오셨는데 지난번보다 아쉬우셨다니 더 신경 쓰이네요. 시즌마다 새 콘텐츠를 들여서 올 때마다 새로운 경험이 되도록 하겠습니다.',
+      '다시 찾아주셨는데 기대에 못 미친 점이 마음에 남습니다. 시즌별 업데이트와 새로운 전시로 더 나아진 모습 보여드리겠습니다.',
+      '다시 오셨을 때 이전과 다른 만족을 드리지 못했네요. 콘텐츠 리프레시를 강화해 매 시즌 새로운 경험을 준비하겠습니다.',
+      '다시 방문해 주셨는데 충분히 만족시켜 드리지 못했네요. 콘텐츠 갱신과 시설 개선으로 더 나아지겠습니다.',
     ],
     en: [
       'We sincerely apologize that this visit did not match your previous experience. We are continuously introducing seasonal new content to ensure each visit offers something fresh.',
@@ -1117,7 +1117,7 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
     ko: [
       '말씀하신 사안을 경영진에 즉시 보고하였습니다. 담당자가 빠른 시일 내 직접 연락드리겠습니다.',
       '이 내용은 즉시 운영 책임자에게 전달되었습니다. 관련 담당자가 직접 연락드릴 것입니다.',
-      '고객님의 상황을 최우선으로 검토하겠습니다. 전담 담당자가 신속히 연락드리겠습니다.',
+      '말씀하신 상황을 가장 먼저 검토하겠습니다. 전담 담당자가 빠르게 연락드리겠습니다.',
       '이 사안은 경영진에 즉시 에스컬레이션되었습니다. 빠른 시일 내에 연락드리겠습니다.',
     ],
     en: [
@@ -1171,10 +1171,10 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   COMPENSATION_DEMAND: {
     ko: [
-      '불편하신 경험에 진심으로 사과드립니다. 고객님의 상황을 살펴볼 수 있도록 고객서비스팀이 별도로 연락드리겠습니다.',
-      '이번 경험에 대해 깊이 사과드립니다. 담당 팀이 고객님의 상황을 검토 후 직접 연락드리겠습니다.',
-      '이러한 경험을 드린 점 진심으로 사과드리며, 관련 담당자가 빠른 시일 내 연락드리겠습니다.',
-      '고객님의 상황을 확인하기 위해 고객서비스팀이 직접 연락드리겠습니다.',
+      '남겨주신 상황을 자세히 살펴볼 수 있도록 고객서비스팀이 따로 연락드리겠습니다.',
+      '담당 팀이 말씀하신 상황을 확인한 뒤 직접 연락드리겠습니다.',
+      '관련 담당자가 빠른 시일 안에 직접 연락드리겠습니다.',
+      '말씀하신 상황을 확인하기 위해 고객서비스팀이 직접 연락드리겠습니다.',
     ],
     en: [
       'We are truly sorry for the experience you had. Our guest experience team will reach out to you directly to review your situation.',
@@ -1229,7 +1229,7 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
     ko: [
       '말씀하신 상황을 운영 책임자에게 직접 전달하였으며, 재발 방지를 위해 내부적으로 검토하겠습니다.',
       '이번 건은 즉시 현장 운영팀에 공유되었습니다. 같은 상황이 반복되지 않도록 내부 조치를 취하겠습니다.',
-      '고객님의 경험을 팀 전체가 공유하고, 서비스 개선에 반드시 반영하겠습니다.',
+      '말씀해 주신 경험을 팀 전체가 공유하고, 서비스 개선에 꼭 반영하겠습니다.',
       '말씀하신 내용을 즉시 운영팀에 전달하였습니다. 적절한 내부 검토와 개선 조치를 약속드립니다.',
     ],
     en: [
@@ -1283,9 +1283,9 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   },
   STAFF_COMPLAINT: {
     ko: [
-      '직원 응대에 불편을 드린 점 진심으로 사과드립니다. CS 매니저가 즉시 해당 내용을 확인하고, 서비스 교육을 강화하겠습니다.',
-      '직원 태도에 대한 솔직한 피드백 주셔서 감사합니다. 고객 서비스 교육을 즉각 재검토하고 강화하여 재발 방지에 최선을 다하겠습니다.',
-      '직원 응대에 대한 소중한 의견 감사합니다. 모든 직원이 친절하고 전문적인 서비스를 제공할 수 있도록 교육을 강화하겠습니다.',
+      '직원 응대 부분은 CS 매니저가 내용을 확인하고 서비스 교육을 보완하겠습니다.',
+      '직원 태도에 대한 솔직한 피드백 감사합니다. 서비스 교육을 다시 점검하고 보완해 같은 일이 없도록 하겠습니다.',
+      '직원 응대에 대한 의견 감사합니다. 모든 직원이 더 친절하게 응대할 수 있도록 교육을 강화하겠습니다.',
       '고객 응대 품질에 대한 우려를 주셔서 감사합니다. 현장 CS 매니저가 즉각적인 개선 조치를 취하겠습니다.',
     ],
     en: [
@@ -1494,7 +1494,7 @@ const SLOT_C_PIVOTS: Partial<Record<string, Record<Language, string[]>>> = {
   //   여기서 또 사과하면 한 답변에 '죄송'이 2~3번 쌓여 부자연스럽다).
   저평점_부정신호: {
     ko: [
-      '주신 의견 깊이 새겨 더 나은 경험으로 보답하겠습니다.',
+      '주신 의견 잘 새겨서 더 나은 경험으로 찾아뵙겠습니다.',
       '말씀하신 점, 더 좋아지도록 노력하겠습니다.',
       '소중한 의견 감사합니다. 깊이 새겨 개선하겠습니다.',
       '더 나은 모습으로 다시 찾아뵙겠습니다.',
@@ -1624,7 +1624,7 @@ const SENSORY_LINES: Record<string, Partial<Record<Language, string[]>>> = {
     tl: ['Ang pagpansin ninyo sa halimuyak na kumakalat sa bawat espasyo ay nangangahulugang naabot kayo ng aming mga pinong detalye.', 'Sana ang banayad na halimuyak ay nagpalalim sa naiwang impresyon ng inyong pagbisita.'],
   },
   '소리': {
-    ko: ['음악과 영상이 어우러진 순간에 깊이 몰입하셨다니 더없이 기쁩니다.', '선율이 공간의 감동을 한층 더해 드렸기를 바랍니다.'],
+    ko: ['음악과 영상이 어우러진 순간에 빠져드셨다니 기뻤어요.', '선율이 공간의 분위기를 한층 더해 드렸기를 바랍니다.'],
     en: ['We are delighted you were immersed in the moments where music and visuals meet.', 'We hope the melodies deepened the wonder of each space.'],
     ja: ['音楽と映像が溶け合う瞬間に深く浸っていただけて、この上なく嬉しく思います。', '旋律が空間の感動をより一層高めていましたら幸いです。'],
     zh: ['您深深沉浸在音乐与影像交融的瞬间，我们倍感欣喜。', '愿旋律为每个空间的感动更添一分。'],
@@ -1660,7 +1660,7 @@ const COMPANION_LINES: Record<string, Partial<Record<Language, string[]>>> = {
     tl: ['Ang pagbahagi ng panahong ito kasama ang inyong pamilya ay lalong nagpapahalaga nito para sa amin.', 'Ang malaman na nag-enjoy ang buong pamilya nang sama-sama ay tunay na kagalakan para sa amin.'],
   },
   '데이트': {
-    ko: ['특별한 데이트 시간에 저희 공간이 함께할 수 있어 영광입니다.', '소중한 데이트 코스로 {branch_name}을 떠올려 주셔서 기쁩니다.'],
+    ko: ['특별한 데이트에 저희 공간이 함께할 수 있어 기뻤어요.', '데이트 코스로 {branch_name}을 떠올려 주셔서 고맙습니다.'],
     en: ['It is an honor that {branch_name} could be part of your special date together.', 'We are so glad we could set the scene for your romantic time together.'],
     ja: ['お二人の特別なひとときに私どもの空間がご一緒できたこと、光栄に存じます。', '大切な方との思い出に{branch_name}が加わったこと、嬉しく思います。'],
     zh: ['两位的特别时光能有我们的空间相伴，深感荣幸。', '很高兴{branch_name}成为您与心爱之人回忆的一部分。'],
@@ -1694,7 +1694,7 @@ export function slotCompanion(lang: Language, companion: string, idx = 0): strin
 //  Slot R — 재방문 인정 (isRepeatVisitor && 긍정) — 단골 고객 인정 (기존 미활용 신호)
 // ════════════════════════════════════════════════════════════════════════════════
 const REPEAT_VISITOR_LINES: Partial<Record<Language, string[]>> = {
-  ko: ['다시 찾아주신 발걸음이 저희에게는 가장 큰 칭찬입니다. 진심으로 감사드립니다.', '잊지 않고 또 방문해 주셔서, 그 변함없는 애정에 깊이 감사드립니다.'],
+  ko: ['다시 찾아주신 것만으로도 저희에겐 큰 칭찬이에요. 정말 감사합니다.', '잊지 않고 또 방문해 주셔서 감사합니다. 그 마음이 큰 힘이 됩니다.'],
   en: ['Your returning visit is the highest compliment we could receive. Thank you sincerely.', 'Thank you for coming back to us — your continued affection means a great deal.'],
   ja: ['再びお越しいただいたことが、私どもにとって何よりの褒め言葉です。心より感謝いたします。', '忘れずにまた訪れてくださり、その変わらぬご愛顧に深く感謝申し上げます。'],
   zh: ['您再次到访，是对我们最高的赞美。衷心感谢。', '感谢您始终记得并再度光临，这份不变的喜爱令我们深深感激。'],
@@ -1779,7 +1779,7 @@ export function slotHybridAck(lang: Language, idx = 0): string {
 const AMBIGUOUS_ACK_LINES: Partial<Record<Language, string[]>> = {
   ko: [
     '좋게 봐주신 부분은 감사히, 아쉬우셨던 부분은 무겁게 새기며 더 나아지겠습니다.',
-    '즐거우셨던 점과 부족했던 점 모두 솔직히 들려주셔서 감사합니다. 더 나은 모습으로 보답하겠습니다.',
+    '즐거우셨던 점과 부족했던 점 모두 솔직히 들려주셔서 감사합니다. 더 나은 모습으로 찾아뵙겠습니다.',
     '만족스러우셨던 부분은 지키고, 아쉬우셨던 부분은 꼭 개선하겠습니다.',
   ],
   en: [
@@ -1952,7 +1952,7 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
         '다음 특별한 날에도 {branch_name}에서 함께해 주세요. 기다리고 있겠습니다.',
         '또 기념할 날이 생기면 꼭 다시 찾아주세요.',
         '{branch_name}이 앞으로도 특별한 날의 추억 장소가 되기를 바랍니다.',
-        '또 다른 축하 자리에 저희를 불러주세요. 영광이겠습니다.',
+        '또 축하할 일 생기면 불러주세요. 기쁘게 준비할게요.',
       ],
       '힐링': [
         '{branch_name}가 언제나 힐링의 공간이 될 수 있도록 노력하겠습니다. 또 찾아주세요.',
@@ -2055,7 +2055,7 @@ export function slotE_positive(lang: Language, idx = 0, contextMirror?: string |
       // 1: 다음 방문 준비
       '다음에 오셔도 즐거운 시간 보내실 수 있도록 잘 준비하겠습니다.',
       // 2: 전시 약속 + 재방문 권유
-      '앞으로도 더 좋은 전시로 보답하겠습니다. 언제든지 다시 방문해 주세요.',
+      '앞으로 더 좋은 전시로 찾아뵙겠습니다. 또 들러주세요.',
       // 3: 재방문 기대
       '다시 찾아주시면 더 반갑게 맞이하겠습니다.',
       // 4: SHORT 재방문 권유 (캐주얼)
