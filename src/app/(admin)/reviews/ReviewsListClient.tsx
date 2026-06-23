@@ -565,31 +565,53 @@ export default function ReviewsListClient({
   // 사람이 수정한 초안은 서버가 자동 스킵(보존). 현재 필터 범위에만 적용.
   async function runRegenerate() {
     if (regenRunning) return
-    if (!confirm('현재 목록(필터) 범위의 답변 초안을 최신 엔진으로 다시 생성합니다.\n사람이 수정한 초안은 보존됩니다. 계속할까요?')) return
+    if (!confirm('저장된 모든 답변 초안을 최신 엔진으로 다시 생성합니다.\n(사람이 수정한 초안은 보존됩니다.) 계속할까요?')) return
     abortRef.current = false
     setRegenRunning(true)
     setRegenDone(0)
-    const filter = server
-      ? { ...server.query, risk: server.activeRisk || undefined, rating: server.activeRating || undefined }
-      : {}
+    // 엔진 업그레이드 반영은 항상 '전체' 대상이어야 한다. 과거엔 화면 필터(server.query: 날짜/검색/지점)를
+    //   그대로 넘겨, 리뷰 작성일이 필터 범위를 벗어나면 대상이 0건이 되어 아무것도 갱신하지 않고 "완료"로
+    //   끝나는 함정이 있었다(저장 초안이 옛 엔진 그대로 남음). → 필터 비우고 전체 재생성.
+    type RegenResp = { processed?: number; skipped?: number; nextCursor?: string; done?: boolean; error?: string }
+    const filter = {}
     let cursor = ''
     let total = 0
+    let skipped = 0
+    let hadError = false
     try {
       for (let guard = 0; guard < 4000; guard++) {
         if (abortRef.current) break
-        const res = await fetch('/api/review/regenerate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cursor, filter }),
-        })
-        const data = await res.json()
-        if (!res.ok) { setDeleteMsg(data.error ?? 'error'); break }
+        // 일시적 오류(세션 갱신/콜드스타트/레이트리밋)로 전체 루프가 중단되지 않도록 청크 단위 3회 재시도
+        let data: RegenResp | null = null
+        for (let attempt = 0; attempt < 3; attempt++) {
+          const res = await fetch('/api/review/regenerate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cursor, filter }),
+          })
+          if (res.ok) { data = (await res.json()) as RegenResp; break }
+          if (attempt === 2) {
+            hadError = true
+            const e = (await res.json().catch(() => ({}))) as RegenResp
+            setDeleteMsg(`⚠ 재생성 중단(${total}건 갱신 후 오류): ${e.error ?? res.status}`)
+          }
+        }
+        if (!data) break
         total += data.processed ?? 0
+        skipped += data.skipped ?? 0
         setRegenDone(total)
         cursor = data.nextCursor ?? cursor
         if (data.done) break
       }
-      setDeleteMsg(`✅ 답변 재생성 완료 — ${total}건 갱신됨`)
+      if (!hadError) {
+        setDeleteMsg(
+          total > 0
+            ? `✅ 답변 재생성 완료 — ${total}건 갱신${skipped ? ` · ${skipped}건 보존/스킵` : ''}`
+            : skipped > 0
+              ? `완료 — 갱신 0건 · ${skipped}건은 사람 수정분이라 보존됨`
+              : '⚠ 재생성 대상이 0건입니다. (접근 권한 범위에 처리할 리뷰가 없습니다)',
+        )
+      }
       router.refresh()
     } catch {
       setDeleteMsg(t.rd_toast_server_err)
@@ -749,7 +771,7 @@ export default function ReviewsListClient({
           </a>
         )}
         {isServer && isAdmin && (
-          <button onClick={runRegenerate} disabled={regenRunning} title="최신 엔진으로 현재 필터 범위의 답변 초안을 다시 생성합니다 (사람 수정분 보존)"
+          <button onClick={runRegenerate} disabled={regenRunning} title="저장된 모든 답변 초안을 최신 엔진으로 다시 생성합니다 (화면 필터와 무관·전체 / 사람 수정분 보존)"
             className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors disabled:opacity-50 ${isServer ? '' : 'ml-auto'} border-purple-300 text-purple-700 hover:bg-purple-50`}>
             {regenRunning ? `♻ 재생성 중… ${regenDone}건` : '♻ 답변 재생성'}
           </button>
