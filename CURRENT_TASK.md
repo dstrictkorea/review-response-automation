@@ -2,7 +2,24 @@
 > Updated 2026-06-15. Keep <300 lines. **No historical wave logs** (those live in git history / a slim CHANGELOG). This file answers: "What is being worked on right now, what's next, what must I not touch?"
 
 ## Current phase
-**✅ EPIC COMPLETE: 말투 2차 전수 고도화 — 극존칭·오버·생경한 단어 제거 (Wave 29)**
+**✅ EPIC COMPLETE: 분류 정확도 — "별점 낮은데 본문 긍정" 오사과 방지 (Wave 30)**
+
+### 이번 EPIC 완료 (사용자 지적: ★2인데 본문이 사실상 긍정(꿀팁 공유)인데 가벼운 사과가 달림)
+- **원인**: 구어체 호평("꿀팁/딱이에요/강추/인생샷/고마워할 거예요")이 정식 긍정 사전에 없어 `hasPositive=false`
+  → ★1-2 최후보정 게이트가 "긍정 없음"으로 보고 COMPLAINT(사과)로 격상.
+- **수정**: `COLLOQUIAL_POSITIVE` 고정밀 패턴을 `hasPositive`에 추가. 이제 ★2+긍정 본문 → **AMBIGUOUS 균형
+  답변(사과 없음) + 사람 승인 격리**(requiresApproval)로 라우팅. (하서진/공도훈 "딱이에요"·"인생샷 각" 등 정상화.)
+- **안전 가드**: 부정과 결합되기 쉬운 토큰(추천/갈 만/또 가고 싶)은 의도적 제외(저평점 반어·필러 → FILLER가 처리).
+  전수 검증: 구어체 토큰 포함 32건 중 실불만 태그 겹침 4건 = 모두 혼합(긍정+경미) 또는 ★4 rating-override →
+  **순수 불만이 사과를 잃은 케이스 0**. ★1 순수 부정("한 번이면 끝")은 COMPLAINT 유지. EN은 유사 표면 패턴이나
+  실제로는 가격불만/환불-EMERGENCY 격리라 정당 → KO 한정 적용.
+- 검증: regression-guard ✅ (tsc 0 · waterfall ALL PASS · loop **0/813**) · 전수 dup 0.0% · 금칙어 0 · KO 과잉톤 0.
+- ⚠️ **재생성 안내**: 06-22(1) export의 저장 초안 128건이 아직 Wave 29 이전 문구(보답/진심으로 감사 등) → 사용자
+  재생성이 Wave 29 **배포 전** 실행됨. 배포 후 ♻ 재생성 재실행 필요.
+
+---
+
+**✅ 이전 EPIC: 말투 2차 전수 고도화 — 극존칭·오버·생경한 단어 제거 (Wave 29)**
 
 ### 이번 EPIC 완료 (사용자 피드백: "500개 하나하나, 극도의 존칭/오버/부자연스럽거나 평소 안 쓰는 단어 없게, ai스럽지 않게")
 - **전수(KO 250건) 자동 플래깅** 후 슬롯 직접 교체. BEFORE→AFTER: 과장 표현 92→**0**, 생경한 단어 39→**0**,

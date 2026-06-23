@@ -128,6 +128,14 @@ const DEFAULT_VALUE =
 // 정상 맥락(고평점)에선 긍정 신호로 처리되지만, rating ≤ 2인 경우 텍스트에서 먼저 제거.
 const NOISE_POSITIVE = FILLER_PATTERN
 
+// ── 구어체 긍정 신호 (정식 긍정 사전이 놓치는 캐주얼 호평) ──────────────────────────
+// "별점은 낮은데 본문은 사실상 긍정"(예: ★2 "꿀팁…아이한테 딱이에요")이 hasPositive 미탐지로
+// COMPLAINT(사과)로 떨어지던 문제 보정. 부정과 결합되기 쉬운 토큰(추천/갈 만/또 가고 싶 등)은
+// 의도적으로 제외 — 그런 토큰은 저평점에서 반어/필러일 확률이 높아 FILLER_PATTERN이 따로 제거한다.
+// 여기 토큰은 부정형이 드물고(부정 시 형태가 달라짐: 후회'없'↔후회'했', 딱이에요↔해당없음) 고정밀.
+const COLLOQUIAL_POSITIVE =
+  /딱이[에야]|딱\s?좋|안성맞춤|꿀팁|꿀잼|핵잼|강추|인생\s?샷|인생\s?사진|후회\s?없|후회\s?안|아깝지\s?않|돈\s?안\s?아까|고마워할\s?거|나중에\s?고마/
+
 // ── PHASE 3: 4 Niche Complaint Tags ──────────────────────────────────────────────
 
 // ROOM_SPECIFIC_COMPLAINT: 특정 전시 구역/방 불만 (슬롯 C → highlight_room 언급 + 개선 약속)
@@ -413,6 +421,7 @@ export function analyzeReview(
   const prosConsStructure = /장점\s*[:：]|좋은\s*점|아쉬운\s*점|단점\s*[:：]|\bpros\s*[:：]|\bcons\s*[:：]|the\s+good\s*[:：]|the\s+bad\s*[:：]/i.test(text)
   const hasPositive = sarcasmPositive || C.positive.test(textForPositive) || fuzzyPositive(textForPositive)
                       || (promotedPos?.test(textForPositive) ?? false) || prosConsStructure
+                      || COLLOQUIAL_POSITIVE.test(textForPositive)
   const isQuestion = C.question.test(text)
   if (!isComplaint && hasPositive && C.artwork.test(text)) {
     isArtworkFocused = true
